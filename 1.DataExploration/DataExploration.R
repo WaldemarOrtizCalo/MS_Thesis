@@ -52,156 +52,23 @@ df_male   <- subset(df,df$sex == "M")
 df_female <- subset(df,df$sex == "F")
 
 ###############################################################################
-#   [Number of Unique Adults]                                               ####
+#   [Summarize]                                                             ####
+#      [Prepping Dataframe]                                                 ####
 
-#      [North and South]                                                    ####
-df_adult %>% 
-  subset(df_adult$site == "North" | df_adult$site == "South") %>% 
-  pull(id) %>% 
-  unique %>% 
-  length
+# Creating new Dataframe
+df_all <- df
 
-#      [North]                                                              ####
+# Making Sex a Factor
+df_all$sex <- factor(df_all$sex, levels = c("M","F"))
 
-n_adult_total_North <- df_adult %>% 
-  subset(df_adult$site == "North") %>% 
-  pull(id) %>% 
-  unique %>% 
-  length %>% 
-  as.numeric()
+# Making Age a Factor
+df_all$age <- factor(df_all$age, levels = c("A","Y","F"))
 
-#        [Male]                                                             ####
+#        [Number of Relocations by Site, Sex, and Age]                      ####
 
-n_adult_male_North <- df_adult %>% 
-  subset(df_adult$site == "North" & df_adult$sex == "M") %>% 
-  pull(id) %>% 
-  unique %>% 
-  length %>% 
-  as.numeric()
-
-#        [Female]                                                           ####
-
-n_adult_female_North <-df_adult %>% 
-  subset(df_adult$site == "North" & df_adult$sex == "F") %>% 
-  pull(id) %>% 
-  unique %>% 
-  length %>% 
-  as.numeric()
-
-#      [South]                                                              ####
-
-n_adult_total_South <- df_adult %>% 
-  subset(df_adult$site == "South") %>% 
-  pull(id) %>% 
-  unique %>% 
-  length %>% 
-  as.numeric()
-
-#        [Male]                                                             ####
-
-n_adult_male_South <- df_adult %>% 
-  subset(df_adult$site == "South" & df_adult$sex == "M") %>% 
-  pull(id) %>% 
-  unique %>% 
-  length %>% 
-  as.numeric()
-
-#        [Female]                                                           ####
-
-n_adult_female_South <-df_adult %>% 
-  subset(df_adult$site == "South" & df_adult$sex == "F") %>% 
-  pull(id) %>% 
-  unique %>% 
-  length %>% 
-  as.numeric()
-
-#      [Cropland]                                                           ####
-
-df_adult %>% 
-  subset(df_adult$site == "CroplandStudy") %>% 
-  pull(id) %>% 
-  unique %>% 
-  length
+df_all %>% 
+  group_by(site,sex,age) %>% 
+  summarise("n_indiv"=n_distinct(id),"n_loc"= n()) %>% 
+  mutate("avg_loc"= n_loc / n_indiv)
 
 
-#   [Number of Adult Relocations]                                           ####
-
-#      [North]                                                              ####
-#        [Male]                                                             ####
-
-nloc_adult_male_North <- df_adult %>% 
-  subset(df_adult$site == "North" & df_adult$sex == "M") %>% 
-  pull(id) %>% 
-  length %>% 
-  as.numeric()
-
-#        [Female]                                                           ####
-
-nloc_adult_female_North <- df_adult %>% 
-  subset(df_adult$site == "North" & df_adult$sex == "F") %>% 
-  pull(id) %>% 
-  length %>% 
-  as.numeric()
-
-#      [South]                                                              ####
-#        [Male]                                                             ####
-
-nloc_adult_male_South <- df_adult %>% 
-  subset(df_adult$site == "South" & df_adult$sex == "M") %>% 
-  pull(id) %>% 
-  length %>% 
-  as.numeric()
-
-#        [Female]                                                           ####
-
-nloc_adult_female_South <- df_adult %>% 
-  subset(df_adult$site == "South" & df_adult$sex == "F") %>% 
-  pull(id) %>% 
-  length %>% 
-  as.numeric()
-
-#      [CroplandStudy]                                                      ####
-
-nrow(subset(df_adult,df_adult$site == "CroplandStudy"))
-
-#   [Average Adult Relocations]                                           ####
-
-#      [North]                                                              ####
-#        [Male]                                                              ####
-
-avgloc_adult_male_North <- df_adult %>% 
-  subset(df_adult$site == "North" & df_adult$sex == "M") %>% 
-  group_by(id) %>%
-  count(id) %>% 
-  pull(n) %>% 
-  mean
-
-#        [Female]                                                              ####
-
-avgloc_adult_female_North <- df_adult %>% 
-  subset(df_adult$site == "North" & df_adult$sex == "F") %>% 
-  group_by(id) %>%
-  count(id) %>% 
-  pull(n) %>% 
-  mean
-
-#      [South]                                                              ####
-
-#        [Male]                                                              ####
-
-avgloc_adult_male_South <- df_adult %>% 
-  subset(df_adult$site == "South" & df_adult$sex == "M") %>% 
-  group_by(id) %>%
-  count(id) %>% 
-  pull(n) %>% 
-  mean
-
-#        [Female]                                                              ####
-
-avgloc_adult_female_South <- df_adult %>% 
-  subset(df_adult$site == "South" & df_adult$sex == "F") %>% 
-  group_by(id) %>%
-  count(id) %>% 
-  pull(n) %>% 
-  mean
-###############################################################################
