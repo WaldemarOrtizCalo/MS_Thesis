@@ -66,9 +66,10 @@ df_all$age <- factor(df_all$age, levels = c("A","Y","F"))
 
 #        [Number of Relocations by Site, Sex, and Age]                      ####
 
-df_all %>% 
+data_summary <- df_all %>% 
   group_by(site,sex,age) %>% 
   summarise("n_indiv"=n_distinct(id),"n_loc"= n()) %>% 
   mutate("avg_loc"= n_loc / n_indiv)
+
 
 
