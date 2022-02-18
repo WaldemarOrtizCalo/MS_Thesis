@@ -5,6 +5,13 @@
 
 *.csv
 *.pdf
-*.rde
+
+
 *.ige
+*.img
+*.rde
+*.rrd
+*.xml
+
+
 *.zip

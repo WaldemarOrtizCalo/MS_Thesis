@@ -15,7 +15,8 @@ library(dplyr)
 #      Functions                                                            ####
 
 #      Data                                                                 ####
-df <- read.csv("1.DataExploration/deer_all_clean.csv")
+
+df <- read_csv("1.DataManagement/CleanData/deer_all_clean.csv")
 
 ###############################################################################
 #   [Data Cleaning]                                                         ####

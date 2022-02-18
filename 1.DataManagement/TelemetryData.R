@@ -2,20 +2,23 @@
 
 # Author: Waldemar Ortiz-Calo
 
-# Date:2022-02-17 
+# Date:2022-02-18 
 
-# Purpose: Data Exploration 
+# Purpose: 
 
 ###############################################################################
 #   Library / Functions / Data                                              ####
 
 #      Library                                                              ####
+
 library(tidyverse)
 library(lubridate)
 
 #      Functions                                                            ####
 
 #      Data                                                                 ####
+
+#        [Deer Data]                                                        ####
 
 df <- read_csv("1.DataManagement/CleanData/deer_all_clean.csv")
 
@@ -31,6 +34,11 @@ df$age <- case_when(df$age == "F"  ~ "F",
                     df$age == "A3" ~ "A")
 
 df$age <- factor(df$age, levels = c("A","Y","F"))
+
+#      [Sex]                                                                ####
+
+# Making Sex a Factor
+df$sex <- factor(df$sex, levels = c("M","F"))
 
 #      [Study Area]                                                         ####
 
@@ -49,7 +57,17 @@ df$site <- case_when(df$site == "North" ~ "North",
 df$t <- ymd_hms(df$t)
 
 ###############################################################################
-#   [Livetime Plot]                                                         ####
+#   [Summarize Telemetry Data]                                              ####
+#      [Number of Relocations by Site, Sex, and Age]                        ####
+
+data_summary <- df %>% 
+  group_by(site,sex,age) %>% 
+  summarise("n_indiv"=n_distinct(id),"n_loc"= n()) %>% 
+  mutate("avg_loc"= n_loc / n_indiv)
+
+
+###############################################################################
+#   [Livetime Plots]                                                        ####
 
 #      [Creating Dataframe for Time Series]                                 ####
 
@@ -150,3 +168,5 @@ ggplot(subset(livetime_pop,site=="CroplandStudy" & sex == "F"), aes(x = t_my,y =
 
 
 
+
+###############################################################################
