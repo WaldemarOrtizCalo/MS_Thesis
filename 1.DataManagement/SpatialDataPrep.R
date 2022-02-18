@@ -14,6 +14,8 @@
 library(raster)
 library(tidyverse)
 library(here)
+library(sf)
+library(mapview)
 
 #      Functions                                                            ####
 
@@ -29,6 +31,23 @@ df_deer <- read_csv("1.DataManagement/CleanData/deer_all_clean.csv")
 
 # Missouri Shapefiles
 
-
+Missouri_shp <- st_read("1.DataManagement\\RawData\\Shapefiles\\Missouri_Counties.shp")
 
 ###############################################################################
+#   [Standardizing Projections]                                             ####
+#      [NLCD]                                                               ####
+
+# Current CRS 
+crs(NLCD_raw)
+
+#      [Missouri Shp]                                                       ####
+
+# Current CRS 
+crs(Missouri_shp)
+
+#      [Deer Data]                                                          ####
+
+###############################################################################
+
+#   [Cropping Raster to Missouri]                                           ####
+Missouri_NLCD <- crop(NLCD_raw,extent(Missouri_shp))
