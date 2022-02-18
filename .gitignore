@@ -13,5 +13,9 @@
 *.rrd
 *.xml
 
+*.dbf
+*.prj
+*.shp
+*.shx
 
 *.zip
