@@ -102,7 +102,7 @@ ggplot(livetime_pop, aes(x = t_my,y = id,fill = age))+
 
 #        [North Male]                                                       ####
 
-ggplot(subset(test,site=="North" & sex == "M"), aes(x = t_my,y = id,fill = age))+
+ggplot(subset(livetime_pop,site=="North" & sex == "M"), aes(x = t_my,y = id,fill = age))+
   geom_point(size = 6, shape = 21)+
   scale_x_date(date_labels = "%b-%Y")+
   theme_bw()+
@@ -111,7 +111,7 @@ ggplot(subset(test,site=="North" & sex == "M"), aes(x = t_my,y = id,fill = age))
 
 #        [North Female]                                                     ####
 
-ggplot(subset(test,site=="North" & sex == "F"), aes(x = t_my,y = id,fill = age))+
+ggplot(subset(livetime_pop,site=="North" & sex == "F"), aes(x = t_my,y = id,fill = age))+
   geom_point(size = 6, shape = 21)+
   scale_x_date(date_labels = "%b-%Y")+
   theme_bw()+
@@ -120,7 +120,7 @@ ggplot(subset(test,site=="North" & sex == "F"), aes(x = t_my,y = id,fill = age))
 
 #        [South Male]                                                       ####
 
-ggplot(subset(test,site=="South" & sex == "M"), aes(x = t_my,y = id,fill = age))+
+ggplot(subset(livetime_pop,site=="South" & sex == "M"), aes(x = t_my,y = id,fill = age))+
   geom_point(size = 6, shape = 21)+
   scale_x_date(date_labels = "%b-%Y")+
   theme_bw()+
@@ -129,7 +129,7 @@ ggplot(subset(test,site=="South" & sex == "M"), aes(x = t_my,y = id,fill = age))
 
 #        [South Female]                                                     ####
 
-ggplot(subset(test,site=="South" & sex == "F"), aes(x = t_my,y = id,fill = age))+
+ggplot(subset(livetime_pop,site=="South" & sex == "F"), aes(x = t_my,y = id,fill = age))+
   geom_point(size = 6, shape = 21)+
   scale_x_date(date_labels = "%b-%Y")+
   theme_bw()+
@@ -138,12 +138,13 @@ ggplot(subset(test,site=="South" & sex == "F"), aes(x = t_my,y = id,fill = age))
 
 #        [CroplandStudy Female]                                             ####
 
-ggplot(subset(test,site=="CroplandStudy" & sex == "F"), aes(x = t_my,y = id,fill = age))+
+ggplot(subset(livetime_pop,site=="CroplandStudy" & sex == "F"), aes(x = t_my,y = id,fill = age))+
   geom_point(size = 6, shape = 21)+
   scale_x_date(date_labels = "%b-%Y")+
   theme_bw()+
   xlab("")+
   ggtitle("CroplandStudy")
+
 
 
 
