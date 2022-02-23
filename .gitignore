@@ -13,5 +13,5 @@
 *.prj
 *.shp
 *.shx
-*.tif
+tif/
 *.zip
