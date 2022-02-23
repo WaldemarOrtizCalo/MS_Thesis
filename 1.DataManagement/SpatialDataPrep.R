@@ -13,7 +13,6 @@
 
 library(raster)
 library(tidyverse)
-library(here)
 library(sf)
 library(mapview)
 
@@ -22,9 +21,8 @@ library(mapview)
 #      Data                                                                 ####
 
 # NLCD Raster
-
-NLCD_raw <- raster("1.DataManagement\\RawData\\RasterData\\NLCD_2016_Land_Cover_L48_20190424.img")
-
+NLCD_raw <- raster("1.DataManagement\\RawData\\RasterData\\nlcd_2016_land_cover_l48_20210604.img")
+n <- NLCD_raw
 # Deer Data 
 
 df_deer <- read_csv("1.DataManagement/CleanData/deer_all_clean.csv")
@@ -45,9 +43,44 @@ crs(NLCD_raw)
 # Current CRS 
 crs(Missouri_shp)
 
-#      [Deer Data]                                                          ####
+# Transforming Projections
+shp_Missouri <- Missouri_shp %>% st_transform(5070)
+
+# Checking new CRS 
+crs(shp_Missouri)
+
 
 ###############################################################################
+#   [Export: NLCD - Missouri]                                               ####
+#      [Cropping]                                                           ####
 
-#   [Cropping Raster to Missouri]                                           ####
-Missouri_NLCD <- crop(NLCD_raw,extent(Missouri_shp))
+# Cropping National NLCD to Missouri Extent
+NLCD_Missouri<- crop(NLCD_raw,extent(Missouri_shp))
+
+# Visually inspecting
+plot(NLCD_Missouri)
+
+
+#      [Saving and Exporting]                                               ####
+
+# Saving Cropped File
+
+writeRaster(NLCD_Missouri,"1.DataManagement/CleanData/NLCD_Missouri.tif")
+
+# Checking if it works
+
+MTif <- raster("1.DataManagement/CleanData/NLCD_Missouri.tif")
+
+plot(MTif)
+
+###############################################################################
+#   [Export: Missouri - Shapefile]                                          ####
+#      [Exporting]                                                          ####
+st_write(shp_Missouri,
+         dsn = "1.DataManagement/CleanData/shp_Missouri.shp",
+         driver = "ESRI Shapefile")
+
+#      [Checking]                                                           ####
+MShp <- st_read("1.DataManagement/CleanData/shp_Missouri.shp")
+
+###############################################################################
