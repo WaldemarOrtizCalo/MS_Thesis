@@ -22,7 +22,7 @@ library(mapview)
 
 # NLCD Raster
 NLCD_raw <- raster("1.DataManagement\\RawData\\RasterData\\nlcd_2016_land_cover_l48_20210604.img")
-n <- NLCD_raw
+
 # Deer Data 
 
 df_deer <- read_csv("1.DataManagement/CleanData/deer_all_clean.csv")
