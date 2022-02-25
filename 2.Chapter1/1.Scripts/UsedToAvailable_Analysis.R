@@ -104,3 +104,13 @@ available_southeast_NLCD<- mask(NLCD_Missouri,mcp_deer_southeast) %>%
 
 ###############################################################################
 
+#### Generating Available Points
+
+rasdf <- as.data.frame(available_north_NLCD)
+non_na <- is.na(available_north_NLCD)
+mapview(available_north_NLCD)
+
+contour_North <- rasterToContour(available_north_NLCD)
+
+available <- as(st_union(st_polygonize(st_as_sf(contour_North))))
+
