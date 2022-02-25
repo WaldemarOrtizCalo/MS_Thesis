@@ -15,6 +15,9 @@ library(raster)
 library(tidyverse)
 library(sf)
 library(mapview)
+library(FedData)
+library(readr)
+library(stringr)
 
 #      Functions                                                            ####
 
@@ -30,6 +33,10 @@ df_deer <- read_csv("1.DataManagement/CleanData/deer_all_clean.csv")
 # Missouri Shapefiles
 
 Missouri_shp <- st_read("1.DataManagement\\RawData\\Shapefiles\\Missouri_Counties.shp")
+
+# DEM List
+DEM_txt_names <- read.table("1.DataManagement\\RawData\\TextFiles\\DEM_List.txt",
+                       header = F)
 
 ###############################################################################
 #   [Standardizing Projections]                                             ####
@@ -51,16 +58,71 @@ crs(shp_Missouri)
 
 
 ###############################################################################
-#   [Export: NLCD - Missouri]                                               ####
+#   [NLCD Raster - Cropping and Reclassifying]                              ####
 #      [Cropping]                                                           ####
 
 # Cropping National NLCD to Missouri Extent
-NLCD_Missouri<- crop(NLCD_raw,extent(Missouri_shp))
+NLCD_Missouri<- crop(NLCD_raw,extent(shp_Missouri))
 
 # Visually inspecting
 plot(NLCD_Missouri)
 
+#      [Reclassifying]                                                      ####
 
+# Loading Legend
+legend <- pal_nlcd() 
+
+# Raster as Df
+ras_df <- as.data.frame(NLCD_Missouri)
+
+reclassify(NLCD_Missouri,legend[,c(2,3)])
+
+###############################################################################
+#   [DEM Rasters]                                                           ####
+
+#      [Listing DEMS and Copying to Project Folder]                         ####
+
+# Making List of DEMS
+DEM_Missouri_NameList <- lapply(DEM_txt_names, str_extract,"ASTGTMV003_N\\d\\dW\\d\\d\\d_dem.tif") %>% 
+  unlist() %>% 
+  na.omit()
+
+# Extracting Files from DEM storage 
+
+DEM_database_list <- paste0("E:\\RAW_DEM_Tiles/",DEM_Missouri_NameList)
+
+# Copying Files to Project Directory
+
+file.copy(from = DEM_database_list,
+          to = "1.DataManagement/RawData/RasterData",
+          recursive = FALSE,
+          overwrite = T,
+          copy.mode = T)
+
+#      [Joining DEMs into Missouri DEM and homogenizing to other data]      ####
+
+# Making List of DEMs
+
+DEM_MissouriList <- lapply(list.files(path = "1.DataManagement/RawData/RasterData",
+                                      pattern = ".tif",full.names = T)
+                           ,raster)
+
+# Making Large DEM for Missouri, reprojecting, masking, and cropping
+
+DEM_Missouri <- do.call(merge,DEM_MissouriList) %>% 
+  projectRaster(NLCD_Missouri)
+
+DEM_Missouri_Mask <- DEM_Missouri %>% mask(shp_Missouri) 
+
+DEM_Missouri_Crop <- DEM_Missouri_Mask %>% crop(shp_Missouri)
+
+###############################################################################
+#   [Export: DEM - Missouri]                                                ####
+
+writeRaster(DEM_Missouri_Crop,"1.DataManagement/CleanData/DEM_Missouri.tif")
+
+###############################################################################
+#   [Export: NLCD - Missouri]                                               ####
 #      [Saving and Exporting]                                               ####
 
 # Saving Cropped File
