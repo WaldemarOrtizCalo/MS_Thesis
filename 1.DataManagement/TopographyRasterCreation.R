@@ -17,6 +17,7 @@ library(tidyverse)
 #      Functions                                                            ####
 
 #      Data                                                                 ####
+
 DEM_Missouri <- raster("1.DataManagement\\CleanData\\DEM_Missouri.tif")
 
 ###############################################################################
@@ -50,9 +51,13 @@ DEM_TRI <- terrain(DEM_Missouri,
 ###############################################################################
 #   [Stack and Export]                                                      ####
 
+# Creating Stack 
+
 TopoStack_Missouri <- stack(c(DEM_Missouri,DEM_Slope,
                               DEM_Aspect,DEM_TRI)) %>% 
   stackSave(filename = "1.DataManagement/CleanData/Topo_Missouri.stk")
+
+# Exporting 
 
 Stack_Check <- stackOpen("1.DataManagement/CleanData/Topo_Missouri.stk")
 

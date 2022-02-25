@@ -165,8 +165,4 @@ ggplot(subset(livetime_pop,site=="CroplandStudy" & sex == "F"), aes(x = t_my,y =
   xlab("")+
   ggtitle("CroplandStudy")
 
-
-
-
-
 ###############################################################################
