@@ -4,7 +4,7 @@
 
 # Date:2022-02-25 
 
-# Purpose: 
+# Purpose: Creating raster layers for different topography variables.
 
 ###############################################################################
 #   Library / Functions / Data                                              ####
