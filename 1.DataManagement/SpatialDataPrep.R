@@ -72,11 +72,11 @@ plot(NLCD_Missouri)
 # Loading Legend
 legend <- pal_nlcd() 
 
-# Raster as Df
-ras_df <- as.data.frame(NLCD_Missouri)
+# Raster as Dat
 
 reclassify(NLCD_Missouri,legend[,c(2,3)])
 
+levels(NLCD_Missouri)[[1]]
 ###############################################################################
 #   [DEM Rasters]                                                           ####
 
