@@ -69,14 +69,35 @@ plot(NLCD_Missouri)
 
 #      [Reclassifying]                                                      ####
 
-# Loading Legend
+# Loading NLCD Legend
 legend <- pal_nlcd() 
 
-# Raster as Dat
+# Making Raster Categorical (https://rspatial.org/raster/rs/5-supclassification.html#reference-data)
+NLCD_Missouri <- NLCD_Missouri %>% ratify()
 
-reclassify(NLCD_Missouri,legend[,c(2,3)])
+rat <- levels(NLCD_Missouri)[[1]]
 
-levels(NLCD_Missouri)[[1]]
+NLCD_newcategories <- c("water",
+                        "developed_open",
+                        "developed_low",
+                        "developed_medium",
+                        "developed_high",
+                        "barren",
+                        "decidious_forest",
+                        "evergreen_forest",
+                        "mixed_forest",
+                        "shrub",
+                        "grassland",
+                        "pasture",
+                        "crop",
+                        "woody_wetlands",
+                        "herbaceous_wetlands")
+
+
+rat$landcover <- NLCD_newcategories 
+
+levels(NLCD_Missouri) <- rat
+
 ###############################################################################
 #   [DEM Rasters]                                                           ####
 
@@ -123,26 +144,15 @@ writeRaster(DEM_Missouri_Crop,"1.DataManagement/CleanData/DEM_Missouri.tif")
 
 ###############################################################################
 #   [Export: NLCD - Missouri]                                               ####
-#      [Saving and Exporting]                                               ####
 
-# Saving Cropped File
-
-writeRaster(NLCD_Missouri,"1.DataManagement/CleanData/NLCD_Missouri.tif")
-
-# Checking if it works
-
-MTif <- raster("1.DataManagement/CleanData/NLCD_Missouri.tif")
-
-plot(MTif)
+writeRaster(NLCD_Missouri,"1.DataManagement/CleanData/NLCD_Missouri.tif",
+            overwrite = T)
 
 ###############################################################################
 #   [Export: Missouri - Shapefile]                                          ####
-#      [Exporting]                                                          ####
+
 st_write(shp_Missouri,
          dsn = "1.DataManagement/CleanData/shp_Missouri.shp",
          driver = "ESRI Shapefile")
-
-#      [Checking]                                                           ####
-MShp <- st_read("1.DataManagement/CleanData/shp_Missouri.shp")
 
 ###############################################################################
