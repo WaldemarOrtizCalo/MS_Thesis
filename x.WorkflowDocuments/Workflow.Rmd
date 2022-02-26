@@ -3,15 +3,17 @@ title: "Workflow"
 author: "Waldemar Ortiz-Calo"
 date: '2022-02-23'
 output: html_document
+bibliography: WorkflowReferences.bib
 ---
 
 ```{r,echo=FALSE}
 #      Library                                                              ####
-
 library(DiagrammeR)
+library(FedData)
+library(kableExtra)
 ```
 
-```{r,echo=FALSE}
+```{r,echo=FALSE,eval=FALSE}
 
 grViz(diagram = "digraph flowchart {
  
@@ -70,3 +72,18 @@ grViz(diagram = "digraph flowchart {
   ")
 
 ```
+
+# NLCD Data
+
+For this analysis we used the National Land Cover Database (NLCD). Figure
+
+@wright2021
+
+```{r,echo=FALSE}
+
+pal_nlcd() %>% kbl(caption = "**Table 1: NLCD Orginal Metadata**") %>%
+  kable_classic(full_width = F, html_font = "Times New Roman")
+
+```
+
+# References
