@@ -18,7 +18,7 @@ library(mapview)
 library(FedData)
 library(readr)
 library(stringr)
-
+library(adehabitatHR)
 #      Functions                                                            ####
 
 #      Data                                                                 ####
@@ -62,10 +62,10 @@ crs(shp_Missouri)
 #      [Cropping]                                                           ####
 
 # Cropping National NLCD to Missouri Extent
-NLCD_Missouri<- crop(NLCD_raw,extent(shp_Missouri))
-
-# Visually inspecting
-plot(NLCD_Missouri)
+NLCD_Missouri<- terra::crop(x = NLCD_raw,
+                            y = shp_Missouri,
+                            snap = "near",
+                            mask = T)
 
 #      [Reclassifying]                                                      ####
 
@@ -75,28 +75,94 @@ legend <- pal_nlcd()
 # Making Raster Categorical (https://rspatial.org/raster/rs/5-supclassification.html#reference-data)
 NLCD_Missouri <- NLCD_Missouri %>% ratify()
 
-rat <- levels(NLCD_Missouri)[[1]]
+###############################################################################
+#   [NLCD - Availability per area ]                                         ####
+#      [North]                                                              ####
 
-NLCD_newcategories <- c("water",
-                        "developed_open",
-                        "developed_low",
-                        "developed_medium",
-                        "developed_high",
-                        "barren",
-                        "decidious_forest",
-                        "evergreen_forest",
-                        "mixed_forest",
-                        "shrub",
-                        "grassland",
-                        "pasture",
-                        "crop",
-                        "woody_wetlands",
-                        "herbaceous_wetlands")
+# Subsetting only North locations
+df_deer_north <- df_deer %>% 
+  filter(site == "North")
+
+# Making a SpatialPoints Object for MCP
+spatialpoints_deer_north <-SpatialPoints(coords = cbind(df_deer_north$x,df_deer_north$y),
+                                         proj4string = crs(NLCD_Missouri))
+
+# MCP 
+mcp_deer_north <- mcp(xy = spatialpoints_deer_north,
+                      percent = 95,
+                      unin = "m",
+                      unout = "km2")
+
+# Masking and Cropping
+
+available_north_NLCD <- terra::crop(x = NLCD_Missouri,
+                                    y = mcp_deer_north,
+                                    snap = "near",
+                                    mask = F) %>% mask(mcp_deer_north) %>%
+  writeRaster("1.DataManagement\\CleanData\\NLCD_available_north.tif",overwrite=T)
 
 
-rat$landcover <- NLCD_newcategories 
+# Visual Inspection 
 
-levels(NLCD_Missouri) <- rat
+mapview(available_north_NLCD)+ mapview(mcp_deer_north)
+
+#      [South]                                                              ####
+
+# Subsetting only South locations
+df_deer_south <- df_deer %>% 
+  filter(site == "South")
+
+# Making a SpatialPoints Object for MCP
+spatialpoints_deer_south <-SpatialPoints(coords = cbind(df_deer_south$x,df_deer_south$y),
+                                         proj4string = crs(NLCD_Missouri))
+
+# MCP 
+mcp_deer_south <- mcp(xy = spatialpoints_deer_south,
+                      percent = 95,
+                      unin = "m",
+                      unout = "km2")
+
+# Masking and Cropping
+
+available_south_NLCD <- terra::crop(x = NLCD_Missouri,
+                                    y = mcp_deer_south,
+                                    snap = "near",
+                                    mask = F) %>% mask(mcp_deer_south) %>% 
+  writeRaster("1.DataManagement\\CleanData\\NLCD_available_south.tif",overwrite=T)
+
+# Visual Inspection 
+
+#mapview(available_south_NLCD)
+
+#      [Southeast]                                                          ####
+
+# Subsetting only Southeast locations
+df_deer_southeast <- df_deer %>% 
+  filter(site == "Southeast")
+
+# Making a SpatialPoints Object for MCP
+spatialpoints_deer_southeast <-SpatialPoints(coords = cbind(df_deer_southeast$x,df_deer_southeast$y),
+                                             proj4string = crs(NLCD_Missouri))
+
+# MCP 
+mcp_deer_southeast <- mcp(xy = spatialpoints_deer_southeast,
+                          percent = 95,
+                          unin = "m",
+                          unout = "km2")
+
+# Masking and Cropping
+
+available_southeast_NLCD <- terra::crop(x = NLCD_Missouri,
+                                        y = mcp_deer_southeast,
+                                        snap = "near",
+                                        mask = F) %>% mask(mcp_deer_southeast) %>% 
+  writeRaster("1.DataManagement\\CleanData\\NLCD_available_southeast.tif",overwrite=T)
+
+# Visual Inspection 
+
+#mapview(available_southeast_NLCD)
+
+
 
 ###############################################################################
 #   [DEM Rasters]                                                           ####
@@ -136,6 +202,80 @@ DEM_Missouri <- do.call(merge,DEM_MissouriList) %>%
 DEM_Missouri_Mask <- DEM_Missouri %>% mask(shp_Missouri) 
 
 DEM_Missouri_Crop <- DEM_Missouri_Mask %>% crop(shp_Missouri)
+
+DEM_Missouri <- DEM_Missouri_Crop
+
+###############################################################################
+#   [DEM - Derived Topography Layers]                                       ####
+
+#      [Slope]                                                              ####
+
+DEM_Slope <- terrain(DEM_Missouri,
+                     opt = "slope",
+                     unit = "degrees",
+                     neighbors = 8,
+                     filename = "1.DataManagement/CleanData/DEM_Slope.tif",
+                     overwrite = T)
+
+#      [Aspect]                                                             ####
+
+DEM_Aspect <- terrain(DEM_Missouri,
+                      opt = "aspect",
+                      unit = "degrees",
+                      neighbors = 8,
+                      filename = "1.DataManagement/CleanData/DEM_Aspect.tif",
+                      overwrite = T)
+
+#      [TRI]                                                                ####
+
+DEM_TRI <- terrain(DEM_Missouri,
+                   opt = "TRI",
+                   filename = "1.DataManagement/CleanData/DEM_TRI.tif",
+                   overwrite = T)
+
+#      [Stacking and Export]                                                ####
+
+# Creating Stack 
+
+TopoStack_Missouri <- stack(c(DEM_Missouri,DEM_Slope,
+                              DEM_Aspect,DEM_TRI)) %>% 
+  stackSave(filename = "1.DataManagement/CleanData/Topo_Missouri.stk")
+
+# CHecking 
+
+Topo_Stack <- stackOpen("1.DataManagement/CleanData/Topo_Missouri.stk")
+
+###############################################################################
+#   [DEM - Derived Topography Layers for availability (95% MCP)]            ####
+#      [North]                                                              ####
+
+Topo_available_north <- crop(Topo_Stack,NLCD_available_north) %>% 
+  mask(NLCD_available_north)
+
+writeRaster(x = Topo_available_north,
+            filename = "1.DataManagement/CleanData/Topo_available_north.tif",
+            format = "GTiff",
+            overwrite = T,
+            bylayer = T,
+            suffix = names(Topo_available_north))
+
+#      [South]                                                              ####
+
+Topo_available_south <- crop(Topo_Stack,NLCD_available_south) %>% 
+  mask(NLCD_available_south) 
+
+writeRaster(x = Topo_available_south,
+            filename = "1.DataManagement/CleanData/Topo_available_south.tif",
+            overwrite = T)
+
+#      [Southeast]                                                          ####
+
+Topo_available_southeast <- crop(Topo_Stack,NLCD_available_southeast) %>% 
+  mask(NLCD_available_southeast) 
+
+writeRaster(x = Topo_available_southeast,
+            filename = "1.DataManagement/CleanData/Topo_available_southeast.tif",
+            overwrite = T)
 
 ###############################################################################
 #   [Export: DEM - Missouri]                                                ####
