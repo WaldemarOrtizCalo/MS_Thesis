@@ -241,7 +241,7 @@ TopoStack_Missouri <- stack(c(DEM_Missouri,DEM_Slope,
                               DEM_Aspect,DEM_TRI)) %>% 
   stackSave(filename = "1.DataManagement/CleanData/Topo_Missouri.stk")
 
-# CHecking 
+# Checking 
 
 Topo_Stack <- stackOpen("1.DataManagement/CleanData/Topo_Missouri.stk")
 
@@ -257,25 +257,59 @@ writeRaster(x = Topo_available_north,
             format = "GTiff",
             overwrite = T,
             bylayer = T,
-            suffix = names(Topo_available_north))
+            suffix = c("DEM_Elevation",
+                       "DEM_Slope",
+                       "DEM_Aspect",
+                       "DEM_TRI"))
+
+Topo_available_north_stack<- stack(lapply(c("1.DataManagement/CleanData/Topo_available_north_DEM_Elevation.tif",
+                                            "1.DataManagement/CleanData/Topo_available_north_DEM_Slope.tif",
+                                            "1.DataManagement/CleanData/Topo_available_north_DEM_Aspect.tif",
+                                            "1.DataManagement/CleanData/Topo_available_north_DEM_TRI.tif"), raster)) %>% 
+  stackSave("1.DataManagement/CleanData/Topo_available_north.stk")
+
 
 #      [South]                                                              ####
 
 Topo_available_south <- crop(Topo_Stack,NLCD_available_south) %>% 
-  mask(NLCD_available_south) 
+  mask(NLCD_available_south)
 
 writeRaster(x = Topo_available_south,
             filename = "1.DataManagement/CleanData/Topo_available_south.tif",
-            overwrite = T)
+            format = "GTiff",
+            overwrite = T,
+            bylayer = T,
+            suffix = c("DEM_Elevation",
+                       "DEM_Slope",
+                       "DEM_Aspect",
+                       "DEM_TRI"))
+
+Topo_available_south_stack<- stack(lapply(c("1.DataManagement/CleanData/Topo_available_south_DEM_Elevation.tif",
+                                            "1.DataManagement/CleanData/Topo_available_south_DEM_Slope.tif",
+                                            "1.DataManagement/CleanData/Topo_available_south_DEM_Aspect.tif",
+                                            "1.DataManagement/CleanData/Topo_available_south_DEM_TRI.tif"), raster)) %>% 
+  stackSave("1.DataManagement/CleanData/Topo_available_south.stk")
 
 #      [Southeast]                                                          ####
 
 Topo_available_southeast <- crop(Topo_Stack,NLCD_available_southeast) %>% 
-  mask(NLCD_available_southeast) 
+  mask(NLCD_available_southeast)
 
 writeRaster(x = Topo_available_southeast,
             filename = "1.DataManagement/CleanData/Topo_available_southeast.tif",
-            overwrite = T)
+            format = "GTiff",
+            overwrite = T,
+            bylayer = T,
+            suffix = c("DEM_Elevation",
+                       "DEM_Slope",
+                       "DEM_Aspect",
+                       "DEM_TRI"))
+
+Topo_available_southeast_stack<- stack(lapply(c("1.DataManagement/CleanData/Topo_available_southeast_DEM_Elevation.tif",
+                                            "1.DataManagement/CleanData/Topo_available_southeast_DEM_Slope.tif",
+                                            "1.DataManagement/CleanData/Topo_available_southeast_DEM_Aspect.tif",
+                                            "1.DataManagement/CleanData/Topo_available_southeast_DEM_TRI.tif"), raster)) %>% 
+  stackSave("1.DataManagement/CleanData/Topo_available_southeast.stk")
 
 ###############################################################################
 #   [Export: DEM - Missouri]                                                ####
