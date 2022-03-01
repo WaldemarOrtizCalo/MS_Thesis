@@ -67,13 +67,10 @@ NLCD_Missouri<- terra::crop(x = NLCD_raw,
                             snap = "near",
                             mask = T)
 
-#      [Reclassifying]                                                      ####
-
-# Loading NLCD Legend
-legend <- pal_nlcd() 
+#      [Ratifying]                                                          ####
 
 # Making Raster Categorical (https://rspatial.org/raster/rs/5-supclassification.html#reference-data)
-NLCD_Missouri <- NLCD_Missouri %>% ratify()
+NLCD_Missouri <- NLCD_Missouri %>% ratify() %>% mask(shp_Missouri)
 
 ###############################################################################
 #   [NLCD - Availability per area ]                                         ####
