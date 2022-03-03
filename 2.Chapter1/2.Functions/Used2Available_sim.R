@@ -198,13 +198,15 @@ Used2Available_sim <- function(pop_df, year_quarter, site.name,
       with(table(SimID, NLCD_Missouri)) %>% 
       as.data.frame() %>% 
       group_by(SimID) %>% 
+      mutate("n.avail" = str_extract(SimID,pattern = "(?<=Available)\\d"), .after = SimID) %>% 
       mutate("Total" = sum(Freq)) %>% 
       mutate("Proportion" = round(Freq/Total, digits = 3)) 
     
     NLCD_plot <-ggplot(freq_table,aes(x = NLCD_Missouri, y = Proportion))+
       geom_boxplot() +
-      theme_classic()+
-      xlab("NLCD Category")
+      theme_bw()+
+      xlab("NLCD Category")+
+      facet_grid(rows = vars(n.avail))
     
     ggsave(paste0(site.name,"_",year_quarter,"_","NLCD.jpeg"),
            plot = NLCD_plot,
@@ -214,7 +216,6 @@ Used2Available_sim <- function(pop_df, year_quarter, site.name,
            height = 4,
            units = "in",
            dpi = 300)
-    
     
     return(result)
   }
