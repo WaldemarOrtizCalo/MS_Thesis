@@ -1,6 +1,4 @@
-#   [Master]                                              ####
-
-Used2Available_Sim <- function(pop_df, year_quarter, site.name,raster_stack, n.avail.range,n.sim){
+Used2Available_sim <- function(pop_df, year_quarter, site.name,raster_stack, n.avail.range,n.sim,export_sim = F,export_dir = NULL){
   
   # Subsetting by yearly quarter and site 
   quarter_subset <- pop_df %>% 
@@ -32,28 +30,20 @@ Used2Available_Sim <- function(pop_df, year_quarter, site.name,raster_stack, n.a
       
       samp <- sampleRandom(available_covariate_stack,(nrow(quarter_subset)*n.avail.range[i])) %>% as.data.frame()
       
-      cbind("SimID" = paste0(site.name,"_",year_quarter,"_","Available",n.avail.range[i],"_","Sim",j),samp)
-      
+      cbind("SimID" = paste0(site.name,"_",year_quarter,"_","Available",n.avail.range[i],"_","Sim",j),
+            "n.avail" = n.avail.range[i],
+            samp)
     }
   }
   
-  # Output of function
-  return(do.call(rbind,res))
+  result <- do.call(rbind,res)
+  
+  if(missing(export_sim)) {
+    
+    return(result)
+    
+  } else {
+    write.csv(result,paste0(export_dir,"/",site.name,"_",year_quarter,".csv"), row.names = F)
+    return(result)
+  }
 }
-
-###############################################################################
-
-# Testing
-
-
-year_quarter <- "2015.1"
-site.name <- "North"
-covariate_stack <- stack(mask(NLCD_Missouri,shp_Missouri),Topo_Missouri)
-
-
-try <- Used2Available_Sim(pop_df = df_deer,
-                          year_quarter = "2016.1",
-                          site.name = "North",
-                          n.avail.range = 1:10,
-                          raster_stack = covariate_stack,
-                          n.sim = 25)
