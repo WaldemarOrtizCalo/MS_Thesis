@@ -20,7 +20,7 @@ library(lubridate)
 
 #        [Deer Data]                                                        ####
 
-df <- read_csv("1.DataManagement/CleanData/deer_all_clean.csv")
+df <- read_csv("1.DataManagement/RawData/csv_files/deer_all_clean.csv")
 
 ###############################################################################
 #   [Data Cleaning]                                                         ####
@@ -55,6 +55,19 @@ df$site <- case_when(df$site == "North" ~ "North",
 
 #      [Setting Dates as Times Variables]                                   ####
 df$t <- ymd_hms(df$t)
+
+#      [Adding more Time Variables]                                         ####
+
+df <- df %>% 
+  dplyr::select(-c(id_yr,id_yr_sn)) %>% 
+  relocate(year, .after = age)
+
+df <- df %>% relocate(year, .after = t) %>% 
+  mutate("month" = month(t,label = T,abbr = T),.after = year) %>% 
+  mutate("week" = epiweek(t), .after = month) 
+
+#      [Export]                                                             ####
+write_csv(df,"1.DataManagement/CleanData/deer_all_clean.csv")
 
 ###############################################################################
 #   [Summarize Telemetry Data]                                              ####
