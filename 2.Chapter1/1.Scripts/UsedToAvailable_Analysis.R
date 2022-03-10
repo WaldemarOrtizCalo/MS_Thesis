@@ -29,10 +29,7 @@ source("2.Chapter1\\2.Functions\\Used2Available_sim.R")
 
 #        [Deer]                                                             ####
 
-df_deer <- read_csv("1.DataManagement/CleanData/deer_all_clean.csv")
-
-df_deer$quarteryear <- quarter(df_deer$t,
-                               type = "year.quarter")
+df_deer <- read_csv("1.DataManagement/CleanData/deer_all_clean.csv") 
 
 #        [NLCD]                                                             ####
 
@@ -47,6 +44,7 @@ Topo_Missouri <- stackOpen("1.DataManagement/CleanData/Topo_Missouri.stk")
 Topo_available_north <- stackOpen("1.DataManagement/CleanData/Topo_available_north.stk")
 Topo_available_south <- stackOpen("1.DataManagement/CleanData/Topo_available_south.stk")
 Topo_available_southeast <- stackOpen("1.DataManagement/CleanData/Topo_available_southeast.stk")
+
 
 #        [Missouri Shapefile]                                               ####
 
