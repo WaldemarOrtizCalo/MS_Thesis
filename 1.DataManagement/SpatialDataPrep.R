@@ -23,20 +23,32 @@ library(adehabitatHR)
 
 #      Data                                                                 ####
 
+#        [Telemetry]                                                        ####
+# Deer Data 
+df_deer <- read_csv("1.DataManagement/CleanData/deer_all_clean.csv")
+
+#        [NLCD]                                                             ####
 # NLCD Raster
 NLCD_raw <- raster("1.DataManagement\\RawData\\RasterData\\nlcd_2016_land_cover_l48_20210604.img")
 
-# Deer Data 
-
-df_deer <- read_csv("1.DataManagement/CleanData/deer_all_clean.csv")
-
-# Missouri Shapefiles
-
-Missouri_shp <- st_read("1.DataManagement\\RawData\\Shapefiles\\Missouri_Counties.shp")
-
+#        [DEM]                                                              ####
 # DEM List
 DEM_txt_names <- read.table("1.DataManagement\\RawData\\TextFiles\\DEM_List.txt",
-                       header = F)
+                            header = F)
+
+#        [Shapefile: Missouri Counties]                                     ####
+
+# Missouri Shapefiles
+Missouri_shp <- st_read("1.DataManagement\\RawData\\Shapefiles\\Missouri_Counties.shp")
+
+#        [Shapefile: Missouri Roads]                                        ####
+Missouri_road_list <- list.files("1.DataManagement\\RawData\\Shapefiles",
+                                 pattern = "RoadSegment",
+                                 full.names = T) %>% str_subset(pattern = ".shp") 
+
+spatial_list <- lapply(Missouri_road_list, st_read)
+
+Missouri_Roads <- do.call(rbind,spatial_list)
 
 ###############################################################################
 #   [Standardizing Projections]                                             ####
@@ -56,6 +68,12 @@ shp_Missouri <- Missouri_shp %>% st_transform(5070)
 # Checking new CRS 
 crs(shp_Missouri)
 
+
+#      [Missouri Road Shp]                                                  ####
+
+Missouri_Roads <- Missouri_Roads %>% st_set_crs(4269) %>% 
+  st_transform("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 
+               +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs no_defs")
 
 ###############################################################################
 #   [NLCD Raster - Cropping and Reclassifying]                              ####
@@ -325,5 +343,11 @@ writeRaster(NLCD_Missouri,"1.DataManagement/CleanData/NLCD_Missouri.tif",
 st_write(shp_Missouri,
          dsn = "1.DataManagement/CleanData/shp_Missouri.shp",
          driver = "ESRI Shapefile")
+
+###############################################################################
+#   [Export: Missouri Roads - Shapefile]                                    ####
+
+st_write(Missouri_Roads, "1.DataManagement\\CleanData\\Missouri_Roads.shp",
+         append = F)
 
 ###############################################################################
