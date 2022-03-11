@@ -19,3 +19,9 @@
 *.xlsx
 *.jpeg
 *.png
+
+# Folders 
+1.DataManagement/CleanData/
+1.DataManagement/RawData/
+2.Chapter1/3.Output/
+2.Chapter2/3.Output/
