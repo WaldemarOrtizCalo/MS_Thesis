@@ -4,7 +4,9 @@
 
 # Date:2022-02-23 
 
-# Purpose: Used to Available Analysis
+# Purpose: The purpose of this code is to run a used-to available analysis to
+# the optimal ratio of used to available points in our study system, Lula (2019)
+# describes the methods. The end result is that a 1 to 5 ratio is best. 
 
 ###############################################################################
 #   Library / Functions / Data                                              ####
