@@ -28,9 +28,16 @@ library(stringr)
 df_deer <- read_csv("1.DataManagement/CleanData/deer_all_clean.csv")
 
 #        [NLCD Data]                                                        ####
-#        [DEM Data]                                                         ####
-#        [Road Data]                                                        ####
+Missouri_NLCD <- raster("1.DataManagement\\CleanData\\NLCD_Missouri.tif")
 
+#        [DEM Data]                                                         ####
+Missouri_topo <- stackOpen("1.DataManagement/CleanData/Topo_Missouri.stk")
+
+#        [Road Data]                                                        ####
+Missouri_roads <- st_read("1.DataManagement\\CleanData\\Missouri_Roads.shp")
+
+#        [County Boundaries Data]                                           ####
+Missouri_boundaries <- st_read("1.DataManagement\\CleanData\\shp_Missouri.shp")
 
 
 ###############################################################################
