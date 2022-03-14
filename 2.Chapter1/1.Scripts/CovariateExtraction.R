@@ -41,3 +41,49 @@ Missouri_boundaries <- st_read("1.DataManagement\\CleanData\\shp_Missouri.shp")
 
 
 ###############################################################################
+#   [Testing with one indiv]                                               ####
+#      [Creating ltraj object]                                             ####
+
+# Subsetting a deer
+indiv <- df_deer %>% filter(id == "N15001")
+
+# Setting Coordinates 
+coordinates(indiv) <- c("x","y")
+
+# Setting projection system
+proj4string(indiv) <- CRS("+init=epsg:5070")
+
+# Creating ltraj
+ltraj <- as.ltraj(xy = coordinates(indiv),
+                  date = indiv$t,
+                  id= indiv$id, 
+                  typeII=TRUE)
+
+# Plotting out data to visually inspect
+plot(ltraj)
+
+mapview(indiv)
+
+#      [Adding Buffer Size Column]                                         ####
+
+ltraj_track <-ltraj[[1]] %>% 
+  transform(dt = dt/3600) %>% 
+  mutate(sampling_buffer = (dist/dt)+(2*sd((dist/dt),na.rm = T))) 
+
+# Creating sf object
+sf_object <- st_as_sf(indiv[1,])
+
+#Creating buffer
+buff <- st_buffer(sf_object,
+                ltraj_track[,"sampling_buffer"][1])
+
+# Sampling Buffer
+sampleused <- st_sample(buff,5,multipoint,type = "random")
+
+available <- sampleused %>% as("Spatial")
+
+indivsub <- indiv[1,]
+
+cbind(indivsub,available)
+
+mapview(sampleused)+mapview(buff)
