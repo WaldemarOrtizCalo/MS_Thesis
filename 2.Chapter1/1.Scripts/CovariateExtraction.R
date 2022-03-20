@@ -174,16 +174,15 @@ buffer_radius <- 420
 #        [NLCD] - in development                                            ####
 
 # Registering Cluster
-cl <- makeCluster(6)
+cl <- makeCluster(7)
 registerDoParallel(cl)
 
-#           [Proportions of Land Cover]  -in development                    ####
+# For Loop
 
 # inspiration for NLCD extraction:
 # https://mbjoseph.github.io/posts/2018-12-27-categorical-spatial-data-extraction-around-buffered-points-in-r/
 
-tictoc::tic()
-NLCD_cov_list <- foreach(i = 1:1, .combine = bind_rows) %do% {
+for (i in 1:length(id_list)) {
   
   # Subsetting a Deer 
   deer <- used_available_list %>% filter(id == id_list[i])
@@ -203,8 +202,9 @@ NLCD_cov_list <- foreach(i = 1:1, .combine = bind_rows) %do% {
   extracts <- terra::extract(cropped, spdf_deer, buffer = buffer_radius)
   
   landcover_proportions <- foreach(i = 1:length(extracts),.combine = bind_rows) %dopar% {
+    library(tidyverse)
     counts_x <- table(extracts[[i]])
-    proportions_x <- prop.table(counts_x) %>% as.data.frame() %>% pivot_wider(names_from = Var1, values_from = Freq)}
+    proportions_x <- prop.table(counts_x) %>% as.data.frame() %>% pivot_wider(names_from = Var1, values_from = Freq,names_prefix = "proportion_")}
   
   spatialstructure_covs <- foreach(i = 1:nrow(spdf_deer),.combine = bind_rows) %dopar% {
     
@@ -251,10 +251,12 @@ NLCD_cov_list <- foreach(i = 1:1, .combine = bind_rows) %do% {
     covariates <- bind_cols(c(cov_1,cov_2,cov_3,cov_4,cov_5,cov_6))
   }
   
-  bind_cols(landcover_proportions,spatialstructure_covs)
+  bind_cols(deer,landcover_proportions,spatialstructure_covs) %>% 
+    write_csv(paste0("2.Chapter1/3.Output/CovariateExtraction/Covariates/",id_list[i],".csv"))
+  
+  print(i)
   
 }
-tictoc::toc()
 
 # Closing the Cluster
 
