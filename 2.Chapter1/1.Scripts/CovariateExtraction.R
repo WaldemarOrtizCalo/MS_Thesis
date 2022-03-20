@@ -172,18 +172,23 @@ id_list <- unique(used_available_list$id)
 buffer_radius <- 420
 
 #        [NLCD] - in development                                            ####
+
+# Registering Cluster
+cl <- makeCluster(6)
+registerDoParallel(cl)
+
 #           [Proportions of Land Cover]  -in development                    ####
 
 # inspiration for NLCD extraction:
 # https://mbjoseph.github.io/posts/2018-12-27-categorical-spatial-data-extraction-around-buffered-points-in-r/
 
-
+tictoc::tic()
 NLCD_cov_list <- foreach(i = 1:1, .combine = bind_rows) %do% {
   
-  # Deer 
+  # Subsetting a Deer 
   deer <- used_available_list %>% filter(id == id_list[i])
   
-  #      [spdf object]                                                        #
+  # Making the deer a SpatialPointsDataFrame
   spdf_deer <- deer
   
   # Setting Coordinates 
@@ -192,66 +197,66 @@ NLCD_cov_list <- foreach(i = 1:1, .combine = bind_rows) %do% {
   # Setting projection system
   proj4string(spdf_deer) <- CRS("+init=epsg:5070")
   
-  # Landcover
-  
+  # Cropping Raster to the extent of the deer's movement track 
   cropped <- crop(Missouri_NLCD,spdf_deer)
   
   extracts <- terra::extract(cropped, spdf_deer, buffer = buffer_radius)
   
-  landcover_proportions <- lapply(extracts, function(x) {
-    counts_x <- table(x)
-    proportions_x <- prop.table(counts_x) %>% as.data.frame() %>% pivot_wider(names_from = x, values_from = Freq)
+  landcover_proportions <- foreach(i = 1:length(extracts),.combine = bind_rows) %dopar% {
+    counts_x <- table(extracts[[i]])
+    proportions_x <- prop.table(counts_x) %>% as.data.frame() %>% pivot_wider(names_from = Var1, values_from = Freq)}
+  
+  spatialstructure_covs <- foreach(i = 1:nrow(spdf_deer),.combine = bind_rows) %dopar% {
     
-  })
+    # Packages
+    library(raster)
+    library(landscapemetrics)
+    library(terra)
+    library(tidyverse)
+    
+    buf <- buffer(x = spdf_deer[i,],
+                  width = buffer_radius)
+    
+    buffer_ras <- crop(cropped,buf) %>% mask(buf)
+    
+    # Landscape Shape Index
+    cov_1 <- lsm_l_shape_mn(buffer_ras, directions = 8) %>% 
+      dplyr::select(-c(layer,level,metric,id,class)) %>% rename(landscapeshapeindex = value)
+    
+    # Shannon'Diversity
+    cov_2 <- lsm_l_shdi(buffer_ras)%>% 
+      dplyr::select(-c(layer,level,metric,id,class)) %>% rename(shannondiversity = value)
+    
+    # Mean Shape Index
+    cov_3 <- lsm_c_shape_mn(buffer_ras, directions = 8) %>% 
+      pivot_wider(names_from = class, values_from = value,names_prefix = "meanshapeindex_") %>% 
+      dplyr::select(-c(layer,level,metric,id))
+    
+    # Contagion
+    cov_4 <- lsm_l_contag(buffer_ras)%>% 
+      dplyr::select(-c(layer,level,metric,id,class)) %>% rename(contagion = value)
+    
+    # Patch Size
+    cov_5 <- lsm_p_area(buffer_ras, directions = 8) %>% 
+      pivot_wider(names_from = class, values_from = value,names_prefix = "patchsize_") %>% 
+      dplyr::select(-c(layer,level,metric,id)) %>% 
+      summarise(across(everything(), ~ mean(.x, na.rm = TRUE)))
+    
+    # Patch Density 
+    cov_6 <- lsm_c_pd(buffer_ras, directions = 8) %>% 
+      pivot_wider(names_from = class, values_from = value,names_prefix = "patchdensity_") %>% 
+      dplyr::select(-c(layer,level,metric,id)) 
+    
+    
+    covariates <- bind_cols(c(cov_1,cov_2,cov_3,cov_4,cov_5,cov_6))
+  }
   
-  nlcd_data <- bind_rows(landcover_proportions)
+  bind_cols(landcover_proportions,spatialstructure_covs)
+  
 }
+tictoc::toc()
 
+# Closing the Cluster
 
-#           [Structure of Land Cover]  -in development                      ####
-
-spatialstructure_covs <- foreach(i = 1:nrow(spdf_deer),.combine = bind_rows)%dopar% {
-  
-  library(raster)
-  library(terra)
-  library(landscapemetrics)
-  library(tidyverse)
-  
-  buf <- buffer(x = spdf_deer[i,],
-                width = buffer_radius)
-  
-  buffer_ras <- crop(cropped,buf) %>% mask(buf)
-  
-  # Landscape Shape Index
-  cov_1 <- lsm_l_shape_mn(buffer_ras, directions = 8) %>% 
-    dplyr::select(-c(layer,level,metric,id,class)) %>% rename(landscapeshapeindex = value)
-  
-  # Shannon'Diversity
-  cov_2 <- lsm_l_shdi(buffer_ras)%>% 
-    dplyr::select(-c(layer,level,metric,id,class)) %>% rename(shannondiversity = value)
-  
-  # Mean Shape Index
-  cov_3 <- lsm_c_shape_mn(buffer_ras, directions = 8) %>% 
-    pivot_wider(names_from = class, values_from = value,names_prefix = "meanshapeindex_") %>% 
-    dplyr::select(-c(layer,level,metric,id))
-  
-  # Contagion
-  cov_4 <- lsm_l_contag(buffer_ras)%>% 
-    dplyr::select(-c(layer,level,metric,id,class)) %>% rename(contagion = value)
-  
-  # Patch Size
-  cov_5 <- lsm_p_area(buffer_ras, directions = 8) %>% 
-    pivot_wider(names_from = class, values_from = value,names_prefix = "patchsize_") %>% 
-    dplyr::select(-c(layer,level,metric,id)) %>% 
-    summarise(across(everything(), ~ mean(.x, na.rm = TRUE)))
-  
-  # Patch Density 
-  cov_6 <- lsm_c_pd(buffer_ras, directions = 8) %>% 
-    pivot_wider(names_from = class, values_from = value,names_prefix = "patchdensity_") %>% 
-    dplyr::select(-c(layer,level,metric,id)) 
-  
-  
-  covariates <- bind_cols(c(cov_1,cov_2,cov_3,cov_4,cov_5,cov_6))
-}
-
+unregister()
 ###############################################################################
