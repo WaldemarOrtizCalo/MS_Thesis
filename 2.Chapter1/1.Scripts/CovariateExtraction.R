@@ -174,7 +174,7 @@ buffer_radius <- 420
 #        [NLCD] - in development                                            ####
 
 # Registering Cluster
-cl <- makeCluster(7)
+cl <- makeCluster(5)
 registerDoParallel(cl)
 
 # For Loop
@@ -182,7 +182,7 @@ registerDoParallel(cl)
 # inspiration for NLCD extraction:
 # https://mbjoseph.github.io/posts/2018-12-27-categorical-spatial-data-extraction-around-buffered-points-in-r/
 
-for (i in 1:length(id_list)) {
+for (i in 96:length(id_list)) {
   
   # Subsetting a Deer 
   deer <- used_available_list %>% filter(id == id_list[i])
@@ -254,7 +254,7 @@ for (i in 1:length(id_list)) {
   bind_cols(deer,landcover_proportions,spatialstructure_covs) %>% 
     write_csv(paste0("2.Chapter1/3.Output/CovariateExtraction/Covariates/",id_list[i],".csv"))
   
-  print(i)
+  print(paste0(i,":",id_list[i]))
   
 }
 
