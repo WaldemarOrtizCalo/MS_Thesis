@@ -11,8 +11,11 @@
 
 #      Library                                                              ####
 library(tidyverse)
-library(mlogit)
 library(survival)
+library(corrplot)
+library(car)
+library(stringr)
+library(lares)
 
 #      Functions                                                            ####
 
@@ -47,66 +50,43 @@ for (i in 1:length(deer_north_raw)) {
 }
 
 # Binding Rows
-deer_north <- bind_rows(deer_north_raw[1])
+deer_north <- bind_rows(deer_north_raw)
 
 deer_north$observation_id<- rep(1:(nrow(deer_north)/6), each = 6)
 
 ###############################################################################
+#   [Data Cleaning/Pre-processing]                                          ####
+#      [Changing NAs to Zeros]                                              ####
+deer_north[is.na(deer_north)] <- 0
 
-#   [Trying with one indiv]                                              ####
+#      [Correlation Assessments]                                            ####
+#        [Correlation Matrix]                                               ####
 
-library(survival)
+corplot_north <-cor(deer_north[13:52])
 
-tictoc::tic()
-summary(clogit(location_type ~ strata(observation_id) +
-         contagion +
-         cluster(id),
-       method = 'approximate', data = deer_north))
+#        [Correlation Barplot]                                              ####
 
-summary(clogit(location_type ~ strata(observation_id) +
-                 contagion,
-               method = 'approximate', data = deer_north))
-
-summary(Rchoice(location_type ~ contagion , family = binomial("logit"),
-                data = deer_north))
-
-summary(mlogit(location_type ~ contagion | 0, 
-               data = deer_north,
-               shape = "long",
-               chid.var = "observation_id",
-               choice = "location_type",
-               alt.var = 'point'))
-
-summary(mlogit(formula = case ~ dist | 0, 
-               data = hellbender, 
-               shape = 'long',
-               chid.var = 'set', 
-               choice = 'case', 
-               alt.var = 'point'))
+cor_bargraph <-corr_cross(deer_north[13:52], rm.na = T, max_pvalue = 0.05, 
+                          top = 35, grid = T)
+cor_bargraph
 
 
-test <- data.frame(id = deer_north$id,
-                   set = deer_north$observation_id,
-                   case = deer_north$location_type,
-                   point = deer_north$point,
-                   var1 = deer_north$proportion_4)
+###############################################################################
+#   [Modeling]                                                              ####
+#      [Proportion Model]                                                   ####
 
-summary(mlogit(formula = case ~ var1 | 0, 
-               data = test, 
-               shape = 'long',
-               chid.var = 'set', 
-               choice = 'case', 
-               alt.var = 'point'))
+names(deer_north[str_which(names(deer_north),"proportion")])
 
-dfidx(data = test,
-      idx = c("id","set", "point"),
-      choice = "case")
+cor_bargraph <-corr_cross(deer_north[str_which(names(deer_north),"proportion")], rm.na = T, max_pvalue = 0.05, 
+                          top = 35, grid = T)
 
+model_proportion_global<- clogit(location_type ~ strata(observation_id) +
+                                   proportion_1 +
+                                   proportion_2 +
+                                   proportion_3+
+                                   cluster(id),
+                                 method = 'approximate', data = deer_north)
 
+summary(model_proportion_global)
 
-summary(clogit(formula = case ~ dist + strata(set), 
-               data = hellbender))
-
-
-tictoc::toc()
 
