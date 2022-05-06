@@ -127,3 +127,24 @@ for (i in 1:length(landcover_southeast_unique)) {
   print(paste0("End of iteration ", i, " Time: ",Sys.time()))
 }
 ###############################################################################
+
+
+#   [Dev]                                                                 ####
+
+library(spatialEco)
+
+buffer_radius <- 540
+
+r <- NLCD_North
+r <- r %>% ratify
+
+fw <- ceiling(focalWeight(r, buffer_radius, type='circle'))
+
+print(Sys.time())
+lsm_focal <- window_lsm(
+  r,
+  fw,
+  what = "lsm_l_lsi",
+  progress = T
+)
+print(Sys.time())
