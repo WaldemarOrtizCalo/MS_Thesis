@@ -59,6 +59,10 @@ South_StudyArea <- Missouri_shp[which(lengths(South_StudyArea)!=0),]
 Southeast_StudyArea <- st_intersects(Missouri_shp,deer_sf_southeast)
 Southeast_StudyArea <- Missouri_shp[which(lengths(Southeast_StudyArea)!=0),]
 ###############################################################################
+#   [Raster Settings]                                                       ####
+#      [Buffer Radius]                                                      ####
+buffer_radius <- 600
+###############################################################################
 #   [North]                                                                 ####
 
 #      [NLCD raster]                                                        ####
@@ -76,7 +80,7 @@ for (i in 1:length(landcover_north_unique)) {
   print(paste0("Start of iteration ", i, " Time: ",Sys.time()))
   proportion_raster_function(raster = NLCD_North,
                              landcover_num = landcover_north_unique[i],
-                             buffer_radius = 540,
+                             buffer_radius = buffer_radius,
                              export = T,
                              export.filepath = "1.DataManagement/CovRasters/North_")
   print(paste0("End of iteration ", i, " Time: ",Sys.time()))
@@ -99,7 +103,7 @@ for (i in 1:length(landcover_south_unique)) {
   print(paste0("Start of iteration ", i, " Time: ",Sys.time()))
   proportion_raster_function(raster = NLCD_South,
                              landcover_num = landcover_south_unique[i],
-                             buffer_radius = 540,
+                             buffer_radius = buffer_radius,
                              export = T,
                              export.filepath = "1.DataManagement/CovRasters/South_")
   print(paste0("End of iteration ", i, " Time: ",Sys.time()))
@@ -121,30 +125,34 @@ for (i in 1:length(landcover_southeast_unique)) {
   print(paste0("Start of iteration ", i, " Time: ",Sys.time()))
   proportion_raster_function(raster = NLCD_Southeast,
                              landcover_num = landcover_southeast_unique[i],
-                             buffer_radius = 540,
+                             buffer_radius = buffer_radius,
                              export = T,
                              export.filepath = "1.DataManagement/CovRasters/Southeast_")
   print(paste0("End of iteration ", i, " Time: ",Sys.time()))
 }
 ###############################################################################
-
-
 #   [Dev]                                                                 ####
-
-library(spatialEco)
-
-buffer_radius <- 540
 
 r <- NLCD_North
 r <- r %>% ratify
 
-fw <- ceiling(focalWeight(r, buffer_radius, type='circle'))
+
+r_crop <- crop(r, extent(300565,356565,1800285,1885285))
+r_crop <- crop(r, extent(340565,346565,1800285,1825285))
+mapview(r_crop)
+fw <- ceiling(focalWeight(r_crop, buffer_radius, type='circle'))
 
 print(Sys.time())
 lsm_focal <- window_lsm(
-  r,
+  r_crop,
   fw,
-  what = "lsm_l_lsi",
-  progress = T
-)
+  what = c("lsm_l_lsi","lsm_l_contag"))
+
 print(Sys.time())
+
+mapview(lsm_focal$layer_1$lsm_l_contag)+
+  mapview(r_crop)
+
+
+lsm_focal[1]
+
