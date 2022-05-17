@@ -36,7 +36,7 @@ unregister <- function() {
 #      Data                                                                 ####
 #        [Deer Data]                                                        ####
 
-deer_all <- lapply(list.files(path = "2.Chapter1/3.Output/CovariateExtraction/AvailabilityLocations",
+deer_all <- lapply(list.files(path = "1.DataManagement/CleanData/Chapter1_UsedAvailableLocations",
                               full.names = T), read_csv)
 
 deer_all  <- do.call(rbind,deer_all)
@@ -48,7 +48,7 @@ deer_all  <- do.call(rbind,deer_all)
 Missouri_NLCD <- raster("1.DataManagement/CleanData/NLCD_Missouri.tif") %>% ratify()
 
 #      [DEM Data]                                                           
-Missouri_topo <- stackOpen("1.DataManagement/CleanData/Topo_Missouri.stk")
+# Missouri_topo <- stackOpen("1.DataManagement/CleanData/Topo_Missouri.stk")
 
 #      [Missouri Shapefiles]
 Missouri_shp <- st_read("1.DataManagement\\CleanData\\shp_Missouri.shp") 
