@@ -18,10 +18,20 @@ library(pbapply)
 library(doParallel)
 library(stringr)
 library(landscapemetrics)
+library(foreach)
 
 #      Functions                                                            ####
 source("2.Chapter1/2.Functions/reclass_matrices.R")
 source("2.Chapter1/2.Functions/proportion_raster_function.R")
+unregister <- function() {
+  
+  # This function is to unregister the parallel backend of the doParallel and
+  # foreach loop. Original source: https://stackoverflow.com/questions/25097729/un-register-a-doparallel-cluster
+  
+  env <- foreach:::.foreachGlobals
+  rm(list=ls(name=env), pos=env)
+  
+}
 
 #      Data                                                                 ####
 #        [Deer Data]                                                        ####
@@ -59,8 +69,9 @@ South_StudyArea <- Missouri_shp[which(lengths(South_StudyArea)!=0),]
 Southeast_StudyArea <- st_intersects(Missouri_shp,deer_sf_southeast)
 Southeast_StudyArea <- Missouri_shp[which(lengths(Southeast_StudyArea)!=0),]
 ###############################################################################
-#   [Raster Settings]                                                       ####
-#      [Buffer Radius]                                                      ####
+#   [Extraction Settings]                                                   ####
+
+# Buffer
 buffer_radius <- 600
 ###############################################################################
 #   [North]                                                                 ####
@@ -86,6 +97,44 @@ for (i in 1:length(landcover_north_unique)) {
   print(paste0("End of iteration ", i, " Time: ",Sys.time()))
 }
 
+#        [Landscape Metrics]                                                ####
+
+# Covariate Metrics
+covariate_metrics <- c("lsm_l_lsi","lsm_l_contag","lsm_l_shdi","lsm_l_shape_mn")
+covariate_metrics_names <- c("lsi","contag","shdi","meanshapeindex")
+
+# Window
+fw <- ceiling(focalWeight(NLCD_North, buffer_radius, type='circle'))
+
+# Registering Parallel Backend
+cl <- makeCluster(4)
+registerDoParallel(cl)
+
+# Raster Creation 
+print(Sys.time())
+
+foreach(i = 1:length(covariate_metrics)) %dopar% {
+  
+  # Packages
+  library(landscapemetrics)
+  library(raster)
+  
+  # Function 
+  window_lsm(
+    NLCD_North,
+    fw,
+    what = covariate_metrics[i])
+  
+  writeRaster(t[[1]][[1]], 
+              filename= file.path("1.DataManagement","CovRasters",paste0("North_",covariate_metrics_names[i],".tif")),
+              format="GTiff", overwrite=TRUE)
+}
+
+print(Sys.time())
+
+# Unregister parallel backend
+unregister()
+
 ###############################################################################
 #   [South]                                                                 ####
 #      [NLCD raster]                                                        ####
@@ -108,6 +157,45 @@ for (i in 1:length(landcover_south_unique)) {
                              export.filepath = "1.DataManagement/CovRasters/South_")
   print(paste0("End of iteration ", i, " Time: ",Sys.time()))
 }
+#        [Landscape Metrics]                                                ####
+
+# Covariate Metrics
+covariate_metrics <- c("lsm_l_lsi","lsm_l_contag","lsm_l_shdi","lsm_l_shape_mn")
+covariate_metrics_names <- c("lsi","contag","shdi","meanshapeindex")
+
+# Window
+fw <- ceiling(focalWeight(NLCD_South, buffer_radius, type='circle'))
+
+# Registering Parallel Backend
+cl <- makeCluster(4)
+registerDoParallel(cl)
+
+# Raster Creation 
+print(Sys.time())
+
+foreach(i = 1:length(covariate_metrics)) %dopar% {
+  
+  # Packages
+  library(landscapemetrics)
+  library(raster)
+  
+  # Function 
+  window_lsm(
+    NLCD_South,
+    fw,
+    what = covariate_metrics[i])
+  
+  writeRaster(t[[1]][[1]], 
+              filename= file.path("1.DataManagement","CovRasters",paste0("South_",covariate_metrics_names[i],".tif")),
+              format="GTiff", overwrite=TRUE)
+}
+
+print(Sys.time())
+
+# Unregister parallel backend
+unregister()
+
+
 ###############################################################################
 #   [Southeast]                                                             ####
 #      [NLCD raster]                                                        ####
@@ -130,29 +218,100 @@ for (i in 1:length(landcover_southeast_unique)) {
                              export.filepath = "1.DataManagement/CovRasters/Southeast_")
   print(paste0("End of iteration ", i, " Time: ",Sys.time()))
 }
+#        [Landscape Metrics]                                                ####
+
+# Covariate Metrics
+covariate_metrics <- c("lsm_l_lsi","lsm_l_contag","lsm_l_shdi","lsm_l_shape_mn")
+covariate_metrics_names <- c("lsi","contag","shdi","meanshapeindex")
+
+# Window
+fw <- ceiling(focalWeight(NLCD_Southeast, buffer_radius, type='circle'))
+
+# Registering Parallel Backend
+cl <- makeCluster(4)
+registerDoParallel(cl)
+
+# Raster Creation 
+print(Sys.time())
+
+foreach(i = 1:length(covariate_metrics)) %dopar% {
+  
+  # Packages
+  library(landscapemetrics)
+  library(raster)
+  
+  # Function 
+  ras <- window_lsm(
+    NLCD_Southeast,
+    fw,
+    what = covariate_metrics[i])
+  
+  writeRaster(ras[[1]][[1]], 
+              filename= file.path("1.DataManagement","CovRasters",paste0("Southeast_",covariate_metrics_names[i],".tif")),
+              format="GTiff", overwrite=TRUE)
+}
+
+print(Sys.time())
+
+# Unregister parallel backend
+unregister()
+
+
 ###############################################################################
 #   [Dev]                                                                 ####
 
-r <- NLCD_North
+r <- NLCD_Southeast
 r <- r %>% ratify
 
 
-r_crop <- crop(r, extent(300565,356565,1800285,1885285))
-r_crop <- crop(r, extent(340565,346565,1800285,1825285))
+r_crop <- crop(r, extent(469225, 476555, 1525365, 1559605))
+
 mapview(r_crop)
 fw <- ceiling(focalWeight(r_crop, buffer_radius, type='circle'))
 
+
+#   [Covariate Raster Creation]                                                                 ####
+
+
+
+# Covariate Metrics
+covariate_metrics <- c("lsm_l_lsi","lsm_l_contag","lsm_l_shdi","lsm_l_shape_mn")
+covariate_metrics_names <- c("lsi","contag","shdi","meanshapeindex")
+
+# Registering Parallel Backend
+cl <- makeCluster(4)
+registerDoParallel(cl)
+
+# Raster Creation 
 print(Sys.time())
-lsm_focal <- window_lsm(
-  r_crop,
+
+foreach(i = 1:length(covariate_metrics)) %dopar% {
+  
+  # Packages
+  library(landscapemetrics)
+  library(raster)
+  
+  # Function 
+  ras <- window_lsm(
+    r_crop,
+    fw,
+    what = covariate_metrics[i])
+  
+  writeRaster(ras[[1]][[1]], 
+              filename= file.path("1.DataManagement","CovRasters",paste0("Southeast_",covariate_metrics_names[i],".tif")),
+              format="GTiff", overwrite=TRUE)
+}
+
+print(Sys.time())
+
+# Unregister parallel backend
+unregister()
+
+ras <- window_lsm(
+  NLCD_Southeast,
   fw,
-  what = c("lsm_l_lsi","lsm_l_contag"))
+  what = covariate_metrics[1])
 
-print(Sys.time())
-
-mapview(lsm_focal$layer_1$lsm_l_contag)+
-  mapview(r_crop)
-
-
-lsm_focal[1]
-
+writeRaster(ras[[1]][[1]], 
+            filename= file.path("1.DataManagement","CovRasters",paste0("Southeast_",covariate_metrics_names[1],".tif")),
+            format="GTiff", overwrite=TRUE)
