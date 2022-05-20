@@ -16,6 +16,10 @@ library(amt)
 library(sjPlot)
 library(sjlabelled)
 library(sjmisc)
+<<<<<<< HEAD
+=======
+
+>>>>>>> 87a533c301f3371efe457b7941a430fa7b897b78
 
 #      Functions                                                            ####
 
