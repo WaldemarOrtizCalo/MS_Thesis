@@ -10,9 +10,12 @@
 #   Library / Functions / Data                                              ####
 
 #      Library                                                              ####
-library(survival)
 library(tidyverse)
 library(lares)
+library(amt)
+library(sjPlot)
+library(sjlabelled)
+library(sjmisc)
 
 #      Functions                                                            ####
 
@@ -79,11 +82,6 @@ data_southeast$sex <- ifelse(data_southeast$sex == F, "F", "M")
 data_north$choice <- ifelse(data_north$choice$choice == "used",1,0)
 data_south$choice <- ifelse(data_south$choice$choice == "used",1,0)
 data_southeast$choice <- ifelse(data_southeast$choice == "used",1,0)
-
-# Making Choice a factor
-data_north$choice <- factor(data_north$choice, levels = c("0","1"))
-data_south$choice <- factor(data_south$choice, levels = c("0","1"))
-data_southeast$choice <- factor(data_southeast$choice, levels = c("0","1"))
 
 ###############################################################################
 #   [Covariate Exploration]                                                 ####
@@ -176,3 +174,147 @@ ggsave(filename = "southeast_boxwhisk.png",
 
 
 ###############################################################################
+#   [Models]                                                                ####
+#      [Southeast]                                                          ####
+#        [Global]                                                           ####
+#           [Backwards Step Selection]                                      ####
+#               [Model 1]                                                   ####
+
+# Global Model with all covariates included 
+southeast_model_global <- data_southeast %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               meanshapeindex + 
+               ShannonDiversityIndex +
+               proportion_water + 
+               proportion_wetland + 
+               proportion_developed + 
+               proportion_barren + 
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_mixedforest + 
+               proportion_shrub + 
+               proportion_grassland +
+               proportion_cropland + 
+               strata(observation_id))
+
+summary(southeast_model_global)
+
+saveRDS(southeast_model_global, file = "2.Chapter1/3.Output/Models/Southeast_model1_global.rda")
+
+#               [Model 2]                                                   ####
+
+# Removing Proportion Cropland. It is highly correlated and NA in results  
+southeast_model_02 <- data_southeast %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               meanshapeindex + 
+               ShannonDiversityIndex +
+               proportion_water + 
+               proportion_wetland + 
+               proportion_developed + 
+               proportion_barren + 
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_mixedforest + 
+               proportion_shrub + 
+               proportion_grassland +
+               strata(observation_id))
+
+summary(southeast_model_02)
+
+saveRDS(southeast_model_02, file = "2.Chapter1/3.Output/Models/Southeast_model_02.rda")
+
+
+
+#               [Model 3]                                                   ####
+
+# Removed meanshapeindex. It had a p-value of 0.50971 
+southeast_model_03 <- data_southeast %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               ShannonDiversityIndex +
+               proportion_water + 
+               proportion_wetland + 
+               proportion_developed + 
+               proportion_barren + 
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_mixedforest + 
+               proportion_shrub + 
+               proportion_grassland +
+               strata(observation_id))
+
+summary(southeast_model_03)
+
+saveRDS(southeast_model_03, file = "2.Chapter1/3.Output/Models/Southeast_model_03.rda")
+
+#               [Model 4]                                                   ####
+
+# Removed contagion It had a p-value of 0.05220 
+southeast_model_04 <- data_southeast %>% 
+  fit_clogit(choice ~ landscapeshapeindex +
+               ShannonDiversityIndex +
+               proportion_water + 
+               proportion_wetland + 
+               proportion_developed + 
+               proportion_barren + 
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_mixedforest + 
+               proportion_shrub + 
+               proportion_grassland +
+               strata(observation_id))
+
+summary(southeast_model_04)
+
+saveRDS(southeast_model_04, file = "2.Chapter1/3.Output/Models/Southeast_model_04.rda")
+
+
+
+
+#               [Model 5]                                                   ####
+
+# Removed proportion of water. It had a p-value of 0.1691
+southeast_model_05 <- data_southeast %>% 
+  fit_clogit(choice ~ landscapeshapeindex +
+               ShannonDiversityIndex +
+               proportion_wetland + 
+               proportion_developed + 
+               proportion_barren + 
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_mixedforest + 
+               proportion_shrub + 
+               proportion_grassland +
+               strata(observation_id))
+
+summary(southeast_model_05)
+
+saveRDS(southeast_model_05, file = "2.Chapter1/3.Output/Models/Southeast_model_05.rda")
+#               [Model Final]                                               ####
+
+southeast_model_05 <- data_southeast %>% 
+  fit_clogit(choice ~ landscapeshapeindex +
+               ShannonDiversityIndex +
+               proportion_wetland + 
+               proportion_developed + 
+               proportion_barren + 
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_mixedforest + 
+               proportion_shrub + 
+               proportion_grassland +
+               strata(observation_id))
+
+summary(southeast_model_05)
+
+saveRDS(southeast_model_05, file = "2.Chapter1/3.Output/Models/Southeast_model_05.rda")
+
+###############################################################################
+#   [Model Validation and Inspection]                                       ####
+#      [Effect Plots]                                                       ####
+plot_model(southeast_model_05$model,
+           transform = "exp",
+           sort.est = T,
+           show.values = TRUE, value.offset = .3)
