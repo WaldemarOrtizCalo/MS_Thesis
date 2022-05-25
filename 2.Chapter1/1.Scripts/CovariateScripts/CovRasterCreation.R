@@ -272,46 +272,48 @@ fw <- ceiling(focalWeight(r_crop, buffer_radius, type='circle'))
 
 #   [Covariate Raster Creation]                                                                 ####
 
+#               [patch density]                                                     ####
 
+mapview(r_crop)
 
-# Covariate Metrics
-covariate_metrics <- c("lsm_l_lsi","lsm_l_contag","lsm_l_shdi","lsm_l_shape_mn")
-covariate_metrics_names <- c("lsi","contag","shdi","meanshapeindex")
+r2 <- r_crop
 
-# Registering Parallel Backend
-cl <- makeCluster(4)
-registerDoParallel(cl)
+r2[r2 != 4] = NA
 
-# Raster Creation 
-print(Sys.time())
+mapview(r2)
 
-foreach(i = 1:length(covariate_metrics)) %dopar% {
-  
-  # Packages
-  library(landscapemetrics)
-  library(raster)
-  
-  # Function 
-  ras <- window_lsm(
-    r_crop,
-    fw,
-    what = covariate_metrics[i])
-  
-  writeRaster(ras[[1]][[1]], 
-              filename= file.path("1.DataManagement","CovRasters",paste0("Southeast_",covariate_metrics_names[i],".tif")),
-              format="GTiff", overwrite=TRUE)
-}
+fw <- ceiling(focalWeight(r2, 600, type='circle'))
 
 print(Sys.time())
-
-# Unregister parallel backend
-unregister()
 
 ras <- window_lsm(
-  NLCD_Southeast,
+  r2,
   fw,
-  what = covariate_metrics[1])
+  what = "lsm_l_pd")
 
-writeRaster(ras[[1]][[1]], 
-            filename= file.path("1.DataManagement","CovRasters",paste0("Southeast_",covariate_metrics_names[1],".tif")),
-            format="GTiff", overwrite=TRUE)
+print(Sys.time())
+
+mapview(ras[[1]][[1]])+mapview(r_crop)+mapview(r2)
+
+#               [mean of patch area]                                                     ####
+
+mapview(r_crop)
+
+r2 <- r_crop
+
+r2[r2 != 4] = NA
+
+mapview(r2)
+
+fw <- ceiling(focalWeight(r2, 600, type='circle'))
+
+print(Sys.time())
+
+ras <- window_lsm(
+  r2,
+  fw,
+  what = "lsm_l_area_mn")
+
+print(Sys.time())
+
+mapview(ras[[1]][[1]])+mapview(r_crop)+mapview(r2)
