@@ -270,7 +270,7 @@ mapview(r_crop)
 fw <- ceiling(focalWeight(r_crop, buffer_radius, type='circle'))
 
 
-#   [Covariate Raster Creation]                                                                 ####
+#   [Covariate Raster Creation]                                             ####
 
 #               [patch density]                                                     ####
 
