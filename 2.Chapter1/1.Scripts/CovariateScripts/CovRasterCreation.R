@@ -257,6 +257,54 @@ print(Sys.time())
 unregister()
 
 
+#        [Mean Size and Patch Density]                                      ####
+
+# Window
+fw <- ceiling(focalWeight(NLCD_Southeast, buffer_radius, type='circle'))
+
+# Registering Parallel Backend
+cl <- makeCluster(5)
+registerDoParallel(cl)
+
+lc_clasess <-c(4,5,6,8,9)
+
+foreach(i = 1:length(lc_clasess)) %dopar% {
+  
+  # Packages
+  library(landscapemetrics)
+  library(raster)
+  
+  base_rast <- NLCD_Southeast
+  
+  base_rast[base_rast!= lc_clasess[i]] = NA
+  
+  # Mean Area 
+  ras <- window_lsm(
+    base_rast,
+    fw,
+    what = "lsm_l_area_mn")
+  
+  ras <-  ras[[1]][[1]]*10000
+  
+  writeRaster(ras, 
+              filename= file.path("1.DataManagement","CovRasters",paste0("Southeast_class",lc_clasess[i],"_MeanPatchArea.tif")),
+              format="GTiff", overwrite=TRUE)
+  
+  # Density
+  ras <- window_lsm(
+    base_rast,
+    fw,
+    what = "lsm_l_np")
+  
+  print(Sys.time())
+  
+  ras <- ras[[1]][[1]]/1130973.36 
+  
+  writeRaster(ras, 
+              filename= file.path("1.DataManagement","CovRasters",paste0("Southeast_class",lc_clasess[i],"_PatchDensity.tif")),
+              format="GTiff", overwrite=TRUE)
+}
+
 ###############################################################################
 #   [Dev]                                                                 ####
 
