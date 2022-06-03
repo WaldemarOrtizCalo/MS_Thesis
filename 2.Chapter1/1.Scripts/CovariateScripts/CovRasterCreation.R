@@ -365,3 +365,43 @@ ras <- window_lsm(
 print(Sys.time())
 
 mapview(ras[[1]][[1]])+mapview(r_crop)+mapview(r2)
+
+#      [Custom Functions for this]                                          ####
+
+
+l <- c(1,1,1,2,2,2,2,2,3,3,3,3,3,4,4,4,5)
+
+area <- table(l) %>% as.data.frame() %>% pull("Freq") %>% `*`(900) %>% sum()
+n.patches <- length(unique(l))
+
+area/n.patches
+
+MeanPatchArea <- function(x){
+  # Makes a list of raster values and takes out NAs
+  l <- na.omit(x)
+  # Calculates the area by counting number of cells in focal window and multupying by cell surface area.
+  area <- table(l) %>% as.data.frame() %>% pull("Freq") %>% `*`(900) %>% sum()
+  # Calculates number of patches
+  n.patches <- length(unique(l))
+  
+  return(area/n.patches)
+}
+
+library(terra)
+r <- rast(matrix(1:25,nrow=5))
+r[] <-c(1,1,1,NA,NA,
+        1,1,1,NA,NA,
+        1,1,1,NA,NA,
+        NA,NA,NA,1,1,
+        NA,NA,NA,1,1)
+
+buffer_area <- 9
+
+patch_density <- function(x) {
+  val <- length(unique(na.omit(x)))
+  return(val / buffer_area)
+}
+
+rr <- focal(r, 3 ,patch_density)
+plot(r)
+plot(rr)
