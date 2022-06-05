@@ -16,6 +16,7 @@ library(amt)
 library(sjPlot)
 library(sjlabelled)
 library(sjmisc)
+library(gridExtra)
 
 #      Functions                                                            ####
 
@@ -183,7 +184,7 @@ ggsave(filename = "southeast_boxwhisk.png",
 
 ###############################################################################
 #   [Models]                                                                ####
-#      [Southeast]                                                          ####
+#      [Southeast - Non-Scaled]                                             ####
 #        [Global]                                                           ####
 #           [Backwards Step Selection]                                      ####
 #               [Model 1]                                                   ####
@@ -387,8 +388,218 @@ southeast_model_final <- data_southeast %>%
 summary(southeast_model_final)
 
 saveRDS(southeast_model_final, file = "2.Chapter1/3.Output/Models/Southeast_model_final.rda")
+#      [Southeast - Scaled]                                                 ####
+
+data_southeast_scaled <- data_southeast
+
+for (i in 13:ncol(data_southeast)) {
+  data_southeast_scaled[ ,i] <- scale(data_southeast_scaled[ ,i])
+  print(i)
+}
+
+#           [Backwards Step Selection]                                      ####
+#               [Model 1]                                                   ####
+
+# Global Model with all covariates included 
+southeast_model_01_scaled <- data_southeast_scaled %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               meanshapeindex + 
+               proportion_water + 
+               proportion_wetland + 
+               proportion_developed + 
+               proportion_barren + 
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_mixedforest + 
+               proportion_shrub + 
+               proportion_grassland +
+               proportion_cropland + 
+               meanpatcharea_decidousforest +
+               meanpatcharea_evergreenforest +
+               meanpatcharea_mixedforest +
+               meanpatcharea_grassland +
+               meanpatcharea_cropland +
+               strata(observation_id))
+
+summary(southeast_model_01_scaled)
+
+saveRDS(southeast_model_01_scaled, file = "2.Chapter1/3.Output/Models/Southeast_model_01_scaled.rda")
+
+#               [Model 2]                                                   ####
+
+# Eliminated Proportion of Cropland. Produced NAs and highly correlated. 
+southeast_model_02_scaled <- data_southeast_scaled %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               meanshapeindex + 
+               proportion_water + 
+               proportion_wetland + 
+               proportion_developed + 
+               proportion_barren + 
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_mixedforest + 
+               proportion_shrub + 
+               proportion_grassland +
+               meanpatcharea_decidousforest +
+               meanpatcharea_evergreenforest +
+               meanpatcharea_mixedforest +
+               meanpatcharea_grassland +
+               meanpatcharea_cropland +
+               strata(observation_id))
+
+summary(southeast_model_02_scaled)
+
+saveRDS(southeast_model_02_scaled, file = "2.Chapter1/3.Output/Models/Southeast_model_02_scaled.rda")
+
+#               [Model 3]                                                   ####
+
+# Eliminated Mean Shape Index. P-value of 0.97053
+
+southeast_model_03_scaled <- data_southeast_scaled %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               proportion_water + 
+               proportion_wetland + 
+               proportion_developed + 
+               proportion_barren + 
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_mixedforest + 
+               proportion_shrub + 
+               proportion_grassland +
+               meanpatcharea_decidousforest +
+               meanpatcharea_evergreenforest +
+               meanpatcharea_mixedforest +
+               meanpatcharea_grassland +
+               meanpatcharea_cropland +
+               strata(observation_id))
+
+summary(southeast_model_03_scaled)
+
+saveRDS(southeast_model_03_scaled, file = "2.Chapter1/3.Output/Models/Southeast_model_03_scaled.rda")
+
+#               [Model 4]                                                   ####
+
+# Eliminated Mean Patch Area - Grassland. P-value of 0.92337
+
+southeast_model_04_scaled <- data_southeast_scaled %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               proportion_water + 
+               proportion_wetland + 
+               proportion_developed + 
+               proportion_barren + 
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_mixedforest + 
+               proportion_shrub + 
+               proportion_grassland +
+               meanpatcharea_decidousforest +
+               meanpatcharea_evergreenforest +
+               meanpatcharea_mixedforest +
+               meanpatcharea_cropland +
+               strata(observation_id))
+
+summary(southeast_model_04_scaled)
+
+saveRDS(southeast_model_04_scaled, file = "2.Chapter1/3.Output/Models/Southeast_model_04_scaled.rda")
+
+#               [Model 5]                                                   ####
+
+# Eliminated Mean Patch Area - Decidous Forest.  P-value of 0.8756
+
+southeast_model_05_scaled <- data_southeast_scaled %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               proportion_water + 
+               proportion_wetland + 
+               proportion_developed + 
+               proportion_barren + 
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_mixedforest + 
+               proportion_shrub + 
+               proportion_grassland +
+               meanpatcharea_evergreenforest +
+               meanpatcharea_mixedforest +
+               meanpatcharea_cropland +
+               strata(observation_id))
+
+summary(southeast_model_05_scaled)
+
+saveRDS(southeast_model_05_scaled, file = "2.Chapter1/3.Output/Models/Southeast_model_05_scaled.rda")
+
+#               [Model 6]                                                   ####
+
+# Eliminated Mean Patch Area - Cropland.  P-value of 0.78984
+
+southeast_model_06_scaled <- data_southeast_scaled %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               proportion_water + 
+               proportion_wetland + 
+               proportion_developed + 
+               proportion_barren + 
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_mixedforest + 
+               proportion_shrub + 
+               proportion_grassland +
+               meanpatcharea_evergreenforest +
+               meanpatcharea_mixedforest +
+               strata(observation_id))
+
+summary(southeast_model_06_scaled)
+
+saveRDS(southeast_model_06_scaled, file = "2.Chapter1/3.Output/Models/Southeast_model_06_scaled.rda")
+
 ###############################################################################
 #   [Model Validation and Inspection]                                       ####
 #      [Southeast]                                                          ####
+#        [Model import]                                                     ####
 
+Southeast_model_final <- readRDS("2.Chapter1/3.Output/Models/Southeast_model_final.rda") 
+Southeast_model_01 <- readRDS("2.Chapter1/3.Output/Models/Southeast_model_01.rda") 
 #        [Effect Plots]                                                     ####
+
+data_southeast_model <- broom::tidy(Southeast_model_final$model) %>% 
+  add_column("plot_index"= rep(x = c(1,2,3),each = nrow(.)/3))
+
+p1 <- ggplot(subset(data_southeast_model, plot_index == 1),
+       aes( x = term , y = estimate))+
+  geom_point()
+
+p2 <- ggplot(subset(data_southeast_model, plot_index == 2),
+       aes( x = term , y = estimate))+
+  geom_point()
+
+p3 <- ggplot(subset(data_southeast_model, plot_index == 3),
+       aes( x = term , y = estimate))+
+  geom_point()
+
+
+grid.arrange(p1,p2,p3,nrow = 3)
+
+
+p4 <- ggplot(subset(data_southeast_model, plot_index == 1),
+             aes( x = term , y = exp(estimate)))+
+  geom_point()+
+  theme(axis.title.x = element_blank())
+
+p5 <- ggplot(subset(data_southeast_model, plot_index == 2),
+             aes( x = term , y = exp(estimate)))+
+  geom_point()+
+  theme(axis.title.x = element_blank())
+
+p6 <- ggplot(subset(data_southeast_model, plot_index == 3),
+             aes( x = term , y = exp(estimate)))+
+  geom_point()+
+  labs(x = "Covariates")
+
+
+grid.arrange(p4,p5,p6,nrow = 3)
+
+
+
