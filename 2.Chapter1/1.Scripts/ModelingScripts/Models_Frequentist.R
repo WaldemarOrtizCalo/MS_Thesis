@@ -388,6 +388,7 @@ southeast_model_final <- data_southeast %>%
 summary(southeast_model_final)
 
 saveRDS(southeast_model_final, file = "2.Chapter1/3.Output/Models/Southeast_model_final.rda")
+
 #      [Southeast - Scaled]                                                 ####
 
 data_southeast_scaled <- data_southeast
@@ -555,13 +556,59 @@ summary(southeast_model_06_scaled)
 
 saveRDS(southeast_model_06_scaled, file = "2.Chapter1/3.Output/Models/Southeast_model_06_scaled.rda")
 
+#               [Model 7]                                                   ####
+
+# Eliminated proportion_barren.  P-value of 0.1028
+
+southeast_model_07_scaled <- data_southeast_scaled %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               proportion_water + 
+               proportion_wetland + 
+               proportion_developed + 
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_mixedforest + 
+               proportion_shrub + 
+               proportion_grassland +
+               meanpatcharea_evergreenforest +
+               meanpatcharea_mixedforest +
+               strata(observation_id))
+
+summary(southeast_model_07_scaled)
+
+saveRDS(southeast_model_07_scaled, file = "2.Chapter1/3.Output/Models/Southeast_model_07_scaled.rda")
+
+#               [Model Final]                                               ####
+
+
+southeast_model_final_scaled <- data_southeast_scaled %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               proportion_water + 
+               proportion_wetland + 
+               proportion_developed + 
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_mixedforest + 
+               proportion_shrub + 
+               proportion_grassland +
+               meanpatcharea_evergreenforest +
+               meanpatcharea_mixedforest +
+               strata(observation_id))
+
+
+summary(southeast_model_final_scaled)
+
+saveRDS(southeast_model_final_scaled, file = "2.Chapter1/3.Output/Models/Southeast_model_final_scaled.rda")
+
 ###############################################################################
 #   [Model Validation and Inspection]                                       ####
 #      [Southeast]                                                          ####
 #        [Model import]                                                     ####
 
 Southeast_model_final <- readRDS("2.Chapter1/3.Output/Models/Southeast_model_final.rda") 
-Southeast_model_01 <- readRDS("2.Chapter1/3.Output/Models/Southeast_model_01.rda") 
+
 #        [Effect Plots]                                                     ####
 
 data_southeast_model <- broom::tidy(Southeast_model_final$model) %>% 
