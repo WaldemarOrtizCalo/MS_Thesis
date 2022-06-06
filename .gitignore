@@ -19,6 +19,8 @@
 *.xlsx
 *.jpeg
 *.png
+*.Rmd
+*.html
 
 # Folders 
 1.DataManagement/CleanData/
