@@ -603,6 +603,29 @@ summary(southeast_model_final_scaled)
 saveRDS(southeast_model_final_scaled, file = "2.Chapter1/3.Output/Models/Southeast_model_final_scaled.rda")
 
 ###############################################################################
+#   [Export All Model Data as tables]                                       ####
+
+file_list <- list.files("2.Chapter1/3.Output/Models",
+                        pattern = ".rda",
+                        full.names = T)
+
+file_names <- list.files("2.Chapter1/3.Output/Models",
+                        pattern = ".rda",
+                        full.names = F) %>% str_remove(".rda")
+
+for (i in 1:length(file_list)) {
+  
+  l <- readRDS(file_list[i])
+  
+  model <- broom::tidy(l$model)
+  
+  write_csv(model,
+            file = paste0("2.Chapter1/3.Output/Models/",file_names[i],".csv"))
+  
+  print(i)
+}
+
+###############################################################################
 #   [Model Validation and Inspection]                                       ####
 #      [Southeast]                                                          ####
 #        [Model import]                                                     ####
