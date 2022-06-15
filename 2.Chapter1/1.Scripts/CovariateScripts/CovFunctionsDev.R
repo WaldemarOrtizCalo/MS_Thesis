@@ -21,166 +21,175 @@ library(landscapemetrics)
 library(foreach)
 library(terra)
 ###############################################################################
+#   [Test]                                                                  ####
+#      [Data]                                                               ####
 
-ffun <- function(x,na.rm) {
-  ifelse(all(is.na(x)),
-         NA,
-         {ras <- matrix(data = x, nrow=3, ncol=3) %>% rast()
-         pat <- patches(ras,directions = 8)
-         nrow(unique(pat))})
+set.seed(69420)
+
+data <- sample(x = c(NA,1,2,3,4),size = 400,replace = T)
+
+ras <- rast(matrix(data, ncol = 20, nrow = 20,byrow = T))
+#      [Polygon Creation for subsetted]                                     ####
+
+# Aggregates the Rasters
+ras_aggregated <- terra::aggregate(ras,4)
+
+# Creates a Polygon of the raster grid 
+ras_polygon <- as.polygons(ras_aggregated,dissolve=F,na.rm=F)
+
+# Crops and Subsets the raster based on polygon
+ras_tilelist <- lapply(seq_along(ras_polygon), function(i) terra::crop(ras, ras_polygon[i]))
+
+#      [Metric Calculation]                                                 ####
+
+#        [Cov Metrics]                                                      ####
+cov_metrics <-  c("lsm_l_lsi","lsm_l_contag","lsm_l_shdi","lsm_l_shape_mn")
+cov_metrics_names <- c("lsi","contag","shdi","meanshapeindex")
+
+#        [Parallel Settings]                                                ####
+
+cl <- makeCluster(4)
+registerDoParallel(cl)
+clusterEvalQ(cl,
+             {
+               library(raster)
+               library(terra)
+               library(landscapemetrics)
+             })
+
+clusterExport(cl=cl, varlist=c("cov_metrics","cov_metrics_names"), envir=environment())
+
+#        [Metric Calculation]                                               ####
+
+length(ras_tilelist)
+for (i in 1:3) {
+  print(paste(Sys.time(),": Tile",i,"of",length(ras_tilelist),"initiated"))
+  
+  r_tile <- ras_tilelist[[i]]
+  
+  foreach(m = 1:length(cov_metrics)) %dopar%{
+    
+    cov <- window_lsm(landscape = r_tile,
+                      window = matrix(data = 1,nrow = 3, ncol = 3),
+                      what = cov_metrics[m])
+    
+    writeRaster(cov[[1]][[1]],
+                filename = paste0("1.DataManagement/CovRasters/cov_metric_tiles/Test/test_",
+                                  cov_metrics_names[m],
+                                  "_tile",formatC(i,width = 3, format = "d", flag = "0"),
+                                  ".tif"), overwrite=T)
+  }
+  
+  print(paste(Sys.time(),": Tile",i,"completed"))
 }
 
 
-data <- c(1,1,1,NA,NA,NA,
-          1,1,1,NA,NA,NA,
-          1,1,1,NA,NA,NA,
-          NA,NA,NA,NA,1,1,
-          NA,NA,NA,NA,1,1,
-          1,1,NA,NA,1,1)
-
-if(all(is.na(x))) {return(NA)} else {
-    ras <- matrix(data = x, nrow=3, ncol=3) %>% rast()
-    pat <- patches(ras,directions = 8)
-    return(length(unique(pat)))
-  }
 
 
-x <- as.vector(data)
-
-ifelse(all(is.na(x)),
-       NA,
-       {ras <- matrix(data = x, nrow=6, ncol=6) %>% rast()
-       pat <- patches(ras,directions = 8)
-       nrow(unique(pat))})
-
-ras <- matrix(data = data, nrow=6, ncol=6) %>% rast()
-pat <- patches(ras,directions = 8)
-nrow(unique(pat))
-
-###############################################################################
-
-
-data <- c(1,1,1,NA,NA,NA,
-          1,1,1,NA,NA,NA,
-          1,1,1,NA,NA,NA,
-          NA,NA,NA,NA,1,1,
-          NA,NA,NA,NA,1,1,
-          1,1,NA,NA,1,1)
-
-ras <- rast(matrix(data, ncol = 6, nrow = 6))
-
-f <- focal(x = ras,
-           w = matrix(data = 1, nrow = 3, ncol = 3),
-           fun = function(x,...) {sum(x,...)},
-           na.rm = T)
-
-plot(f)
-
-
-as.vector(patches(ras))
-
-
-
-###############################################################################
-
-
-
-pilot_data <- data <- c(1,1,NA,
-                        1,1,NA,
-                        1,1,NA)
-
-pilot_data <- data <- c(NA,NA,NA,
-                        NA,NA,NA,
-                        NA,NA,NA)
-
-pilot_ras <- rast(matrix(pilot_data, ncol = 3, nrow = 3))
-
-
-f <- focal(x = ras,
-           w = matrix(data = 1, nrow = 3, ncol = 3),
-           fun = function(x, ...) {
-             pilot_ras <- rast(matrix(pilot_data, ncol = 3, nrow = 3))
-             pat <- patches(pilot_ras) %>% as.vector(mode = "numeric") %>% unique() %>% na.omit()
-             length(pat)
-           },
-           na.rm = T)
-
-matrix(pilot_ras,ncol = 3,nrow = 3, byrow = T) %>% sum(na.rm = T)
-
-pat <- patches(pilot_ras) %>% as.vector(mode = "numeric") %>% unique() %>% na.omit()
-
-length(pat)
-
-
-data <- c(2,1,1,NA,NA,NA,
-          1,1,1,NA,NA,NA,
-          1,1,3,NA,NA,NA,
-          NA,NA,NA,NA,1,1,
-          NA,NA,NA,NA,1,1,
-          2,2,NA,NA,1,2)
-
-ras <- rast(matrix(data, ncol = 6, nrow = 6,byrow = T))
-f <- focal(x = ras,
-      w = matrix(data = 1, nrow = 3, ncol = 3),
-      fun = function(x, ...) {diversity(na.omit(x),index = "shannon")},
-      na.rm = T,
-      pad = T)
-
-plot(f)
-
-f <- window_lsm(ras,
-                w = matrix(data = 1, nrow = 3, ncol = 3),
-                what = "lsm_l_shdi")
-
-plot(f[[1]][[1]])
-
-diversity(na.omit(data))
-
-###############################################################################
-
-
-
-SplitRas <- function(raster,ppside,save,plot){
-  h        <- ceiling(ncol(raster)/ppside)
-  v        <- ceiling(nrow(raster)/ppside)
-  agg      <- aggregate(raster,fact=c(h,v))
-  agg[]    <- 1:ncell(agg)
-  agg_poly <- rasterToPolygons(agg)
-  names(agg_poly) <- "polis"
-  r_list <- list()
-  for(i in 1:ncell(agg)){
-    e1          <- extent(agg_poly[agg_poly$polis==i,])
-    r_list[[i]] <- crop(raster,e1)
-  }
-  if(save==T){
-    for(i in 1:length(r_list)){
-      writeRaster(r_list[[i]],filename=paste("SplitRas",i,sep=""),
-                  format="GTiff",datatype="FLT4S",overwrite=TRUE)  
-    }
-  }
-  if(plot==T){
-    par(mfrow=c(ppside,ppside))
-    for(i in 1:length(r_list)){
-      plot(r_list[[i]],axes=F,legend=F,bty="n",box=FALSE)  
-    }
-  }
-  return(r_list)
+foreach(m = 1:length(cov_metrics)) %dopar%{
+  
+  cov <- window_lsm(landscape = r_tile,
+             window = matrix(data = 1,nrow = 3, ncol = 3),
+             what = cov_metrics[m])
+  
+  writeRaster(cov[[1]][[1]],
+              filename = paste0("1.DataManagement/CovRasters/cov_metric_tiles/Test/test_",
+                                cov_metrics_names[m],
+                                "_tile",formatC(i,width = 3, format = "d", flag = "0"),
+                                ".tif"),
+              overwrite=T)
 }
 
-data <- c(1,1,1,NA,NA,4,
-          1,1,1,NA,NA,NA,
-          1,1,1,NA,NA,NA,
-          NA,NA,NA,NA,2,2,
-          NA,NA,NA,NA,2,2,
-          3,3,NA,NA,2,2)
-
-ras <- raster(matrix(data, ncol = 6, nrow = 6,byrow = T)) 
+#      [Mosaic of Tiles]                                                    ####
 
 
-a <- raster::aggregate(ras,3)
 
-p <- as(a, "SpatialPolygons")
-x <- lapply(seq_along(p), function(i) crop(ras, p[i]))
 
-plot(p, border='gray')
-z <- lapply(x, function(i) plot(i, add=T, legend=F))
+###############################################################################
+
+#   [Test]                                                                 ####
+#      [Data]                                                              ####
+
+set.seed(69420)
+
+data <- sample(x = c(NA,1,2,3,4),size = 10000,replace = T)
+
+ras <- rast(matrix(data, ncol = 100, nrow = 100,byrow = T))
+#      [Creating Raster Polygon and Cropping]                              ####
+
+# Aggregates the Rasters
+ras_aggregated <- terra::aggregate(ras,6)
+
+# Creates a Polygon of the raster grid 
+ras_polygon <- as.polygons(ras_aggregated,dissolve=F,na.rm=F)
+
+# Crops and Subsets the raster based on polygon
+ras_tilelist <- lapply(seq_along(ras_polygon), function(i) terra::crop(ras, ras_polygon[i]))
+
+#      [Exporting Subsetted Tiles]                                         ####
+
+# Establishing Progress Bar
+
+pb = txtProgressBar(min = 0, max = length(ras_tilelist), initial = 0,style = 3) 
+
+for (i in 1:length(ras_tilelist)) {
+  
+  # Progress Bar Iterator
+  setTxtProgressBar(pb,i)
+  
+  # File Exporter
+  writeRaster(ras_tilelist[[i]],filename = paste0("1.DataManagement/CovRasters/cov_metric_tiles/Test/test_raw_",
+                                                  formatC(i,width = 3, format = "d", flag = "0"),".tif"), overwrite=T)
+  
+  # Progress bar closing
+  close(pb)
+}
+
+
+#      [Importing Tiles]                                                              ####
+
+r_tile <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/Test", pattern = "raw",full.names = T) 
+
+#        [Metric Calculation]                                                            ####
+
+#           [Node Setup and Settings]                                                  ####
+
+cl <- makeCluster(4)
+registerDoParallel(cl)
+
+clusterEvalQ(cl,
+             {
+               library(raster)
+               library(terra)
+               library(landscapemetrics)
+             })
+
+clusterExport(cl=cl, varlist=c("r_tile"), envir=environment())
+
+#           [Metric Calculation]                                                         ####
+
+
+foreach(i = 1:10, 
+        .errorhandling="pass",
+        .combine = "rbind") %dopar% {
+          
+          # Creating a Raster
+          ras <- rast(r_tile[[i]])
+          
+          # Metric Calculation
+          cov <- window_lsm(landscape = ras,
+                            window = matrix(data = 1,nrow = 3, ncol = 3),
+                            what = "lsm_l_lsi")
+          
+          # Raster Export
+          writeRaster(cov[[1]][[1]],
+                      filename = paste0("1.DataManagement/CovRasters/cov_metric_tiles/Test/test_lsi_",
+                                        formatC(i,width = 3, format = "d", flag = "0"),".tif"), overwrite=T)
+          
+          return(i)
+        }
+
+
+
+
+
