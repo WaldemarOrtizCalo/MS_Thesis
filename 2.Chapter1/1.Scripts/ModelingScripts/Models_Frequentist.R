@@ -93,6 +93,16 @@ data_southeast$choice <- ifelse(data_southeast$choice == "used",1,0)
 # Changing NAs to zero
 data_southeast[is.na(data_southeast)] = 0
 
+#        [Scaling]                                                          ####
+
+# Southeast
+data_southeast_scaled <- data_southeast
+
+for (i in 13:ncol(data_southeast)) {
+  data_southeast_scaled[ ,i] <- scale(data_southeast_scaled[ ,i])
+  print(i)
+}
+
 ###############################################################################
 #   [Covariate Exploration]                                                 ####
 #      [North]                                                              ####
@@ -181,6 +191,91 @@ ggsave(filename = "southeast_boxwhisk.png",
        width = 16,
        height = 6,
        units = "in")
+
+#   [Scaled Covariate Exploration]                                          ####
+
+#      [North]                                                              ####
+#        [Correlation Plots]                                                ####
+
+north_cor_bargraph <-corr_cross(data_north[13:ncol(data_north)], rm.na = T, max_pvalue = 0.05, 
+                                top = 10, grid = T)
+north_cor_bargraph
+
+ggsave(filename = "north_corplot.png",
+       plot = north_cor_bargraph,
+       device = "png",
+       path = "2.Chapter1/3.Output/CovariateExploration")
+
+#        [Box-Whisker Plots]                                                ####
+
+boxwhisk_data <- pivot_longer(data_north,cols = 13:ncol(data_north))
+
+north_boxwhisk <- ggplot(boxwhisk_data, aes(x = name,y = value, fill = choice))+
+  geom_boxplot() +
+  labs(x = "covariates")
+
+ggsave(filename = "north_boxwhisk.png",
+       plot = north_boxwhisk,
+       device = "png",
+       path = "2.Chapter1/3.Output/CovariateExploration",
+       width = 16,
+       height = 6,
+       units = "in")
+
+#      [South]                                                              ####
+#        [Correlation Plots]                                                ####
+
+south_cor_bargraph <-corr_cross(data_south[13:ncol(data_south)], rm.na = T, max_pvalue = 0.05, 
+                                top = 10, grid = T)
+south_cor_bargraph
+
+ggsave(filename = "south_corplot.png",
+       plot = south_cor_bargraph,
+       device = "png",
+       path = "2.Chapter1/3.Output/CovariateExploration")
+
+#        [Box-Whisker Plots]                                                ####
+
+boxwhisk_data <- pivot_longer(data_south,cols = 13:ncol(data_south))
+
+south_boxwhisk <- ggplot(boxwhisk_data, aes(x = name,y = value, fill = choice))+
+  geom_boxplot() +
+  labs(x = "covariates")
+
+ggsave(filename = "south_boxwhisk.png",
+       plot = south_boxwhisk,
+       device = "png",
+       path = "2.Chapter1/3.Output/CovariateExploration",
+       width = 16,
+       height = 6,
+       units = "in")
+
+#      [Southeast]                                                          ####
+#        [Correlation Plots]                                                ####
+
+southeast_cor_bargraph <-corr_cross(data_southeast[13:ncol(data_southeast)], rm.na = T, max_pvalue = 0.05,
+                                    top = 10, grid = T)
+southeast_cor_bargraph
+
+ggsave(filename = "southeast_corplot.png",
+       plot = southeast_cor_bargraph,
+       device = "png",
+       width = 12,
+       height = 8,
+       units = "in",
+       path = "2.Chapter1/3.Output/CovariateExploration")
+
+#        [Box-Whisker Plots EXAMPLE]                                        ####
+
+df <- data_southeast %>% select(choice,contagion)
+
+ggplot(df, aes(as.character(choice),contagion)) +
+  geom_boxplot()
+
+
+names(df[,2])
+
+names(data_southeast)
 
 ###############################################################################
 #   [Models]                                                                ####
@@ -391,12 +486,6 @@ saveRDS(southeast_model_final, file = "2.Chapter1/3.Output/Models/Southeast_mode
 
 #      [Southeast - Scaled]                                                 ####
 
-data_southeast_scaled <- data_southeast
-
-for (i in 13:ncol(data_southeast)) {
-  data_southeast_scaled[ ,i] <- scale(data_southeast_scaled[ ,i])
-  print(i)
-}
 
 #           [Backwards Step Selection]                                      ####
 #               [Model 1]                                                   ####
