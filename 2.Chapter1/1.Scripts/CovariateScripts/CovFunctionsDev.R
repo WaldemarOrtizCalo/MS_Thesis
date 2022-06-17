@@ -20,19 +20,20 @@ library(stringr)
 library(landscapemetrics)
 library(foreach)
 library(terra)
+
 ###############################################################################
 #   [Test]                                                                  ####
 #      [Data]                                                               ####
 
 set.seed(69420)
 
-data <- sample(x = c(NA,1,2,3,4),size = 400,replace = T)
+data <- sample(x = c(NA,1,2,3,4),size = 1000000,replace = T)
 
-ras <- rast(matrix(data, ncol = 20, nrow = 20,byrow = T))
-#      [Polygon Creation for subsetted]                                     ####
+ras <- rast(matrix(data, ncol = 1000, nrow = 1000,byrow = T))
+#      [Creating Raster Polygon and Cropping]                               ####
 
 # Aggregates the Rasters
-ras_aggregated <- terra::aggregate(ras,4)
+ras_aggregated <- terra::aggregate(ras,100)
 
 # Creates a Polygon of the raster grid 
 ras_polygon <- as.polygons(ras_aggregated,dissolve=F,na.rm=F)
@@ -40,93 +41,7 @@ ras_polygon <- as.polygons(ras_aggregated,dissolve=F,na.rm=F)
 # Crops and Subsets the raster based on polygon
 ras_tilelist <- lapply(seq_along(ras_polygon), function(i) terra::crop(ras, ras_polygon[i]))
 
-#      [Metric Calculation]                                                 ####
-
-#        [Cov Metrics]                                                      ####
-cov_metrics <-  c("lsm_l_lsi","lsm_l_contag","lsm_l_shdi","lsm_l_shape_mn")
-cov_metrics_names <- c("lsi","contag","shdi","meanshapeindex")
-
-#        [Parallel Settings]                                                ####
-
-cl <- makeCluster(4)
-registerDoParallel(cl)
-clusterEvalQ(cl,
-             {
-               library(raster)
-               library(terra)
-               library(landscapemetrics)
-             })
-
-clusterExport(cl=cl, varlist=c("cov_metrics","cov_metrics_names"), envir=environment())
-
-#        [Metric Calculation]                                               ####
-
-length(ras_tilelist)
-for (i in 1:3) {
-  print(paste(Sys.time(),": Tile",i,"of",length(ras_tilelist),"initiated"))
-  
-  r_tile <- ras_tilelist[[i]]
-  
-  foreach(m = 1:length(cov_metrics)) %dopar%{
-    
-    cov <- window_lsm(landscape = r_tile,
-                      window = matrix(data = 1,nrow = 3, ncol = 3),
-                      what = cov_metrics[m])
-    
-    writeRaster(cov[[1]][[1]],
-                filename = paste0("1.DataManagement/CovRasters/cov_metric_tiles/Test/test_",
-                                  cov_metrics_names[m],
-                                  "_tile",formatC(i,width = 3, format = "d", flag = "0"),
-                                  ".tif"), overwrite=T)
-  }
-  
-  print(paste(Sys.time(),": Tile",i,"completed"))
-}
-
-
-
-
-foreach(m = 1:length(cov_metrics)) %dopar%{
-  
-  cov <- window_lsm(landscape = r_tile,
-             window = matrix(data = 1,nrow = 3, ncol = 3),
-             what = cov_metrics[m])
-  
-  writeRaster(cov[[1]][[1]],
-              filename = paste0("1.DataManagement/CovRasters/cov_metric_tiles/Test/test_",
-                                cov_metrics_names[m],
-                                "_tile",formatC(i,width = 3, format = "d", flag = "0"),
-                                ".tif"),
-              overwrite=T)
-}
-
-#      [Mosaic of Tiles]                                                    ####
-
-
-
-
-###############################################################################
-
-#   [Test]                                                                 ####
-#      [Data]                                                              ####
-
-set.seed(69420)
-
-data <- sample(x = c(NA,1,2,3,4),size = 10000,replace = T)
-
-ras <- rast(matrix(data, ncol = 100, nrow = 100,byrow = T))
-#      [Creating Raster Polygon and Cropping]                              ####
-
-# Aggregates the Rasters
-ras_aggregated <- terra::aggregate(ras,6)
-
-# Creates a Polygon of the raster grid 
-ras_polygon <- as.polygons(ras_aggregated,dissolve=F,na.rm=F)
-
-# Crops and Subsets the raster based on polygon
-ras_tilelist <- lapply(seq_along(ras_polygon), function(i) terra::crop(ras, ras_polygon[i]))
-
-#      [Exporting Subsetted Tiles]                                         ####
+#      [Exporting Subsetted Tiles]                                          ####
 
 # Establishing Progress Bar
 
@@ -146,13 +61,18 @@ for (i in 1:length(ras_tilelist)) {
 }
 
 
-#      [Importing Tiles]                                                              ####
+#      [Metric Calculation]                                                 ####
+#        [Importing Tiles]                                                  ####
 
-r_tile <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/Test", pattern = "raw",full.names = T) 
+tiles <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/Test", pattern = "raw",full.names = T) 
 
-#        [Metric Calculation]                                                            ####
+#        [Metric Calculation]                                               ####
 
-#           [Node Setup and Settings]                                                  ####
+#           [Window settings]                                               ####
+
+fw <- ceiling(focalWeight(ras, 10, type='circle'))
+
+#           [Node Setup and Settings]                                       ####
 
 cl <- makeCluster(4)
 registerDoParallel(cl)
@@ -164,22 +84,25 @@ clusterEvalQ(cl,
                library(landscapemetrics)
              })
 
-clusterExport(cl=cl, varlist=c("r_tile"), envir=environment())
+clusterExport(cl=cl, varlist=c("tiles","fw"), envir=environment())
 
-#           [Metric Calculation]                                                         ####
+#           [Metric Calculation and export]                                 ####
 
-
-foreach(i = 1:10, 
+# Landscape Shape Index
+foreach(i = 1:length(tiles), 
         .errorhandling="pass",
         .combine = "rbind") %dopar% {
           
           # Creating a Raster
-          ras <- rast(r_tile[[i]])
+          ras <- rast(tiles[[i]])
           
           # Metric Calculation
           cov <- window_lsm(landscape = ras,
-                            window = matrix(data = 1,nrow = 3, ncol = 3),
-                            what = "lsm_l_lsi")
+                            window = fw,
+                            what = "lsm_l_lsi",
+                            neighbourhood = 8,
+                            pad = T,
+                            na.rm=TRUE)
           
           # Raster Export
           writeRaster(cov[[1]][[1]],
@@ -188,8 +111,16 @@ foreach(i = 1:10,
           
           return(i)
         }
+ 
+#      [Mosaic]                                                             ####
+#        [LSI]                                                              ####
+
+
+test_lsi_files <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/Test",pattern = "lsi",full.names = T) %>% 
+  lapply(rast) %>% sprc() %>% mosaic()
+
+plot(test_lsi_files)
 
 
 
-
-
+###############################################################################
