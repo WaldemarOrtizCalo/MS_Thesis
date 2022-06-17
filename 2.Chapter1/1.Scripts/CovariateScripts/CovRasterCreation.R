@@ -69,11 +69,6 @@ South_StudyArea <- Missouri_shp[which(lengths(South_StudyArea)!=0),]
 Southeast_StudyArea <- st_intersects(Missouri_shp,deer_sf_southeast)
 Southeast_StudyArea <- Missouri_shp[which(lengths(Southeast_StudyArea)!=0),]
 ###############################################################################
-#   [Extraction Settings]                                                   ####
-
-# Buffer
-buffer_radius <- 600
-###############################################################################
 #   [North]                                                                 ####
 
 #      [NLCD raster]                                                        ####
@@ -306,102 +301,128 @@ foreach(i = 1:length(lc_clasess)) %dopar% {
 }
 
 ###############################################################################
-#   [Dev]                                                                 ####
+#   [Southeast]                                                             ####
+#      [NLCD raster]                                                        ####
 
-r <- NLCD_Southeast
-r <- r %>% ratify
+NLCD_Southeast <- crop(Missouri_NLCD,Southeast_StudyArea) %>% mask(Southeast_StudyArea) %>% 
+  ratify() %>% 
+  reclassify(reclass_matrixSouth)
 
+#        [Proportion of Landcover]                                          ####
 
-r_crop <- crop(r, extent(469225, 476555, 1525365, 1559605))
+# Unique Landcover types
+landcover_southeast_unique <- unique(NLCD_Southeast)
 
-mapview(r_crop)
-fw <- ceiling(focalWeight(r_crop, buffer_radius, type='circle'))
-
-
-#   [Covariate Raster Creation]                                             ####
-
-#               [patch density]                                                     ####
-
-mapview(r_crop)
-
-r2 <- r_crop
-
-r2[r2 != 4] = NA
-
-mapview(r2)
-
-fw <- ceiling(focalWeight(r2, 600, type='circle'))
-
-print(Sys.time())
-
-ras <- window_lsm(
-  r2,
-  fw,
-  what = "lsm_l_pd")
-
-print(Sys.time())
-
-mapview(ras[[1]][[1]])+mapview(r_crop)+mapview(r2)
-
-#               [mean of patch area]                                                     ####
-
-mapview(r_crop)
-
-r2 <- r_crop
-
-r2[r2 != 4] = NA
-
-mapview(r2)
-
-fw <- ceiling(focalWeight(r2, 600, type='circle'))
-
-print(Sys.time())
-
-ras <- window_lsm(
-  r2,
-  fw,
-  what = "lsm_l_area_mn")
-
-print(Sys.time())
-
-mapview(ras[[1]][[1]])+mapview(r_crop)+mapview(r2)
-
-#      [Custom Functions for this]                                          ####
+for (i in 1:length(landcover_southeast_unique)) {
+  print(paste0("Start of iteration ", i, " Time: ",Sys.time()))
+  proportion_raster_function(raster = NLCD_Southeast,
+                             landcover_num = landcover_southeast_unique[i],
+                             buffer_radius = buffer_radius,
+                             export = T,
+                             export.filepath = "1.DataManagement/CovRasters/Southeast_")
+  print(paste0("End of iteration ", i, " Time: ",Sys.time()))
+}
 
 
-l <- c(1,1,1,2,2,2,2,2,3,3,3,3,3,4,4,4,5)
+#        [Landscape Metrics]                                                ####
+#          [Data]                                                           ####
 
-area <- table(l) %>% as.data.frame() %>% pull("Freq") %>% `*`(900) %>% sum()
-n.patches <- length(unique(l))
+ras <- NLCD_Southeast %>% rast()
 
-area/n.patches
+#          [Creating Raster Polygon and Cropping]                           ####
 
-MeanPatchArea <- function(x){
-  # Makes a list of raster values and takes out NAs
-  l <- na.omit(x)
-  # Calculates the area by counting number of cells in focal window and multupying by cell surface area.
-  area <- table(l) %>% as.data.frame() %>% pull("Freq") %>% `*`(900) %>% sum()
-  # Calculates number of patches
-  n.patches <- length(unique(l))
+# Aggregates the Rasters
+ras_aggregated <- terra::aggregate(ras,200)
+
+# Creates a Polygon of the raster grid 
+ras_polygon <- as.polygons(ras_aggregated,dissolve=F,na.rm=F)
+
+plot(ras_polygon)
+plot(ras_aggregated)
+# Crops and Subsets the raster based on polygon
+ras_tilelist <- lapply(seq_along(ras_polygon), function(i) terra::crop(ras, ras_polygon[i]))
+
+#          [Exporting Subsetted Tiles]                                      ####
+
+# Establishing Progress Bar
+
+pb = txtProgressBar(min = 0, max = length(ras_tilelist), initial = 0,style = 3) 
+
+for (i in 1:length(ras_tilelist)) {
   
-  return(area/n.patches)
+  # Progress Bar Iterator
+  setTxtProgressBar(pb,i)
+  
+  # File Exporter
+  writeRaster(ras_tilelist[[i]],filename = paste0("1.DataManagement/CovRasters/cov_metric_tiles/southeast/southeast_raw_",
+                                                  formatC(i,width = 3, format = "d", flag = "0"),".tif"), overwrite=T)
+  
+  # Progress bar closing
+  close(pb)
 }
 
-library(terra)
-r <- rast(matrix(1:25,nrow=5))
-r[] <-c(1,1,1,NA,NA,
-        1,1,1,NA,NA,
-        1,1,1,NA,NA,
-        NA,NA,NA,1,1,
-        NA,NA,NA,1,1)
 
-buffer_area <- 9
+#          [Metric Calculation]                                             ####
+#            [Importing Tiles]                                              ####
 
-patch_density <- function(x) {
-  val <- length(unique(na.omit(x)))
-  return(val / buffer_area)
-}
+tiles <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/southeast", pattern = "raw",full.names = T) 
 
-rr <- focal(r, 3 ,patch_density)
-plot(r)
-plot(rr)
+#            [Metric Calculation]                                           ####
+
+#               [Window settings]                                           ####
+buffer_radius <- 600
+
+fw <- ceiling(focalWeight(ras, buffer_radius, type='circle'))
+
+#               [Node Setup and Settings]                                   ####
+
+cl <- makeCluster(4)
+registerDoParallel(cl)
+
+clusterEvalQ(cl,
+             {
+               library(raster)
+               library(terra)
+               library(landscapemetrics)
+             })
+
+clusterExport(cl=cl, varlist=c("tiles","fw"), envir=environment())
+
+#               [Metric Calculation and export]                             ####
+
+# Landscape Shape Index
+length(tiles)
+
+foreach(i = 1:50, 
+        .errorhandling="pass",
+        .combine = "rbind") %dopar% {
+          
+          # Creating a Raster
+          ras <- rast(tiles[[i]])
+          
+          # Metric Calculation
+          cov <- window_lsm(landscape = ras,
+                            window = fw,
+                            what = "lsm_l_lsi",
+                            neighbourhood = 8,
+                            pad = T,
+                            na.rm=TRUE)
+          
+          # Raster Export
+          writeRaster(cov[[1]][[1]],
+                      filename = paste0("1.DataManagement/CovRasters/cov_metric_tiles/southeast/southeast_lsi_",
+                                        formatC(i,width = 3, format = "d", flag = "0"),".tif"), overwrite=T)
+          
+          return(i)
+        }
+
+#          [Mosaic and export]                                              ####
+#            [LSI]                                                          ####
+
+
+test_lsi_files <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/southeast",pattern = "lsi",full.names = T) %>% 
+  lapply(rast) %>% sprc() %>% mosaic()
+
+plot(test_lsi_files)
+
+
