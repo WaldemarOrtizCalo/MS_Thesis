@@ -19,6 +19,7 @@ library(doParallel)
 library(stringr)
 library(landscapemetrics)
 library(foreach)
+library(terra)
 
 #      Functions                                                            ####
 source("2.Chapter1/2.Functions/reclass_matrices.R")
@@ -33,7 +34,7 @@ unregister <- function() {
   
 }
 
-#      Data                                                                 ####
+#      Data [DO NOT RUN]                                                    ####
 #        [Deer Data]                                                        ####
 
 deer_all <- lapply(list.files(path = "1.DataManagement/CleanData/Chapter1_UsedAvailableLocations",
@@ -68,6 +69,91 @@ South_StudyArea <- Missouri_shp[which(lengths(South_StudyArea)!=0),]
 
 Southeast_StudyArea <- st_intersects(Missouri_shp,deer_sf_southeast)
 Southeast_StudyArea <- Missouri_shp[which(lengths(Southeast_StudyArea)!=0),]
+#        [Study Area Exports]                                               ####
+
+# North
+NLCD_North <- crop(Missouri_NLCD,North_StudyArea) %>% mask(North_StudyArea) %>% 
+  ratify() %>% 
+  reclassify(reclass_matrixNorth)
+
+writeRaster(NLCD_North,
+            filename = paste0("1.DataManagement/CovRasters/base_layers/north_nlcd.tif"),
+            overwrite = T)
+
+# South
+NLCD_South <- crop(Missouri_NLCD,South_StudyArea) %>% mask(South_StudyArea) %>% 
+  ratify() %>% 
+  reclassify(reclass_matrixSouth)
+
+writeRaster(NLCD_South,
+            filename = paste0("1.DataManagement/CovRasters/base_layers/south_nlcd.tif"),
+            overwrite = T)
+
+# Southeast
+NLCD_Southeast <- crop(Missouri_NLCD,Southeast_StudyArea) %>% mask(Southeast_StudyArea) %>% 
+  ratify() %>% 
+  reclassify(reclass_matrixSouth)
+
+writeRaster(NLCD_Southeast,
+            filename = paste0("1.DataManagement/CovRasters/base_layers/southeast_nlcd.tif"),
+            overwrite = T)
+
+###############################################################################
+#   [Data - Tile Subsetting Study Areas]                                    ####
+#      [NCLD Southeast]                                                     ####
+
+NLCD_Southeast <- rast("1.DataManagement\\CovRasters\\base_layers\\southeast_nlcd.tif") 
+#          [Data]                                                           ####
+
+# Base Raster
+ras <- NLCD_Southeast
+
+# Buffer Radius
+buffer_radius <- 600
+
+# Focal Window
+fw <- ceiling(focalWeight(ras, buffer_radius, type='circle'))
+
+#          [Creating Raster Polygon and Cropping]                           ####
+
+# Aggregates the Rasters
+ras_aggregated <- terra::aggregate(ras,200)
+
+# Creates a Polygon of the raster grid 
+ras_polygon <- as.polygons(ras_aggregated,dissolve=F,na.rm=F)
+
+# Expanding Polygon extents 
+
+base_extents <- foreach(i = 1:length(ras_polygon)) %do% {
+  ext(ras_polygon[i]) %>% as.vector()
+}
+
+extended_extents <- foreach(i = 1:length(ras_polygon)) %do% {
+  ext(ras_polygon[i]) %>% extend(c(nrow(fw)*40,ncol(fw)*40)) 
+}
+
+# Crops and Subsets the raster based on polygon
+ras_tilelist <- lapply(seq_along(extended_extents), function(i) terra::crop(ras, extended_extents[[i]]))
+
+#          [Exporting Subsetted Tiles]                                      ####
+
+# Establishing Progress Bar
+
+pb = txtProgressBar(min = 0, max = length(ras_tilelist), initial = 0,style = 3) 
+
+for (i in 1:length(ras_tilelist)) {
+  
+  # Progress Bar Iterator
+  setTxtProgressBar(pb,i)
+  
+  # File Exporter
+  writeRaster(ras_tilelist[[i]],filename = paste0("1.DataManagement/CovRasters/cov_metric_tiles/southeast/southeast_raw_",
+                                                  formatC(i,width = 3, format = "d", flag = "0"),".tif"), overwrite=T)
+  
+  # Progress bar closing
+  close(pb)
+}
+
 ###############################################################################
 #   [North]                                                                 ####
 
@@ -303,97 +389,64 @@ foreach(i = 1:length(lc_clasess)) %dopar% {
 ###############################################################################
 #   [Southeast]                                                             ####
 #      [NLCD raster]                                                        ####
+#        [Data]                                                             ####
 
-NLCD_Southeast <- crop(Missouri_NLCD,Southeast_StudyArea) %>% mask(Southeast_StudyArea) %>% 
-  ratify() %>% 
-  reclassify(reclass_matrixSouth)
+NLCD_Southeast <- rast("1.DataManagement\\CovRasters\\base_layers\\southeast_nlcd.tif") 
 
 #        [Proportion of Landcover]                                          ####
 
 # Unique Landcover types
-landcover_southeast_unique <- unique(NLCD_Southeast)
+landcover_southeast_unique <- unique(raster(NLCD_Southeast))
+
+# Buffer Radius
+buffer_radius <- 600
 
 for (i in 1:length(landcover_southeast_unique)) {
   print(paste0("Start of iteration ", i, " Time: ",Sys.time()))
-  proportion_raster_function(raster = NLCD_Southeast,
+  proportion_raster_function(raster = raster(NLCD_Southeast),
                              landcover_num = landcover_southeast_unique[i],
                              buffer_radius = buffer_radius,
                              export = T,
-                             export.filepath = "1.DataManagement/CovRasters/Southeast_")
+                             export.filepath = "1.DataManagement/CovRasters/cov_layers_final/southeast_")
   print(paste0("End of iteration ", i, " Time: ",Sys.time()))
 }
 
-
 #        [Landscape Metrics]                                                ####
-#          [Data]                                                           ####
-
-ras <- NLCD_Southeast %>% rast()
-
-#          [Creating Raster Polygon and Cropping]                           ####
-
-# Aggregates the Rasters
-ras_aggregated <- terra::aggregate(ras,200)
-
-# Creates a Polygon of the raster grid 
-ras_polygon <- as.polygons(ras_aggregated,dissolve=F,na.rm=F)
-
-plot(ras_polygon)
-plot(ras_aggregated)
-# Crops and Subsets the raster based on polygon
-ras_tilelist <- lapply(seq_along(ras_polygon), function(i) terra::crop(ras, ras_polygon[i]))
-
-#          [Exporting Subsetted Tiles]                                      ####
-
-# Establishing Progress Bar
-
-pb = txtProgressBar(min = 0, max = length(ras_tilelist), initial = 0,style = 3) 
-
-for (i in 1:length(ras_tilelist)) {
-  
-  # Progress Bar Iterator
-  setTxtProgressBar(pb,i)
-  
-  # File Exporter
-  writeRaster(ras_tilelist[[i]],filename = paste0("1.DataManagement/CovRasters/cov_metric_tiles/southeast/southeast_raw_",
-                                                  formatC(i,width = 3, format = "d", flag = "0"),".tif"), overwrite=T)
-  
-  # Progress bar closing
-  close(pb)
-}
-
-
-#          [Metric Calculation]                                             ####
-#            [Importing Tiles]                                              ####
+#          [Importing Tiles]                                                ####
 
 tiles <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/southeast", pattern = "raw",full.names = T) 
 
-#            [Metric Calculation]                                           ####
+#          [Window Settings]                                                ####
 
-#               [Window settings]                                           ####
 buffer_radius <- 600
 
 fw <- ceiling(focalWeight(ras, buffer_radius, type='circle'))
 
-#               [Node Setup and Settings]                                   ####
+#          [Node Setup and Settings]                                        ####
 
+# Cluster Number
 cl <- makeCluster(4)
 registerDoParallel(cl)
 
+# Exporting Packages
 clusterEvalQ(cl,
              {
                library(raster)
                library(terra)
                library(landscapemetrics)
+               library(tidyverse)
              })
 
-clusterExport(cl=cl, varlist=c("tiles","fw"), envir=environment())
+# Exporting data to clusters
+clusterExport(cl=cl, varlist=c("tiles","fw","base_extents"), envir=environment())
 
-#               [Metric Calculation and export]                             ####
+#            [Metric Calculation: LSI]                                      ####
 
-# Landscape Shape Index
-length(tiles)
+# Start
+print(paste0("Start: ",Sys.time()))
 
-foreach(i = 1:50, 
+# Function 
+foreach(i = 1:length(tiles), 
         .errorhandling="pass",
         .combine = "rbind") %dopar% {
           
@@ -408,21 +461,159 @@ foreach(i = 1:50,
                             pad = T,
                             na.rm=TRUE)
           
+          cov <- cov[[1]][[1]] %>% 
+            rast() %>% 
+            crop(ext(base_extents[[i]]))
+          
           # Raster Export
-          writeRaster(cov[[1]][[1]],
+          writeRaster(cov,
                       filename = paste0("1.DataManagement/CovRasters/cov_metric_tiles/southeast/southeast_lsi_",
                                         formatC(i,width = 3, format = "d", flag = "0"),".tif"), overwrite=T)
           
           return(i)
         }
 
-#          [Mosaic and export]                                              ####
-#            [LSI]                                                          ####
+# End 
+print(paste0("End: ",Sys.time()))
+
+#            [Metric Calculation: Contag]                                   ####
+
+# Start
+print(paste0("Start: ",Sys.time()))
+
+# Function 
+foreach(i = 1:length(tiles), 
+        .errorhandling="pass",
+        .combine = "rbind") %dopar% {
+          
+          # Creating a Raster
+          ras <- rast(tiles[[i]])
+          
+          # Metric Calculation
+          cov <- window_lsm(landscape = ras,
+                            window = fw,
+                            what = "lsm_l_contag",
+                            neighbourhood = 8,
+                            pad = T,
+                            na.rm=TRUE)
+          
+          cov <- cov[[1]][[1]] %>% 
+            rast() %>% 
+            crop(ext(base_extents[[i]]))
+          
+          # Raster Export
+          writeRaster(cov,
+                      filename = paste0("1.DataManagement/CovRasters/cov_metric_tiles/southeast/southeast_contag_",
+                                        formatC(i,width = 3, format = "d", flag = "0"),".tif"), overwrite=T)
+          
+          return(i)
+        }
+
+# End 
+print(paste0("End: ",Sys.time()))
+
+#            [Metric Calculation: SHDI]                                     ####
+
+# Start
+print(paste0("Start: ",Sys.time()))
+
+# Function 
+foreach(i = 1:length(tiles), 
+        .errorhandling="pass",
+        .combine = "rbind") %dopar% {
+          
+          # Creating a Raster
+          ras <- rast(tiles[[i]])
+          
+          # Metric Calculation
+          cov <- window_lsm(landscape = ras,
+                            window = fw,
+                            what = "lsm_l_shdi",
+                            neighbourhood = 8,
+                            pad = T,
+                            na.rm=TRUE)
+          
+          cov <- cov[[1]][[1]] %>% 
+            rast() %>% 
+            crop(ext(base_extents[[i]]))
+          
+          # Raster Export
+          writeRaster(cov,
+                      filename = paste0("1.DataManagement/CovRasters/cov_metric_tiles/southeast/southeast_shdi_",
+                                        formatC(i,width = 3, format = "d", flag = "0"),".tif"), overwrite=T)
+          
+          return(i)
+        }
+
+# End 
+print(paste0("End: ",Sys.time()))
+
+#            [Metric Calculation: MeanShape]                                ####
+
+# Start
+print(paste0("Start: ",Sys.time()))
+length(tiles)
+# Function 
+foreach(i = 1:10, 
+        .errorhandling="pass",
+        .combine = "rbind") %dopar% {
+          
+          # Creating a Raster
+          ras <- rast(tiles[[i]])
+          
+          # Metric Calculation
+          cov <- window_lsm(landscape = ras,
+                            window = fw,
+                            what = "lsm_l_shape_mn",
+                            neighbourhood = 8,
+                            pad = T,
+                            na.rm=TRUE)
+          
+          cov <- cov[[1]][[1]] %>% 
+            rast() %>% 
+            crop(ext(base_extents[[i]]))
+          
+          # Raster Export
+          writeRaster(cov,
+                      filename = paste0("1.DataManagement/CovRasters/cov_metric_tiles/southeast/southeast_meanshape_",
+                                        formatC(i,width = 3, format = "d", flag = "0"),".tif"), overwrite=T)
+          
+          return(i)
+        }
+
+# End 
+print(paste0("End: ",Sys.time()))
 
 
-test_lsi_files <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/southeast",pattern = "lsi",full.names = T) %>% 
-  lapply(rast) %>% sprc() %>% mosaic()
+###############################################################################
+#   [Mosaic of Covariate Tiles and Export]                                  ####
+#      [Southeast]                                                          ####
+#        [LSI]                                                              ####
 
-plot(test_lsi_files)
+southeast_lsi <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/southeast",pattern = "lsi",full.names = T) %>% 
+  lapply(rast) %>% 
+  sprc() %>% 
+  mosaic()
 
+#        [Contag]                                                           ####
 
+southeast_contag <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/southeast",pattern = "contag",full.names = T) %>% 
+  lapply(rast) %>% 
+  sprc() %>% 
+  mosaic()
+
+#        [SHDI]                                                             ####
+
+southeast_shdi <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/southeast",pattern = "shdi",full.names = T) %>% 
+  lapply(rast) %>% 
+  sprc() %>% 
+  mosaic()
+
+#        [MeanShape]                                                        ####
+
+southeast_meanshape <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/southeast",pattern = "meanshape",full.names = T) %>% 
+  lapply(rast) %>% 
+  sprc() %>% 
+  mosaic()
+
+###############################################################################
