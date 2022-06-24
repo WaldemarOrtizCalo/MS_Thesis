@@ -30,6 +30,9 @@ set.seed(69420)
 data <- sample(x = c(NA,1,2,3,4),size = 1000000,replace = T)
 
 ras <- rast(matrix(data, ncol = 1000, nrow = 1000,byrow = T))
+
+fw <- ceiling(focalWeight(ras, 10, type='circle'))
+
 #      [Creating Raster Polygon and Cropping]                               ####
 
 # Aggregates the Rasters
@@ -38,8 +41,18 @@ ras_aggregated <- terra::aggregate(ras,100)
 # Creates a Polygon of the raster grid 
 ras_polygon <- as.polygons(ras_aggregated,dissolve=F,na.rm=F)
 
+# Expanding Polygon extents 
+
+base_extents <- foreach(i = 1:length(ras_polygon)) %do% {
+  ext(ras_polygon[i]) %>% as.vector()
+}
+
+extended_extents <- foreach(i = 1:length(ras_polygon)) %do% {
+  ext(ras_polygon[i]) %>% extend(c(nrow(fw),ncol(fw))) 
+}
+
 # Crops and Subsets the raster based on polygon
-ras_tilelist <- lapply(seq_along(ras_polygon), function(i) terra::crop(ras, ras_polygon[i]))
+ras_tilelist <- lapply(seq_along(extended_extents), function(i) terra::crop(ras, extended_extents[[i]]))
 
 #      [Exporting Subsetted Tiles]                                          ####
 
@@ -82,13 +95,16 @@ clusterEvalQ(cl,
                library(raster)
                library(terra)
                library(landscapemetrics)
+               library(tidyverse)
              })
 
-clusterExport(cl=cl, varlist=c("tiles","fw"), envir=environment())
+clusterExport(cl=cl, varlist=c("tiles","fw","base_extents"), envir=environment())
 
 #           [Metric Calculation and export]                                 ####
 
 # Landscape Shape Index
+
+
 foreach(i = 1:length(tiles), 
         .errorhandling="pass",
         .combine = "rbind") %dopar% {
@@ -104,8 +120,12 @@ foreach(i = 1:length(tiles),
                             pad = T,
                             na.rm=TRUE)
           
+          cov <- cov[[1]][[1]] %>% 
+            rast() %>% 
+            crop(ext(base_extents[[i]]))
+          
           # Raster Export
-          writeRaster(cov[[1]][[1]],
+          writeRaster(cov,
                       filename = paste0("1.DataManagement/CovRasters/cov_metric_tiles/Test/test_lsi_",
                                         formatC(i,width = 3, format = "d", flag = "0"),".tif"), overwrite=T)
           
@@ -116,8 +136,11 @@ foreach(i = 1:length(tiles),
 #        [LSI]                                                              ####
 
 
-test_lsi_files <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/Test",pattern = "lsi",full.names = T) %>% 
-  lapply(rast) %>% sprc() %>% mosaic()
+test_lsi_files <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/Test",pattern = "lsi",full.names = T) %>%
+  str_subset(pattern = ".aux", negate = T) %>% 
+  lapply(rast) %>% 
+  sprc() %>% 
+  mosaic()
 
 plot(test_lsi_files)
 
