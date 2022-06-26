@@ -420,12 +420,12 @@ tiles <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/southeast", pa
 
 buffer_radius <- 600
 
-fw <- ceiling(focalWeight(ras, buffer_radius, type='circle'))
+fw <- ceiling(focalWeight(rast(tiles[1]), buffer_radius, type='circle'))
 
 #          [Node Setup and Settings]                                        ####
 
 # Cluster Number
-cl <- makeCluster(4)
+cl <- makeCluster(5)
 registerDoParallel(cl)
 
 # Exporting Packages
@@ -552,9 +552,9 @@ print(paste0("End: ",Sys.time()))
 
 # Start
 print(paste0("Start: ",Sys.time()))
-length(tiles)
+
 # Function 
-foreach(i = 1:10, 
+foreach(i = 210:length(tiles), 
         .errorhandling="pass",
         .combine = "rbind") %dopar% {
           
@@ -590,30 +590,73 @@ print(paste0("End: ",Sys.time()))
 #      [Southeast]                                                          ####
 #        [LSI]                                                              ####
 
-southeast_lsi <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/southeast",pattern = "lsi",full.names = T) %>% 
-  lapply(rast) %>% 
-  sprc() %>% 
-  mosaic()
+lsi_mos_tiles <- list()
+
+for (i in 1:length(tile_val)) {
+  print(i)
+  lsi_mos_tiles[i] <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/southeast",pattern = "lsi",full.names = T) %>% 
+    .[tile_val[[i]]] %>% 
+    lapply(rast) %>% 
+    sprc() %>% 
+    mosaic()
+}
+
+lsi_mos <- sprc(lsi_mos_tiles) %>% mosaic()
+
+writeRaster(lsi_mos,
+            filename = paste0("1.DataManagement/CovRasters/cov_layers_final/southeast/southeast_lsi_final.tif"))
 
 #        [Contag]                                                           ####
 
-southeast_contag <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/southeast",pattern = "contag",full.names = T) %>% 
-  lapply(rast) %>% 
-  sprc() %>% 
-  mosaic()
+contag_mos_tiles <- list()
+
+for (i in 1:length(tile_val)) {
+  print(i)
+  contag_mos_tiles[i] <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/southeast",pattern = "contag",full.names = T) %>% 
+    .[tile_val[[i]]] %>% 
+    lapply(rast) %>% 
+    sprc() %>% 
+    mosaic()
+}
+
+contag_mos <- sprc(contag_mos_tiles) %>% mosaic()
+
+writeRaster(contag_mos,
+            filename = paste0("1.DataManagement/CovRasters/cov_layers_final/southeast/southeast_contag_final.tif"))
 
 #        [SHDI]                                                             ####
 
-southeast_shdi <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/southeast",pattern = "shdi",full.names = T) %>% 
-  lapply(rast) %>% 
-  sprc() %>% 
-  mosaic()
+shdi_mos_tiles <- list()
+
+for (i in 1:length(tile_val)) {
+  print(i)
+  shdi_mos_tiles[i] <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/southeast",pattern = "shdi",full.names = T) %>% 
+    .[tile_val[[i]]] %>% 
+    lapply(rast) %>% 
+    sprc() %>% 
+    mosaic()
+}
+
+shdi_mos <- sprc(shdi_mos_tiles) %>% mosaic()
+
+writeRaster(shdi_mos,
+            filename = paste0("1.DataManagement/CovRasters/cov_layers_final/southeast/southeast_shdi_final.tif"))
 
 #        [MeanShape]                                                        ####
 
-southeast_meanshape <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/southeast",pattern = "meanshape",full.names = T) %>% 
-  lapply(rast) %>% 
-  sprc() %>% 
-  mosaic()
+meanshape_mos_tiles <- list()
 
+for (i in 1:length(tile_val)) {
+  print(i)
+  meanshape_mos_tiles[i] <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/southeast",pattern = "meanshape",full.names = T) %>% 
+    .[tile_val[[i]]] %>% 
+    lapply(rast) %>% 
+    sprc() %>% 
+    mosaic()
+}
+
+meanshape_mos <- sprc(meanshape_mos_tiles) %>% mosaic()
+
+writeRaster(meanshape_mos,
+            filename = paste0("1.DataManagement/CovRasters/cov_layers_final/southeast/southeast_meanshape_final.tif"))
 ###############################################################################
