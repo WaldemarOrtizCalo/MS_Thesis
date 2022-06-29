@@ -23,9 +23,6 @@ library(gridExtra)
 #      Functions                                                            ####
 
 #      Data                                                                 ####
-
-#      Data                                                                 ####
-
 #        [Deer Data]                                                        ####
 
 
@@ -119,3 +116,5 @@ for (i in 1:length(cov_chosen)) {
          width = 8)
 }
 
+
+###############################################################################
