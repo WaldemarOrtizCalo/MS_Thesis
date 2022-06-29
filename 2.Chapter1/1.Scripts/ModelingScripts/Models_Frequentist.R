@@ -719,46 +719,82 @@ for (i in 1:length(file_list)) {
 #      [Southeast]                                                          ####
 #        [Model import]                                                     ####
 
-Southeast_model_final <- readRDS("2.Chapter1/3.Output/Models/Southeast_model_final.rda") 
+Southeast_model_final <- readRDS("2.Chapter1/3.Output/Models/Southeast_model_final.rda")
+Southeast_model_final_scaled <- readRDS("2.Chapter1/3.Output/Models/Southeast_model_final_scaled.rda") 
+
+#        [Model Inspection]                                                 ####
+
+summary(Southeast_model_final)
+summary(Southeast_model_final_scaled)
 
 #        [Effect Plots]                                                     ####
+#           [Data Prep]                                                     ####
+
+
+# Making data into a dataframe
 
 data_southeast_model <- broom::tidy(Southeast_model_final$model) %>% 
-  add_column("plot_index"= rep(x = c(1,2,3),each = nrow(.)/3))
+  add_column("plot_index"= rep(x = c(1,2,3),each = nrow(.)/3)) %>% 
+  dplyr::mutate(expcoef = exp(estimate)) %>% 
+  dplyr::mutate(lower = exp(estimate - qnorm(0.025) * std.error)) %>% 
+  dplyr::mutate(upper = exp(estimate + qnorm(0.025) * std.error)) 
+
+# Renaming covariate
+cov_names <- data.frame("term" = data_southeast_model$term,
+                        "term2" = c("Contagion",
+                                  "Landscape Shape Index",
+                                  "Proportion of Water",
+                                  "Proportion of Wetland",
+                                  "Proportion of Developed",
+                                  "Proportion of Decidious Forest",
+                                  "Proportion of Evergreen Forest",
+                                  "Proportion of Mixed Forest",
+                                  "Proportion of Shrub",
+                                  "Mean Patch Area (Evergreen Forest)",
+                                  "Mean Patch Area (Mixed Forest)",
+                                  "Mean Patch Area (Grassland)"))
+
+# Merging
+
+data_southeast_model <- merge(data_southeast_model,cov_names,by = "term")
+
+#           [Plots]                                                         ####
+
 
 p1 <- ggplot(subset(data_southeast_model, plot_index == 1),
-       aes( x = term , y = estimate))+
-  geom_point()
+             aes( x = term2 , y = expcoef))+
+  geom_point()+
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2)+
+  expand_limits(y=c(0,1.25))+
+  geom_hline(yintercept = 1)+
+  theme(axis.title.x = element_blank()) +
+  ylab("Log-Odds")
 
 p2 <- ggplot(subset(data_southeast_model, plot_index == 2),
-       aes( x = term , y = estimate))+
-  geom_point()
+             aes( x = term2 , y = expcoef))+
+  geom_point()+
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2)+
+  expand_limits(y=c(0,1.25))+
+  geom_hline(yintercept = 1)+
+  theme(axis.title.x = element_blank())+
+  ylab("Log-Odds")
 
 p3 <- ggplot(subset(data_southeast_model, plot_index == 3),
-       aes( x = term , y = estimate))+
-  geom_point()
-
-
-grid.arrange(p1,p2,p3,nrow = 3)
-
-
-p4 <- ggplot(subset(data_southeast_model, plot_index == 1),
-             aes( x = term , y = exp(estimate)))+
+             aes( x = term2 , y = expcoef))+
   geom_point()+
-  theme(axis.title.x = element_blank())
-
-p5 <- ggplot(subset(data_southeast_model, plot_index == 2),
-             aes( x = term , y = exp(estimate)))+
-  geom_point()+
-  theme(axis.title.x = element_blank())
-
-p6 <- ggplot(subset(data_southeast_model, plot_index == 3),
-             aes( x = term , y = exp(estimate)))+
-  geom_point()+
-  labs(x = "Covariates")
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2)+
+  expand_limits(y=c(0,1.25))+
+  geom_hline(yintercept = 1)+
+  ylab("Log-Odds")+
+  xlab("Covariate")
 
 
-grid.arrange(p4,p5,p6,nrow = 3)
+plot <- grid.arrange(p1,p2,p3,nrow = 3)
 
-
-
+ggsave(filename = "z.Figures/EffectPlot_Southeast_Frequentist.png",
+       plot = plot,
+       device = "png",
+       width = 12,
+       height = 8,
+       units = "in",
+       dpi = 300)
