@@ -83,7 +83,7 @@ cov_names <- c("Contagion",
                "Proportion of Water",
                "Proportion of Wetland",
                "Proportion of Developed",
-               "Proportion of Decidious Forest",
+               "Proportion of Deciduous Forest",
                "Proportion of Evergreen Forest",
                "Proportion of Mixed Forest",
                "Proportion of Shrub",
@@ -93,13 +93,23 @@ cov_names <- c("Contagion",
 
 cov_chosen <- c(18,19,21,22,23,25,26,27,28,14,15,16)
 
+prediction <- data_southeast[c(1:12,cov_chosen)]
+
+pred <- predict(southeast_model_clogit,newdata = prediction)
+
+prediction$prob <- exp(pred)/(1+exp(pred))
+
+pred_df <- data.frame(data_southeast[cov_chosen[i]],prediction$prob)
+
+
 for (i in 1:length(cov_chosen)) {
   print(i)
-  pred <- data.frame(data_southeast[cov_chosen[i]],probabilities)
   
-  plot <- ggplot(pred, aes(x = pred[,1],y = pred[,2]))+
+  pred_df <- data.frame(data_southeast[cov_chosen[i]],prediction$prob)
+  
+  plot <- ggplot(pred_df, aes(x =  pred_df[,1],y = pred_df[,2])) +
     stat_smooth(method="glm", method.args = list(family="binomial"))+
-    labs(x = cov_names[i], y = "Probility of Use")
+    labs(x = cov_names[i], y = "Probability of Use")
   
   ggsave(filename = paste0("Southeast_PredictiveProbability_",cov_names[i],".png"),
          plot = plot,
@@ -108,3 +118,4 @@ for (i in 1:length(cov_chosen)) {
          height = 6,
          width = 8)
 }
+
