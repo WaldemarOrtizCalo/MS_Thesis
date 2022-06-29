@@ -554,7 +554,7 @@ print(paste0("End: ",Sys.time()))
 print(paste0("Start: ",Sys.time()))
 
 # Function 
-foreach(i = 210:length(tiles), 
+foreach(i = 425:length(tiles), 
         .errorhandling="pass",
         .combine = "rbind") %dopar% {
           
