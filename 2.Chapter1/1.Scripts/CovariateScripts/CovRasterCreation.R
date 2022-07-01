@@ -101,10 +101,10 @@ writeRaster(NLCD_Southeast,
 ###############################################################################
 #   [Data - Tile Subsetting Study Areas]                                    ####
 #      [NCLD North]                                                         ####
-
-NLCD_North <- rast("1.DataManagement\\CovRasters\\base_layers\\north_nlcd.tif") 
-
 #          [Data]                                                           ####
+
+# Import
+NLCD_North <- rast("1.DataManagement\\CovRasters\\base_layers\\north_nlcd.tif") 
 
 # Base Raster
 ras <- NLCD_North
@@ -156,10 +156,19 @@ for (i in 1:length(ras_tilelist)) {
 }
 
 #      [NCLD South]                                                         ####
+#          [Data]                                                           ####
+
+# Base Raster
+ras <- NLCD_South
+
+# Buffer Radius
+buffer_radius <- 600
+
+# Focal Window
+fw <- ceiling(focalWeight(ras, buffer_radius, type='circle'))
+
 
 NLCD_South <- rast("1.DataManagement\\CovRasters\\base_layers\\south_nlcd.tif") 
-
-#          [Data]                                                           ####
 
 # Base Raster
 ras <- NLCD_South
@@ -303,7 +312,7 @@ fw <- ceiling(focalWeight(rast(tiles[1]), buffer_radius, type='circle'))
 #          [Node Setup and Settings]                                        ####
 
 # Cluster Number
-cl <- makeCluster(5)
+cl <- makeCluster(4)
 registerDoParallel(cl)
 
 # Exporting Packages
@@ -346,7 +355,7 @@ foreach(i = 1:length(tiles),
           # Raster Export
           writeRaster(cov,
                       filename = paste0("1.DataManagement/CovRasters/cov_metric_tiles/north/north_lsi_",
-                                        formatC(i,width = 3, format = "d", flag = "0"),".tif"), overwrite=T)
+                                        formatC(i,width = 4, format = "d", flag = "0"),".tif"), overwrite=T)
           
           return(i)
         }
@@ -382,7 +391,7 @@ foreach(i = 1:length(tiles),
           # Raster Export
           writeRaster(cov,
                       filename = paste0("1.DataManagement/CovRasters/cov_metric_tiles/north/north_contag_",
-                                        formatC(i,width = 3, format = "d", flag = "0"),".tif"), overwrite=T)
+                                        formatC(i,width = 4, format = "d", flag = "0"),".tif"), overwrite=T)
           
           return(i)
         }
@@ -418,7 +427,7 @@ foreach(i = 1:length(tiles),
           # Raster Export
           writeRaster(cov,
                       filename = paste0("1.DataManagement/CovRasters/cov_metric_tiles/north/north_shdi_",
-                                        formatC(i,width = 3, format = "d", flag = "0"),".tif"), overwrite=T)
+                                        formatC(i,width = 4, format = "d", flag = "0"),".tif"), overwrite=T)
           
           return(i)
         }
@@ -454,7 +463,7 @@ foreach(i = 1:length(tiles),
           # Raster Export
           writeRaster(cov,
                       filename = paste0("1.DataManagement/CovRasters/cov_metric_tiles/north/north_meanshape_",
-                                        formatC(i,width = 3, format = "d", flag = "0"),".tif"), overwrite=T)
+                                        formatC(i,width = 4, format = "d", flag = "0"),".tif"), overwrite=T)
           
           return(i)
         }
@@ -545,7 +554,7 @@ foreach(i = 1:length(tiles),
           # Raster Export
           writeRaster(cov,
                       filename = paste0("1.DataManagement/CovRasters/cov_metric_tiles/south/south_lsi_",
-                                        formatC(i,width = 3, format = "d", flag = "0"),".tif"), overwrite=T)
+                                        formatC(i,width = 4, format = "d", flag = "0"),".tif"), overwrite=T)
           
           return(i)
         }
@@ -581,7 +590,7 @@ foreach(i = 1:length(tiles),
           # Raster Export
           writeRaster(cov,
                       filename = paste0("1.DataManagement/CovRasters/cov_metric_tiles/south/south_contag_",
-                                        formatC(i,width = 3, format = "d", flag = "0"),".tif"), overwrite=T)
+                                        formatC(i,width = 4, format = "d", flag = "0"),".tif"), overwrite=T)
           
           return(i)
         }
@@ -617,7 +626,7 @@ foreach(i = 1:length(tiles),
           # Raster Export
           writeRaster(cov,
                       filename = paste0("1.DataManagement/CovRasters/cov_metric_tiles/south/south_shdi_",
-                                        formatC(i,width = 3, format = "d", flag = "0"),".tif"), overwrite=T)
+                                        formatC(i,width = 4, format = "d", flag = "0"),".tif"), overwrite=T)
           
           return(i)
         }
@@ -653,7 +662,7 @@ foreach(i = 1:length(tiles),
           # Raster Export
           writeRaster(cov,
                       filename = paste0("1.DataManagement/CovRasters/cov_metric_tiles/south/south_meanshape_",
-                                        formatC(i,width = 3, format = "d", flag = "0"),".tif"), overwrite=T)
+                                        formatC(i,width = 4, format = "d", flag = "0"),".tif"), overwrite=T)
           
           return(i)
         }
