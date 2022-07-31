@@ -22,128 +22,15 @@ library(foreach)
 library(terra)
 
 ###############################################################################
-#   [Test]                                                                  ####
-#      [Data]                                                               ####
-
-set.seed(69420)
-
-data <- sample(x = c(NA,1,2,3,4),size = 1000000,replace = T)
-
-ras <- rast(matrix(data, ncol = 1000, nrow = 1000,byrow = T))
-
-fw <- ceiling(focalWeight(ras, 10, type='circle'))
-
-#      [Creating Raster Polygon and Cropping]                               ####
-
-# Aggregates the Rasters
-ras_aggregated <- terra::aggregate(ras,100)
-
-# Creates a Polygon of the raster grid 
-ras_polygon <- as.polygons(ras_aggregated,dissolve=F,na.rm=F)
-
-# Expanding Polygon extents 
-
-base_extents <- foreach(i = 1:length(ras_polygon)) %do% {
-  ext(ras_polygon[i]) %>% as.vector()
-}
-
-extended_extents <- foreach(i = 1:length(ras_polygon)) %do% {
-  ext(ras_polygon[i]) %>% extend(c(nrow(fw),ncol(fw))) 
-}
-
-# Crops and Subsets the raster based on polygon
-ras_tilelist <- lapply(seq_along(extended_extents), function(i) terra::crop(ras, extended_extents[[i]]))
-
-#      [Exporting Subsetted Tiles]                                          ####
-
-# Establishing Progress Bar
-
-pb = txtProgressBar(min = 0, max = length(ras_tilelist), initial = 0,style = 3) 
-
-for (i in 1:length(ras_tilelist)) {
-  
-  # Progress Bar Iterator
-  setTxtProgressBar(pb,i)
-  
-  # File Exporter
-  writeRaster(ras_tilelist[[i]],filename = paste0("1.DataManagement/CovRasters/cov_metric_tiles/Test/test_raw_",
-                                                  formatC(i,width = 3, format = "d", flag = "0"),".tif"), overwrite=T)
-  
-  # Progress bar closing
-  close(pb)
-}
+# Road Layers
 
 
-#      [Metric Calculation]                                                 ####
-#        [Importing Tiles]                                                  ####
+library(sf)
+library(raster)
+library(stars)
 
-tiles <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/Test", pattern = "raw",full.names = T) 
+template <- raster("1.DataManagement\\CovRasters\\base_layers\\north_nlcd.tif")
+rds <- st_read("1.DataManagement/CleanData/Missouri_Roads.shp")
 
-#        [Metric Calculation]                                               ####
-
-#           [Window settings]                                               ####
-
-fw <- ceiling(focalWeight(ras, 10, type='circle'))
-
-#           [Node Setup and Settings]                                       ####
-
-cl <- makeCluster(4)
-registerDoParallel(cl)
-
-clusterEvalQ(cl,
-             {
-               library(raster)
-               library(terra)
-               library(landscapemetrics)
-               library(tidyverse)
-             })
-
-clusterExport(cl=cl, varlist=c("tiles","fw","base_extents"), envir=environment())
-
-#           [Metric Calculation and export]                                 ####
-
-# Landscape Shape Index
-
-
-foreach(i = 1:length(tiles), 
-        .errorhandling="pass",
-        .combine = "rbind") %dopar% {
-          
-          # Creating a Raster
-          ras <- rast(tiles[[i]])
-          
-          # Metric Calculation
-          cov <- window_lsm(landscape = ras,
-                            window = fw,
-                            what = "lsm_l_lsi",
-                            neighbourhood = 8,
-                            pad = T,
-                            na.rm=TRUE)
-          
-          cov <- cov[[1]][[1]] %>% 
-            rast() %>% 
-            crop(ext(base_extents[[i]]))
-          
-          # Raster Export
-          writeRaster(cov,
-                      filename = paste0("1.DataManagement/CovRasters/cov_metric_tiles/Test/test_lsi_",
-                                        formatC(i,width = 3, format = "d", flag = "0"),".tif"), overwrite=T)
-          
-          return(i)
-        }
- 
-#      [Mosaic]                                                             ####
-#        [LSI]                                                              ####
-
-
-test_lsi_files <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/Test",pattern = "lsi",full.names = T) %>%
-  str_subset(pattern = ".aux", negate = T) %>% 
-  lapply(rast) %>% 
-  sprc() %>% 
-  mosaic()
-
-plot(test_lsi_files)
-
-
-
-###############################################################################
+rds_rast<-st_rasterize(rds, template = template)
+a##################
