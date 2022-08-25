@@ -872,11 +872,298 @@ print(paste0("End: ",Sys.time()))
 
 ###############################################################################
 #   [Mosaic of Covariate Tiles and Export]                                  ####
-#      [Southeast]                                                          ####
+#      [North]                                                              ####
+
+# Checking How many tiles there are for the study area 
+list.files("1.DataManagement/CovRasters/cov_metric_tiles/north",pattern = "contag",full.names = T) %>% 
+  length()
+
+# Indexing List
+
+tile_val <- list(1:100,
+                 101:200,
+                 201:300,
+                 301:400,
+                 401:500,
+                 501:600,
+                 601:700,
+                 701:800,
+                 801:900,
+                 901:1000,
+                 1001:1100,
+                 1101:1200,
+                 1201:1300,
+                 1301:1400,
+                 1401:1430)
+
 #        [LSI]                                                              ####
 
+# Making an empty list for raster tiles
 lsi_mos_tiles <- list()
 
+# For loop to create tile subsets
+for (i in 1:length(tile_val)) {
+  print(i)
+  lsi_mos_tiles[i] <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/north",pattern = "lsi",full.names = T) %>% 
+    .[tile_val[[i]]] %>% 
+    lapply(rast) %>% 
+    sprc() %>% 
+    mosaic()
+}
+
+# Creating a Mosaic of the tiles
+lsi_mos <- sprc(lsi_mos_tiles) %>% mosaic()
+
+# Exporting Mosaic
+writeRaster(lsi_mos,
+            filename = paste0("1.DataManagement/CovRasters/cov_layers_final/north/north_lsi_final.tif"),
+            overwrite = T)
+
+# Removing big object post export and then cleaning memory 
+rm(lsi_mos_tiles)
+rm(lsi_mos)
+gc()
+
+#        [Contag]                                                           ####
+# Making an empty list for raster tiles
+contag_mos_tiles <- list()
+
+# For loop to create tile subsets
+for (i in 1:length(tile_val)) {
+  print(i)
+  contag_mos_tiles[i] <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/north",pattern = "contag",full.names = T) %>% 
+    .[tile_val[[i]]] %>% 
+    lapply(rast) %>% 
+    sprc() %>% 
+    mosaic()
+}
+
+# Creating a Mosaic of the tiles
+contag_mos <- sprc(contag_mos_tiles) %>% mosaic()
+
+# Exporting Mosaic
+writeRaster(contag_mos,
+            filename = paste0("1.DataManagement/CovRasters/cov_layers_final/north/north_contag_final.tif"),
+            overwrite = T)
+
+# Removing big object post export and then cleaning memory 
+rm(contag_mos_tiles)
+rm(contag_mos)
+gc()
+
+#        [SHDI]                                                             ####
+
+# Making an empty list for raster tiles
+shdi_mos_tiles <- list()
+
+# For loop to create tile subsets
+for (i in 1:length(tile_val)) {
+  print(i)
+  shdi_mos_tiles[i] <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/north",pattern = "shdi",full.names = T) %>% 
+    .[tile_val[[i]]] %>% 
+    lapply(rast) %>% 
+    sprc() %>% 
+    mosaic()
+}
+
+# Creating a Mosaic of the tiles
+shdi_mos <- sprc(shdi_mos_tiles) %>% mosaic()
+
+# Exporting Mosaic
+writeRaster(shdi_mos,
+            filename = paste0("1.DataManagement/CovRasters/cov_layers_final/north/north_shdi_final.tif"),
+            overwrite = T)
+
+# Removing big object post export and then cleaning memory 
+rm(shdi_mos_tiles)
+rm(shdi_mos)
+gc()
+
+#        [MeanShape]                                                        ####
+
+# Making an empty list for raster tiles
+meanshape_mos_tiles <- list()
+
+# For loop to create tile subsets
+for (i in 1:length(tile_val)) {
+  print(i)
+  meanshape_mos_tiles[i] <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/north",pattern = "meanshape",full.names = T) %>% 
+    .[tile_val[[i]]] %>% 
+    lapply(rast) %>% 
+    sprc() %>% 
+    mosaic()
+}
+
+# Creating a Mosaic of the tiles
+meanshape_mos <- sprc(meanshape_mos_tiles) %>% mosaic()
+
+# Exporting Mosaic
+writeRaster(meanshape_mos,
+            filename = paste0("1.DataManagement/CovRasters/cov_layers_final/north/north_meanshape_final.tif"),
+            overwrite = T)
+
+# Removing big object post export and then cleaning memory 
+rm(meanshape_mos_tiles)
+rm(meanshape_mos)
+gc()
+
+#      [South]                                                              ####
+
+# Checking How many tiles there are for the study area 
+list.files("1.DataManagement/CovRasters/cov_metric_tiles/south",pattern = "raw",full.names = T) %>% 
+  length()
+
+# Indexing List
+
+tile_val <- list(1:100,
+                 101:200,
+                 201:300,
+                 301:400,
+                 401:500,
+                 501:600,
+                 601:700,
+                 701:800,
+                 801:900,
+                 901:1000,
+                 1001:1100,
+                 1101:1200,
+                 1201:1300,
+                 1301:1400,
+                 1401:1500,
+                 1501:1600,
+                 1601:1665)
+
+#        [LSI]                                                              ####
+
+# Making an empty list for raster tiles
+lsi_mos_tiles <- list()
+
+# For loop to create tile subsets
+for (i in 1:length(tile_val)) {
+  print(i)
+  lsi_mos_tiles[i] <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/south",pattern = "lsi",full.names = T) %>% 
+    .[tile_val[[i]]] %>% 
+    lapply(rast) %>% 
+    sprc() %>% 
+    mosaic()
+}
+
+# Creating a Mosaic of the tiles
+lsi_mos <- sprc(lsi_mos_tiles) %>% mosaic()
+
+# Exporting Mosaic
+writeRaster(lsi_mos,
+            filename = paste0("1.DataManagement/CovRasters/cov_layers_final/south/south_lsi_final.tif"),
+            overwrite = T)
+
+# Removing big object post export and then cleaning memory 
+rm(lsi_mos_tiles)
+rm(lsi_mos)
+gc()
+
+#        [Contag]                                                           ####
+# Making an empty list for raster tiles
+contag_mos_tiles <- list()
+
+# For loop to create tile subsets
+for (i in 1:length(tile_val)) {
+  print(i)
+  contag_mos_tiles[i] <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/south",pattern = "contag",full.names = T) %>% 
+    .[tile_val[[i]]] %>% 
+    lapply(rast) %>% 
+    sprc() %>% 
+    mosaic()
+}
+
+# Creating a Mosaic of the tiles
+contag_mos <- sprc(contag_mos_tiles) %>% mosaic()
+
+# Exporting Mosaic
+writeRaster(contag_mos,
+            filename = paste0("1.DataManagement/CovRasters/cov_layers_final/south/south_contag_final.tif"),
+            overwrite = T)
+
+# Removing big object post export and then cleaning memory 
+rm(contag_mos_tiles)
+rm(contag_mos)
+gc()
+
+#        [SHDI]                                                             ####
+
+# Making an empty list for raster tiles
+shdi_mos_tiles <- list()
+
+# For loop to create tile subsets
+for (i in 1:length(tile_val)) {
+  print(i)
+  shdi_mos_tiles[i] <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/south",pattern = "shdi",full.names = T) %>% 
+    .[tile_val[[i]]] %>% 
+    lapply(rast) %>% 
+    sprc() %>% 
+    mosaic()
+}
+
+# Creating a Mosaic of the tiles
+shdi_mos <- sprc(shdi_mos_tiles) %>% mosaic()
+
+# Exporting Mosaic
+writeRaster(shdi_mos,
+            filename = paste0("1.DataManagement/CovRasters/cov_layers_final/south/south_shdi_final.tif"),
+            overwrite = T)
+
+# Removing big object post export and then cleaning memory 
+rm(shdi_mos_tiles)
+rm(shdi_mos)
+gc()
+
+#        [MeanShape]                                                        ####
+
+# Making an empty list for raster tiles
+meanshape_mos_tiles <- list()
+
+# For loop to create tile subsets
+for (i in 1:length(tile_val)) {
+  print(i)
+  meanshape_mos_tiles[i] <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/south",pattern = "meanshape",full.names = T) %>% 
+    .[tile_val[[i]]] %>% 
+    lapply(rast) %>% 
+    sprc() %>% 
+    mosaic()
+}
+
+# Creating a Mosaic of the tiles
+meanshape_mos <- sprc(meanshape_mos_tiles) %>% mosaic()
+
+# Exporting Mosaic
+writeRaster(meanshape_mos,
+            filename = paste0("1.DataManagement/CovRasters/cov_layers_final/south/south_meanshape_final.tif"),
+            overwrite = T)
+
+# Removing big object post export and then cleaning memory 
+rm(meanshape_mos_tiles)
+rm(meanshape_mos)
+gc()
+
+#      [Southeast]                                                          ####
+
+# Checking How many tiles there are for the study area 
+list.files("1.DataManagement/CovRasters/cov_metric_tiles/southeast",pattern = "raw",full.names = T) %>% 
+  length()
+
+# Indexing List
+
+tile_val <- list(1:100,
+                 101:200,
+                 201:300,
+                 301:400,
+                 401:500)
+
+#        [LSI]                                                              ####
+
+# Making an empty list for raster tiles
+lsi_mos_tiles <- list()
+
+# For loop to create tile subsets
 for (i in 1:length(tile_val)) {
   print(i)
   lsi_mos_tiles[i] <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/southeast",pattern = "lsi",full.names = T) %>% 
@@ -886,15 +1173,24 @@ for (i in 1:length(tile_val)) {
     mosaic()
 }
 
+# Creating a Mosaic of the tiles
 lsi_mos <- sprc(lsi_mos_tiles) %>% mosaic()
 
+# Exporting Mosaic
 writeRaster(lsi_mos,
-            filename = paste0("1.DataManagement/CovRasters/cov_layers_final/southeast/southeast_lsi_final.tif"))
+            filename = paste0("1.DataManagement/CovRasters/cov_layers_final/southeast/southeast_lsi_final.tif"),
+            overwrite = T)
+
+# Removing big object post export and then cleaning memory 
+rm(lsi_mos_tiles)
+rm(lsi_mos)
+gc()
 
 #        [Contag]                                                           ####
-
+# Making an empty list for raster tiles
 contag_mos_tiles <- list()
 
+# For loop to create tile subsets
 for (i in 1:length(tile_val)) {
   print(i)
   contag_mos_tiles[i] <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/southeast",pattern = "contag",full.names = T) %>% 
@@ -904,15 +1200,25 @@ for (i in 1:length(tile_val)) {
     mosaic()
 }
 
+# Creating a Mosaic of the tiles
 contag_mos <- sprc(contag_mos_tiles) %>% mosaic()
 
+# Exporting Mosaic
 writeRaster(contag_mos,
-            filename = paste0("1.DataManagement/CovRasters/cov_layers_final/southeast/southeast_contag_final.tif"))
+            filename = paste0("1.DataManagement/CovRasters/cov_layers_final/southeast/southeast_contag_final.tif"),
+            overwrite = T)
+
+# Removing big object post export and then cleaning memory 
+rm(contag_mos_tiles)
+rm(contag_mos)
+gc()
 
 #        [SHDI]                                                             ####
 
+# Making an empty list for raster tiles
 shdi_mos_tiles <- list()
 
+# For loop to create tile subsets
 for (i in 1:length(tile_val)) {
   print(i)
   shdi_mos_tiles[i] <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/southeast",pattern = "shdi",full.names = T) %>% 
@@ -922,15 +1228,25 @@ for (i in 1:length(tile_val)) {
     mosaic()
 }
 
+# Creating a Mosaic of the tiles
 shdi_mos <- sprc(shdi_mos_tiles) %>% mosaic()
 
+# Exporting Mosaic
 writeRaster(shdi_mos,
-            filename = paste0("1.DataManagement/CovRasters/cov_layers_final/southeast/southeast_shdi_final.tif"))
+            filename = paste0("1.DataManagement/CovRasters/cov_layers_final/southeast/southeast_shdi_final.tif"),
+            overwrite = T)
+
+# Removing big object post export and then cleaning memory 
+rm(shdi_mos_tiles)
+rm(shdi_mos)
+gc()
 
 #        [MeanShape]                                                        ####
 
+# Making an empty list for raster tiles
 meanshape_mos_tiles <- list()
 
+# For loop to create tile subsets
 for (i in 1:length(tile_val)) {
   print(i)
   meanshape_mos_tiles[i] <- list.files("1.DataManagement/CovRasters/cov_metric_tiles/southeast",pattern = "meanshape",full.names = T) %>% 
@@ -940,8 +1256,17 @@ for (i in 1:length(tile_val)) {
     mosaic()
 }
 
+# Creating a Mosaic of the tiles
 meanshape_mos <- sprc(meanshape_mos_tiles) %>% mosaic()
 
+# Exporting Mosaic
 writeRaster(meanshape_mos,
-            filename = paste0("1.DataManagement/CovRasters/cov_layers_final/southeast/southeast_meanshape_final.tif"))
+            filename = paste0("1.DataManagement/CovRasters/cov_layers_final/southeast/southeast_meanshape_final.tif"),
+            overwrite = T)
+
+# Removing big object post export and then cleaning memory 
+rm(meanshape_mos_tiles)
+rm(meanshape_mos)
+gc()
+
 ###############################################################################
