@@ -294,7 +294,7 @@ for (i in 1:length(landcover_north_unique)) {
                              landcover_num = landcover_north_unique[i],
                              buffer_radius = buffer_radius,
                              export = T,
-                             export.filepath = "1.DataManagement/CovRasters/cov_layers_final/north_")
+                             export.filepath = "1.DataManagement/CovRasters/cov_layers_final/north/north_")
   print(paste0("End of iteration ", i, " Time: ",Sys.time()))
 }
 
@@ -493,7 +493,7 @@ for (i in 1:length(landcover_south_unique)) {
                              landcover_num = landcover_south_unique[i],
                              buffer_radius = buffer_radius,
                              export = T,
-                             export.filepath = "1.DataManagement/CovRasters/cov_layers_final/south_")
+                             export.filepath = "1.DataManagement/CovRasters/cov_layers_final/south/south_")
   print(paste0("End of iteration ", i, " Time: ",Sys.time()))
 }
 
