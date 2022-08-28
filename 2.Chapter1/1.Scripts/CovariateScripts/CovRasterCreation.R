@@ -914,6 +914,9 @@ for (i in 1:length(tile_val)) {
 # Creating a Mosaic of the tiles
 lsi_mos <- sprc(lsi_mos_tiles) %>% mosaic()
 
+# Naming Layer 
+names(lsi_mos)<- "north_lsi"
+
 # Exporting Mosaic
 writeRaster(lsi_mos,
             filename = paste0("1.DataManagement/CovRasters/cov_layers_final/north/north_lsi_final.tif"),
@@ -940,6 +943,9 @@ for (i in 1:length(tile_val)) {
 
 # Creating a Mosaic of the tiles
 contag_mos <- sprc(contag_mos_tiles) %>% mosaic()
+
+# Naming Layer 
+names(contag_mos)<- "north_contag"
 
 # Exporting Mosaic
 writeRaster(contag_mos,
@@ -969,6 +975,9 @@ for (i in 1:length(tile_val)) {
 # Creating a Mosaic of the tiles
 shdi_mos <- sprc(shdi_mos_tiles) %>% mosaic()
 
+# Naming Layer 
+names(shdi_mos)<- "north_shdi"
+
 # Exporting Mosaic
 writeRaster(shdi_mos,
             filename = paste0("1.DataManagement/CovRasters/cov_layers_final/north/north_shdi_final.tif"),
@@ -996,6 +1005,9 @@ for (i in 1:length(tile_val)) {
 
 # Creating a Mosaic of the tiles
 meanshape_mos <- sprc(meanshape_mos_tiles) %>% mosaic()
+
+# Naming Layer 
+names(meanshape_mos)<- "north_meanshape"
 
 # Exporting Mosaic
 writeRaster(meanshape_mos,
@@ -1051,6 +1063,9 @@ for (i in 1:length(tile_val)) {
 # Creating a Mosaic of the tiles
 lsi_mos <- sprc(lsi_mos_tiles) %>% mosaic()
 
+# Naming Layer 
+names(lsi_mos)<- "south_lsi"
+
 # Exporting Mosaic
 writeRaster(lsi_mos,
             filename = paste0("1.DataManagement/CovRasters/cov_layers_final/south/south_lsi_final.tif"),
@@ -1077,6 +1092,9 @@ for (i in 1:length(tile_val)) {
 
 # Creating a Mosaic of the tiles
 contag_mos <- sprc(contag_mos_tiles) %>% mosaic()
+
+# Naming Layer 
+names(contag_mos)<- "south_contag"
 
 # Exporting Mosaic
 writeRaster(contag_mos,
@@ -1106,6 +1124,9 @@ for (i in 1:length(tile_val)) {
 # Creating a Mosaic of the tiles
 shdi_mos <- sprc(shdi_mos_tiles) %>% mosaic()
 
+# Naming Layer 
+names(shdi_mos)<- "south_shdi"
+
 # Exporting Mosaic
 writeRaster(shdi_mos,
             filename = paste0("1.DataManagement/CovRasters/cov_layers_final/south/south_shdi_final.tif"),
@@ -1134,6 +1155,9 @@ for (i in 1:length(tile_val)) {
 # Creating a Mosaic of the tiles
 meanshape_mos <- sprc(meanshape_mos_tiles) %>% mosaic()
 
+# Naming Layer 
+names(meanshape_mos)<- "south_meanshape"
+
 # Exporting Mosaic
 writeRaster(meanshape_mos,
             filename = paste0("1.DataManagement/CovRasters/cov_layers_final/south/south_meanshape_final.tif"),
@@ -1152,11 +1176,15 @@ list.files("1.DataManagement/CovRasters/cov_metric_tiles/southeast",pattern = "r
 
 # Indexing List
 
-tile_val <- list(1:100,
+tile_val <- list(1:50,
+                 51:100,
                  101:200,
-                 201:300,
-                 301:400,
-                 401:500)
+                 201:250,
+                 251:300,
+                 301:350,
+                 351:400,
+                 401:450,
+                 451:500)
 
 #        [LSI]                                                              ####
 
@@ -1175,6 +1203,9 @@ for (i in 1:length(tile_val)) {
 
 # Creating a Mosaic of the tiles
 lsi_mos <- sprc(lsi_mos_tiles) %>% mosaic()
+
+# Naming Layer 
+names(lsi_mos)<- "southeast_lsi"
 
 # Exporting Mosaic
 writeRaster(lsi_mos,
@@ -1202,6 +1233,9 @@ for (i in 1:length(tile_val)) {
 
 # Creating a Mosaic of the tiles
 contag_mos <- sprc(contag_mos_tiles) %>% mosaic()
+
+# Naming Layer 
+names(contag_mos)<- "southeast_contag"
 
 # Exporting Mosaic
 writeRaster(contag_mos,
@@ -1231,6 +1265,9 @@ for (i in 1:length(tile_val)) {
 # Creating a Mosaic of the tiles
 shdi_mos <- sprc(shdi_mos_tiles) %>% mosaic()
 
+# Naming Layer 
+names(shdi_mos)<- "southeast_shdi"
+
 # Exporting Mosaic
 writeRaster(shdi_mos,
             filename = paste0("1.DataManagement/CovRasters/cov_layers_final/southeast/southeast_shdi_final.tif"),
@@ -1258,6 +1295,9 @@ for (i in 1:length(tile_val)) {
 
 # Creating a Mosaic of the tiles
 meanshape_mos <- sprc(meanshape_mos_tiles) %>% mosaic()
+
+# Naming Layer 
+names(meanshape_mos)<- "southeast_meanshape"
 
 # Exporting Mosaic
 writeRaster(meanshape_mos,
