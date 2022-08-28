@@ -142,30 +142,32 @@ deer_choicesets <- list.files("1.DataManagement/CleanData/Chapter1_UsedAvailable
                                   full.names = T) %>% read_csv()
 
 # By region
-North_choicesets <- deer_choicesets %>% filter(site == "North")
-South_choicesets <- deer_choicesets %>% filter(site == "South")
+North_choicesets <- deer_choicesets %>% filter(site == "North") %>% 
+  vect(geom = c("x","y"), crs = "+init=EPSG:5070")
+
+South_choicesets <- deer_choicesets %>% filter(site == "South") %>% 
+  vect(geom = c("x","y"), crs = "+init=EPSG:5070")
+
 Southeast_choicesets <- deer_choicesets %>% filter(site == "CroplandStudy") %>% 
   vect(geom = c("x","y"), crs = "+init=EPSG:5070")
 
 #        [Covariate Rasters by Region]                                      ####
 
 # North 
-North_covrasters <-list.files("1.DataManagement/CovRasters",
-                                  pattern = "North",full.names = T) %>% 
+North_covrasters <-list.files("1.DataManagement/CovRasters/cov_layers_final/north",
+                                  pattern = "north",full.names = T) %>% 
   str_subset(pattern = "aux",negate = T) %>%
-  lapply(raster) %>% 
-  stack()
+  rast()
 
 # South
-South_covrasters <-list.files("1.DataManagement/CovRasters",
-                                  pattern = "South",full.names = T) %>% 
+South_covrasters <-list.files("1.DataManagement/CovRasters/cov_layers_final/south",
+                                  pattern = "south",full.names = T) %>% 
   str_subset(pattern = "aux",negate = T) %>%
-  lapply(raster) %>% 
-  stack()
+  rast()
 
 # Southeast
-Southeast_covrasters <-list.files("1.DataManagement/CovRasters",
-           pattern = "Southeast",full.names = T) %>% 
+Southeast_covrasters <-list.files("1.DataManagement/CovRasters/cov_layers_final/southeast",
+           pattern = "southeast",full.names = T) %>% 
   str_subset(pattern = "aux",negate = T) %>%
   rast()
 
@@ -174,18 +176,25 @@ Southeast_covrasters <-list.files("1.DataManagement/CovRasters",
 # Extract
 North_final <- terra::extract(North_covrasters,North_choicesets) %>% 
   cbind(North_choicesets,.) %>% 
-  as.data.frame()
+  as.data.frame() %>% add_column(dc_ids = 1:nrow(.),.before = "observation_id")
 
 # Export
+write_csv(North_final,
+          file = "1.DataManagement/CleanData/Chapter1_FinalData/north_final.csv",
+          append = F)
 
 #        [South]                                                            ####
 
 # Extract
 South_final <- terra::extract(South_covrasters,South_choicesets) %>% 
   cbind(South_choicesets,.) %>% 
-  as.data.frame()
+  as.data.frame() %>% add_column(dc_ids = 1:nrow(.),.before = "observation_id")
 
 # Export
+write_csv(South_final,
+          file = "1.DataManagement/CleanData/Chapter1_FinalData/south_final.csv",
+          append = F)
+
 #        [Southeast]                                                        ####
 
 # Extract
