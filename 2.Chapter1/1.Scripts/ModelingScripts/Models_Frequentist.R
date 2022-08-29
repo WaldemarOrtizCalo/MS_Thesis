@@ -79,19 +79,8 @@ data_southeast <- read_csv("1.DataManagement/CleanData/Chapter1_FinalData/Southe
          #ShannonDiversityIndex = Southeast_shdi # Leaving this here while I fix layer
     )
 
-#        [Changes to Data]                                                  ####
-
-# Making sure sex is formatted correctly 
-data_southeast$sex <- ifelse(data_southeast$sex == F, "F", "M")
 
 
-# Changing Used/Available data to right format 
-data_north$choice <- ifelse(data_north$choice$choice == "used",1,0)
-data_south$choice <- ifelse(data_south$choice$choice == "used",1,0)
-data_southeast$choice <- ifelse(data_southeast$choice == "used",1,0)
-
-# Changing NAs to zero
-data_southeast[is.na(data_southeast)] = 0
 
 #        [Scaling]                                                          ####
 
