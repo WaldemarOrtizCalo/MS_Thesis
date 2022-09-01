@@ -57,34 +57,34 @@ data_south <- read_csv("1.DataManagement/CleanData/Chapter1_FinalData/south_fina
          meanshapeindex = south_meanshape,
          ShannonDiversityIndex = south_shdi)
 
-data_southeast <- read_csv("1.DataManagement/CleanData/Chapter1_FinalData/southeast_final.csv") %>% 
-  rename(choice = location_type,
-         proportion_water = Southeast_proportion_1_buffer600m,
-         proportion_developed = Southeast_proportion_2_buffer600m,
-         proportion_barren = Southeast_proportion_3_buffer600m,
-         proportion_decidousforest = Southeast_proportion_4_buffer600m,
-         proportion_evergreenforest = Southeast_proportion_5_buffer600m,
-         proportion_mixedforest = Southeast_proportion_6_buffer600m,
-         proportion_shrub = Southeast_proportion_7_buffer600m,
-         proportion_grassland = Southeast_proportion_8_buffer600m,
-         proportion_cropland = Southeast_proportion_9_buffer600m,
-         proportion_wetland = Southeast_proportion_10_buffer600m,
-         contagion = Southeast_contag,
-         landscapeshapeindex = Southeast_lsi,
-         meanshapeindex = Southeast_meanshape,
-         ShannonDiversityIndex = Southeast_shdi)
+# data_southeast <- read_csv("1.DataManagement/CleanData/Chapter1_FinalData/southeast_final.csv") %>% 
+#   rename(choice = location_type,
+#          proportion_water = Southeast_proportion_1_buffer600m,
+#          proportion_developed = Southeast_proportion_2_buffer600m,
+#          proportion_barren = Southeast_proportion_3_buffer600m,
+#          proportion_decidousforest = Southeast_proportion_4_buffer600m,
+#          proportion_evergreenforest = Southeast_proportion_5_buffer600m,
+#          proportion_mixedforest = Southeast_proportion_6_buffer600m,
+#          proportion_shrub = Southeast_proportion_7_buffer600m,
+#          proportion_grassland = Southeast_proportion_8_buffer600m,
+#          proportion_cropland = Southeast_proportion_9_buffer600m,
+#          proportion_wetland = Southeast_proportion_10_buffer600m,
+#          contagion = Southeast_contag,
+#          landscapeshapeindex = Southeast_lsi,
+#          meanshapeindex = Southeast_meanshape,
+#          ShannonDiversityIndex = Southeast_shdi)
 
 #        [Changing the format of choice variable]                           ####
 
 data_north$choice <- ifelse(data_north$choice == "used",0,1)
 data_south$choice <- ifelse(data_south$choice == "used",0,1)
-data_southeast$choice <- ifelse(data_southeast$choice == "used",0,1)
+# data_southeast$choice <- ifelse(data_southeast$choice == "used",0,1)
 ###############################################################################
 #   [Global Models]                                                         ####
-
 #      [North]                                                              ####
 #        [Global Model: No Random Effects]                                  ####
 
+# Fitting Model
 north_global <-  data_north %>% 
   fit_clogit(choice ~ contagion + 
                landscapeshapeindex +
@@ -97,34 +97,58 @@ north_global <-  data_north %>%
                proportion_cropland  +
                strata(observation_id))
 
+# Saving model outputs as dataframe 
+broom::tidy(north_global$model) %>% write_csv(
+  file = "2.Chapter1/3.Output/Models/RevisedModels/north_global_dataframe.csv")
+
+# Model Export
+saveRDS(north_global,
+        file = "2.Chapter1/3.Output/Models/RevisedModels/north_global.rda")
+
 #        [Global Model: Random Effects]                                     ####
 
 north_global_MixedEffects <-Ts.estim(formula = choice ~ contagion + 
-                    landscapeshapeindex +
-                    meanshapeindex + 
-                    proportion_water + 
-                    proportion_developed + 
-                    proportion_forest + 
-                    proportion_shrub + 
-                    proportion_grassland +
-                    proportion_cropland  +
-                    strata(observation_id) + cluster(id),
-                  data = data_north, 
-                  random = ~ contagion + 
-                    landscapeshapeindex +
-                    meanshapeindex + 
-                    proportion_water + 
-                    proportion_developed + 
-                    proportion_forest + 
-                    proportion_shrub + 
-                    proportion_grassland +
-                    proportion_cropland, all.m.1=F)
+                                       landscapeshapeindex +
+                                       meanshapeindex + 
+                                       proportion_water + 
+                                       proportion_developed + 
+                                       proportion_forest + 
+                                       proportion_grassland +
+                                       proportion_cropland  +
+                                       strata(observation_id) + cluster(id),
+                                     data = data_north, 
+                                     random = ~ contagion + 
+                                       landscapeshapeindex +
+                                       meanshapeindex + 
+                                       proportion_water + 
+                                       proportion_developed + 
+                                       proportion_forest + 
+                                       proportion_grassland +
+                                       proportion_cropland, all.m.1=F)
+
+north_global_MixedEffects <-Ts.estim(formula = choice ~ contagion + 
+                                       landscapeshapeindex +
+                                       meanshapeindex + 
+                                       proportion_developed + 
+                                       proportion_forest + 
+                                       proportion_grassland +
+                                       proportion_cropland  +
+                                       strata(observation_id) + cluster(id),
+                                     data = data_north, 
+                                     random = ~ contagion + 
+                                       landscapeshapeindex +
+                                       meanshapeindex + 
+                                       proportion_developed + 
+                                       proportion_forest + 
+                                       proportion_grassland +
+                                       proportion_cropland, all.m.1=F)
 
 #      [South]                                                              ####
 
 #        [Global Model: No Random Effects]                                  ####
 
-south_global <-  data_south %>% 
+# Model Fitting
+south_global <-  data_south[1:300000,] %>% 
   fit_clogit(choice ~ contagion + 
                landscapeshapeindex +
                meanshapeindex + 
@@ -137,6 +161,14 @@ south_global <-  data_south %>%
                proportion_grassland +
                proportion_cropland  +
                strata(observation_id))
+
+# Saving model outputs as dataframe 
+broom::tidy(south_global$model) %>% write_csv(
+          file = "2.Chapter1/3.Output/Models/RevisedModels/south_global_dataframe.csv")
+
+# Model Export 
+saveRDS(south_global,
+        file = "2.Chapter1/3.Output/Models/RevisedModels/south_global.rda")
 
 #        [Global Model: Random Effects]                                     ####
 
@@ -210,45 +242,45 @@ southeast_model_01 <- data_south %>%
 
 #        [Global Model: No Random Effects]                                  ####
 
-southeast_global <-  data_southeast[1:20000,] %>% 
-  fit_clogit(choice ~ contagion + 
-               landscapeshapeindex +
-               meanshapeindex + 
-               proportion_water + 
-               proportion_developed + 
-               proportion_decidousforest +
-               proportion_evergreenforest +
-               proportion_mixedforest + 
-               proportion_shrub + 
-               proportion_grassland +
-               proportion_cropland  +
-               strata(observation_id))
+# southeast_global <-  data_southeast[1:20000,] %>%
+#   fit_clogit(choice ~ contagion +
+#                landscapeshapeindex +
+#                meanshapeindex +
+#                proportion_water +
+#                proportion_developed +
+#                proportion_decidousforest +
+#                proportion_evergreenforest +
+#                proportion_mixedforest +
+#                proportion_shrub +
+#                proportion_grassland +
+#                proportion_cropland  +
+#                strata(observation_id))
 
 #        [Global Model: Random Effects]                                     ####
 
-southeast_global_MixedEffects <-Ts.estim(formula = choice ~ contagion + 
-                                       landscapeshapeindex +
-                                       meanshapeindex + 
-                                       proportion_water + 
-                                       proportion_developed + 
-                                       proportion_decidousforest +
-                                       proportion_evergreenforest +
-                                       proportion_mixedforest + 
-                                       proportion_shrub + 
-                                       proportion_grassland +
-                                       proportion_cropland  +
-                                       strata(observation_id) + cluster(id),
-                                     data = data_southeast[1:20000,], 
-                                     random = ~ contagion + 
-                                       landscapeshapeindex +
-                                       meanshapeindex + 
-                                       proportion_water + 
-                                       proportion_developed + 
-                                       proportion_decidousforest +
-                                       proportion_evergreenforest +
-                                       proportion_mixedforest + 
-                                       proportion_shrub + 
-                                       proportion_grassland +
-                                       proportion_cropland, all.m.1=F)
+# southeast_global_MixedEffects <-Ts.estim(formula = choice ~ contagion +
+#                                        landscapeshapeindex +
+#                                        meanshapeindex +
+#                                        proportion_water +
+#                                        proportion_developed +
+#                                        proportion_decidousforest +
+#                                        proportion_evergreenforest +
+#                                        proportion_mixedforest +
+#                                        proportion_shrub +
+#                                        proportion_grassland +
+#                                        proportion_cropland  +
+#                                        strata(observation_id) + cluster(id),
+#                                      data = data_southeast[1:20000,],
+#                                      random = ~ contagion +
+#                                        landscapeshapeindex +
+#                                        meanshapeindex +
+#                                        proportion_water +
+#                                        proportion_developed +
+#                                        proportion_decidousforest +
+#                                        proportion_evergreenforest +
+#                                        proportion_mixedforest +
+#                                        proportion_shrub +
+#                                        proportion_grassland +
+#                                        proportion_cropland, all.m.1=F)
 
 ###############################################################################
