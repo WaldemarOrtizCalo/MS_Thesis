@@ -1,0 +1,26 @@
+---
+title: "GlobalModelDIscussion"
+author: "Waldemar Ortiz"
+format: html
+editor: visual
+project:
+  execute-dir: project
+---
+```{r Library and Data Import, echo = F,message=F}
+
+# Library
+library(tidyverse)
+library(gridExtra)
+library(grid)
+library(foreach)
+library(htmltools)
+library(knitr)
+
+# Models
+Southeast_model_final <- read_csv("2.Chapter1/3.Output/Models/Southeast_model_final.csv")
+
+
+```
+
+
+Test
