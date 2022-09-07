@@ -98,8 +98,12 @@ M.OUF <- ctmm.fit(indiv,GUESS)
 KDE <- akde(indiv,M.IID) # KDE
 AKDE <- akde(indiv,M.OUF) # AKDE
 
+writeShapefile(object = AKDE,
+               folder = "1.DataManagement/HomeRangePolygons/southeast/IndividualPolygons",
+               file=paste0(AKDE@info$identity,"_all"),
+               overwrite = T)
 
-
+# Model Details
 fitted.mods <- ctmm.select(indiv, CTMM=GUESS, verbose=TRUE) %>% 
   summary(fitted.mods) %>% 
   as.data.frame() %>% 
