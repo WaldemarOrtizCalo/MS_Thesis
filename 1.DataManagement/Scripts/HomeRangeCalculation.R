@@ -19,10 +19,13 @@ library(mapview)
 library(sf)
 library(foreach)
 library(doParallel)
+library(lubridate)
 
 #      Functions                                                            ####
 
 #      Data                                                                 ####
+
+#        [Importing Data]                                                   ####
 
 # Deer Data
 deer_df <- read_csv("1.DataManagement/CleanData/deer_all_clean.csv") %>% 
@@ -30,6 +33,87 @@ deer_df <- read_csv("1.DataManagement/CleanData/deer_all_clean.csv") %>%
          timestamp = t,
          location.long = x,
          location.lat = y)
+
+#        [Adding Season classification]                                     ####
+
+# Spring:  1 March – 31 May (3 mo.)
+# Summer:  1 June – 30 August (3 mo.)
+# Fall:  1 September – 30 November (3 mo.)
+# Winter:  1 December – 28 February (3 mo.)
+
+# Start
+time_partition_start <- expand_grid(year = (deer_df$timestamp %>% year() %>% unique() %>% .[1]-1) : 
+                                      (deer_df$timestamp %>% year() %>% unique() %>% .[length(.)]+1),
+                                    month = c("03","06","09","12"),
+                                    day = "01") %>% 
+  mutate(season = ifelse(month == "03", "spring",
+                         ifelse(month == "06", "summer",
+                                ifelse(month == "09", "fall",
+                                       ifelse(month == "12", "winter",NA))))) %>% 
+  mutate(date = paste(year,month,day,sep = "-"),.keep = "unused",.before = 1) %>% 
+  mutate(date = paste0(date, " 00:00:00"))
+
+# End
+time_partition_end <- expand_grid(year = (deer_df$timestamp %>% year() %>% unique() %>% .[1]-1) : 
+                                    (deer_df$timestamp %>% year() %>% unique() %>% .[length(.)]+1),
+                                  month = c("05","08","11","02"))
+
+time_partition_end <- time_partition_end %>% 
+  mutate(day = ifelse(time_partition_end$month == "05","31",
+                      ifelse(time_partition_end$month == "08","30",
+                             ifelse(time_partition_end$month == "11","30",
+                                    ifelse(time_partition_end$month == "02","28",NA))))) %>% 
+  mutate(year = ifelse(.$month == "02",year + 1, year)) %>% 
+  mutate(date = paste(year,month,day,sep = "-"),.keep = "unused") %>% 
+  mutate(date = paste0(date, " 23:59:59"))
+
+# Creating Time Partition dataframe
+time_partitions <- data.frame(start = time_partition_start$date,
+                              end = time_partition_end$date,
+                              season = time_partition_start$season)
+
+ints <- list()
+
+for (i in 1:nrow(time_partitions)) {
+  ints[[i]] <- interval(time_partitions[i,1], time_partitions[i,2])
+}
+
+# Mutating dataframe and adding season
+deer_df <- deer_df %>% 
+  mutate(season = case_when(
+    timestamp %within% ints[[1]] ~ time_partitions$season %>% unique() %>% .[1],
+    timestamp %within% ints[[2]] ~ time_partitions$season %>% unique() %>% .[2],
+    timestamp %within% ints[[3]] ~ time_partitions$season %>% unique() %>% .[3],
+    timestamp %within% ints[[4]] ~ time_partitions$season %>% unique() %>% .[4],
+    timestamp %within% ints[[5]] ~ time_partitions$season %>% unique() %>% .[1],
+    timestamp %within% ints[[6]] ~ time_partitions$season %>% unique() %>% .[2],
+    timestamp %within% ints[[7]] ~ time_partitions$season %>% unique() %>% .[3],
+    timestamp %within% ints[[8]] ~ time_partitions$season %>% unique() %>% .[4],
+    timestamp %within% ints[[9]] ~ time_partitions$season %>% unique() %>% .[1],
+    timestamp %within% ints[[10]] ~ time_partitions$season %>% unique() %>% .[2],
+    timestamp %within% ints[[11]] ~ time_partitions$season %>% unique() %>% .[3],
+    timestamp %within% ints[[12]] ~ time_partitions$season %>% unique() %>% .[4],
+    timestamp %within% ints[[13]] ~ time_partitions$season %>% unique() %>% .[1],
+    timestamp %within% ints[[14]] ~ time_partitions$season %>% unique() %>% .[2],
+    timestamp %within% ints[[15]] ~ time_partitions$season %>% unique() %>% .[3],
+    timestamp %within% ints[[16]] ~ time_partitions$season %>% unique() %>% .[4],
+    timestamp %within% ints[[17]] ~ time_partitions$season %>% unique() %>% .[1],
+    timestamp %within% ints[[18]] ~ time_partitions$season %>% unique() %>% .[2],
+    timestamp %within% ints[[19]] ~ time_partitions$season %>% unique() %>% .[3],
+    timestamp %within% ints[[20]] ~ time_partitions$season %>% unique() %>% .[4],
+    timestamp %within% ints[[21]] ~ time_partitions$season %>% unique() %>% .[1],
+    timestamp %within% ints[[22]] ~ time_partitions$season %>% unique() %>% .[2],
+    timestamp %within% ints[[23]] ~ time_partitions$season %>% unique() %>% .[3],
+    timestamp %within% ints[[24]] ~ time_partitions$season %>% unique() %>% .[4],
+    timestamp %within% ints[[25]] ~ time_partitions$season %>% unique() %>% .[1],
+    timestamp %within% ints[[26]] ~ time_partitions$season %>% unique() %>% .[2],
+    timestamp %within% ints[[27]] ~ time_partitions$season %>% unique() %>% .[3],
+    timestamp %within% ints[[28]] ~ time_partitions$season %>% unique() %>% .[4],
+    timestamp %within% ints[[29]] ~ time_partitions$season %>% unique() %>% .[1],
+    timestamp %within% ints[[30]] ~ time_partitions$season %>% unique() %>% .[2],
+    timestamp %within% ints[[31]] ~ time_partitions$season %>% unique() %>% .[3],
+    timestamp %within% ints[[32]] ~ time_partitions$season %>% unique() %>% .[4],
+    TRUE ~ "NA"),.after = timestamp)
 
 ###############################################################################
 #   [North]                                                                 ####
@@ -214,7 +298,7 @@ kde_UD <- getverticeshr(kde, 95)%>%
 #        [Setting Up Cluster for Parallel Computing]                        ####
 
 # Setting the Settings for the Cluster
-myCluster <- makeCluster(4,
+myCluster <- makeCluster(5,
                          type = "PSOCK") 
 
 # Registering 
@@ -339,7 +423,7 @@ kde_UD <- getverticeshr(kde, 95)%>%
 #        [Setting Up Cluster for Parallel Computing]                        ####
 
 # Setting the Settings for the Cluster
-myCluster <- makeCluster(4,
+myCluster <- makeCluster(5,
                          type = "PSOCK") 
 
 # Registering 
