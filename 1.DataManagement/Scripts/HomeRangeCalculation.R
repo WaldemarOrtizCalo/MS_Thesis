@@ -178,7 +178,7 @@ kde_UD <- getverticeshr(kde, 95)%>%
 # mapview(kde_UD)
 
 #        [Seasonal Home Ranges]                                             ####
-#           [Creating Dataframes]                                           ####
+#           [HR Calculation]                                                ####
 
 # Creating SpatialPointsDataFrame
 spdf <- data_aggregated
@@ -339,6 +339,41 @@ kde_UD <- getverticeshr(kde, 95)%>%
 # mapview(kde_UD)
 
 #        [Seasonal Home Ranges]                                             ####
+#           [HR Calculation]                                                ####
+
+# Creating SpatialPointsDataFrame
+spdf <- data_aggregated
+coordinates(spdf) <- ~location.long + location.lat
+proj4string(spdf) <- CRS("+init=epsg:5070")
+
+# Subsetting by season
+seasons <- unique(spdf$season)
+
+# Creating home ranges and exporting them
+for (i in 1:length(seasons)) {
+  
+  print(i)
+  
+  # Subsetting by season
+  spdf_season <- subset(spdf, spdf$season == seasons[i])
+  
+  # Creating MCP 
+  mcp <- mcp(spdf_season, percent= 95, 
+             unin = c("m"),
+             unout = c("km2")) %>% 
+    st_as_sf() %>% 
+    st_write(paste0("1.DataManagement/HomeRangePolygons/south/AggregatedPolygons/mcp_south_",seasons[i],".shp"),
+             append=FALSE)
+  
+  # Creating KDE
+  kde <- kernelUD(spdf_season, h = "href",grid = 500, extent = 5)
+  kde_UD <- getverticeshr(kde, 95)%>% 
+    st_as_sf() %>% 
+    st_write(paste0("1.DataManagement/HomeRangePolygons/south/AggregatedPolygons/kde_south_",seasons[i],".shp"),
+             append=FALSE)
+}
+
+
 #      [Individual Home Ranges - All Locations]                             ####
 #        [Setting Up Cluster for Parallel Computing]                        ####
 
@@ -467,6 +502,40 @@ kde_UD <- getverticeshr(kde, 95)%>%
 # mapview(kde_UD)
 
 #        [Seasonal Home Ranges]                                             ####
+#           [HR Calculation]                                                ####
+
+# Creating SpatialPointsDataFrame
+spdf <- data_aggregated
+coordinates(spdf) <- ~location.long + location.lat
+proj4string(spdf) <- CRS("+init=epsg:5070")
+
+# Subsetting by season
+seasons <- unique(spdf$season)
+
+# Creating home ranges and exporting them
+for (i in 1:length(seasons)) {
+  
+  print(i)
+  
+  # Subsetting by season
+  spdf_season <- subset(spdf, spdf$season == seasons[i])
+  
+  # Creating MCP 
+  mcp <- mcp(spdf_season, percent= 95, 
+             unin = c("m"),
+             unout = c("km2")) %>% 
+    st_as_sf() %>% 
+    st_write(paste0("1.DataManagement/HomeRangePolygons/southeast/AggregatedPolygons/mcp_southeast_",seasons[i],".shp"),
+             append=FALSE)
+  
+  # Creating KDE
+  kde <- kernelUD(spdf_season, h = "href",grid = 500, extent = 5)
+  kde_UD <- getverticeshr(kde, 95)%>% 
+    st_as_sf() %>% 
+    st_write(paste0("1.DataManagement/HomeRangePolygons/southeast/AggregatedPolygons/kde_southeast_",seasons[i],".shp"),
+             append=FALSE)
+}
+
 #      [Individual Home Ranges - All Locations]                             ####
 #        [Setting Up Cluster for Parallel Computing]                        ####
 
