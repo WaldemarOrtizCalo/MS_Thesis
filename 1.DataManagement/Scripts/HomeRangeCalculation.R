@@ -118,6 +118,11 @@ deer_df <- deer_df %>%
 # Fixing leap years
 deer_df$season <- ifelse(month(deer_df$timestamp) == 2 & day(deer_df$timestamp) == 29, "winter",deer_df$season)
 
+# Exporting csv file
+write_csv(deer_df,
+          file = "1.DataManagement/RawData/csv_files/deer_all_revised.csv",
+          append = FALSE)
+
 # Removing unnecessary objects and clearing RAM
 rm(list = c("time_partition_start","time_partition_end","time_partitions","ints","i"))
 gc()
