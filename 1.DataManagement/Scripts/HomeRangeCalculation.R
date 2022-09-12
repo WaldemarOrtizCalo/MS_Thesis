@@ -60,7 +60,7 @@ time_partition_end <- expand_grid(year = (deer_df$timestamp %>% year() %>% uniqu
 
 time_partition_end <- time_partition_end %>% 
   mutate(day = ifelse(time_partition_end$month == "05","31",
-                      ifelse(time_partition_end$month == "08","30",
+                      ifelse(time_partition_end$month == "08","31",
                              ifelse(time_partition_end$month == "11","30",
                                     ifelse(time_partition_end$month == "02","28",NA))))) %>% 
   mutate(year = ifelse(.$month == "02",year + 1, year)) %>% 
@@ -114,6 +114,9 @@ deer_df <- deer_df %>%
     timestamp %within% ints[[31]] ~ time_partitions$season %>% unique() %>% .[3],
     timestamp %within% ints[[32]] ~ time_partitions$season %>% unique() %>% .[4],
     TRUE ~ "NA"),.after = timestamp)
+
+# Fixing leap years
+deer_df$season <- ifelse(month(deer_df$timestamp) == 2 & day(deer_df$timestamp) == 29, "winter",deer_df$season)
 
 # Removing unnecessary objects and clearing RAM
 rm(list = c("time_partition_start","time_partition_end","time_partitions","ints","i"))
@@ -175,6 +178,40 @@ kde_UD <- getverticeshr(kde, 95)%>%
 # mapview(kde_UD)
 
 #        [Seasonal Home Ranges]                                             ####
+#           [Creating Dataframes]                                           ####
+
+# Creating SpatialPointsDataFrame
+spdf <- data_aggregated
+coordinates(spdf) <- ~location.long + location.lat
+proj4string(spdf) <- CRS("+init=epsg:5070")
+
+# Subsetting by season
+seasons <- unique(spdf$season)
+
+# Creating home ranges and exporting them
+for (i in 1:length(seasons)) {
+  
+  print(i)
+  
+  # Subsetting by season
+  spdf_season <- subset(spdf, spdf$season == seasons[i])
+  
+  # Creating MCP 
+  mcp <- mcp(spdf_season, percent= 95, 
+             unin = c("m"),
+             unout = c("km2")) %>% 
+    st_as_sf() %>% 
+    st_write(paste0("1.DataManagement/HomeRangePolygons/north/AggregatedPolygons/mcp_north_",seasons[i],".shp"),
+             append=FALSE)
+  
+  # Creating KDE
+  kde <- kernelUD(spdf_season, h = "href",grid = 500, extent = 5)
+  kde_UD <- getverticeshr(kde, 95)%>% 
+    st_as_sf() %>% 
+    st_write(paste0("1.DataManagement/HomeRangePolygons/north/AggregatedPolygons/kde_north_",seasons[i],".shp"),
+             append=FALSE)
+}
+
 #      [Individual Home Ranges - All Locations]                             ####
 #        [Setting Up Cluster for Parallel Computing]                        ####
 
