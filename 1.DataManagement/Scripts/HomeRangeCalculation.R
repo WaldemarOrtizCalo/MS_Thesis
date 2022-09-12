@@ -115,6 +115,10 @@ deer_df <- deer_df %>%
     timestamp %within% ints[[32]] ~ time_partitions$season %>% unique() %>% .[4],
     TRUE ~ "NA"),.after = timestamp)
 
+# Removing unnecessary objects and clearing RAM
+rm(list = c("time_partition_start","time_partition_end","time_partitions","ints","i"))
+gc()
+
 ###############################################################################
 #   [North]                                                                 ####
 #      [Data Prep]                                                          ####
@@ -135,14 +139,15 @@ telemetry_object <- move(x=data$location.long,
 
 
 #      [Aggregated Home Ranges]                                             ####
-#        [Creating Dataframe]                                               ####
+#        [All Locations]                                                    ####
+#           [Creating Dataframe]                                            ####
 
 # Creating SpatialPointsDataFrame
 spdf <- data_aggregated
 coordinates(spdf) <- ~location.long + location.lat
 proj4string(spdf) <- CRS("+init=epsg:5070")
 
-#        [MCP]                                                              ####
+#           [MCP]                                                           ####
 
 # Creating MCP 
 mcp <- mcp(spdf, percent=95, 
@@ -156,7 +161,7 @@ mcp <- mcp(spdf, percent=95,
 
 # mapview(mcp)
 
-#        [KDE]                                                              ####
+#           [KDE]                                                           ####
 
 # Creating KDE
 kde <- kernelUD(spdf, h = "href")
@@ -169,6 +174,7 @@ kde_UD <- getverticeshr(kde, 95)%>%
 
 # mapview(kde_UD)
 
+#        [Seasonal Home Ranges]                                             ####
 #      [Individual Home Ranges - All Locations]                             ####
 #        [Setting Up Cluster for Parallel Computing]                        ####
 
@@ -260,14 +266,15 @@ telemetry_object <- move(x=data$location.long,
 
 
 #      [Aggregated Home Ranges]                                             ####
-#        [Creating Dataframe]                                               ####
+#        [All Locations]                                                    ####
+#           [Creating Dataframe]                                            ####
 
 # Creating SpatialPointsDataFrame
 spdf <- data_aggregated
 coordinates(spdf) <- ~location.long + location.lat
 proj4string(spdf) <- CRS("+init=epsg:5070")
 
-#        [MCP]                                                              ####
+#           [MCP]                                                           ####
 
 # Creating MCP 
 mcp <- mcp(spdf, percent=95, 
@@ -281,7 +288,7 @@ mcp <- mcp(spdf, percent=95,
 
 # mapview(mcp)
 
-#        [KDE]                                                              ####
+#           [KDE]                                                           ####
 
 # Creating KDE
 kde <- kernelUD(spdf, h = "href")
@@ -294,6 +301,7 @@ kde_UD <- getverticeshr(kde, 95)%>%
 
 # mapview(kde_UD)
 
+#        [Seasonal Home Ranges]                                             ####
 #      [Individual Home Ranges - All Locations]                             ####
 #        [Setting Up Cluster for Parallel Computing]                        ####
 
@@ -385,14 +393,16 @@ telemetry_object <- move(x=data$location.long,
 
 
 #      [Aggregated Home Ranges]                                             ####
-#        [Creating Dataframe]                                               ####
+#        [All Locations]                                                    ####
+
+#           [Creating Dataframe]                                            ####
 
 # Creating SpatialPointsDataFrame
 spdf <- data_aggregated
 coordinates(spdf) <- ~location.long + location.lat
 proj4string(spdf) <- CRS("+init=epsg:5070")
 
-#        [MCP]                                                              ####
+#           [MCP]                                                           ####
 
 # Creating MCP 
 mcp <- mcp(spdf, percent=95, 
@@ -406,7 +416,7 @@ mcp <- mcp(spdf, percent=95,
 
 # mapview(mcp)
 
-#        [KDE]                                                              ####
+#           [KDE]                                                           ####
 
 # Creating KDE
 kde <- kernelUD(spdf, h = "href")
@@ -419,6 +429,7 @@ kde_UD <- getverticeshr(kde, 95)%>%
 
 # mapview(kde_UD)
 
+#        [Seasonal Home Ranges]                                             ####
 #      [Individual Home Ranges - All Locations]                             ####
 #        [Setting Up Cluster for Parallel Computing]                        ####
 
