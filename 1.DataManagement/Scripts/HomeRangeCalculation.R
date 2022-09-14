@@ -418,9 +418,14 @@ for (i in 1:length(seasons)) {
 
 #        [Seasonal Home Ranges - By Sex]                                    ####
 
+# Creating SpatialPointsDataFrame
+spdf <- data_aggregated
+coordinates(spdf) <- ~location.long + location.lat
+proj4string(spdf) <- CRS("+init=epsg:5070")
+
 # Subsetting parameters
 seasons <- unique(spdf$season)
-sex <- unique(spdf$season)
+sex <- unique(spdf$sex)
 
 for (i in 1:length(seasons)) {
   
@@ -441,14 +446,14 @@ for (i in 1:length(seasons)) {
                unin = c("m"),
                unout = c("km2")) %>% 
       st_as_sf() %>% 
-      st_write(paste0("1.DataManagement/HomeRangePolygons/north/AggregatedPolygons/mcp_north_",sex[j],"_",seasons[i],".shp"),
+      st_write(paste0("1.DataManagement/HomeRangePolygons/south/AggregatedPolygons/mcp_south_",sex[j],"_",seasons[i],".shp"),
                append=FALSE)
     
     # Creating KDE
     kde <- kernelUD(spdf_season, h = "href",grid = 500, extent = 5)
     kde_UD <- getverticeshr(kde, 95)%>% 
       st_as_sf() %>% 
-      st_write(paste0("1.DataManagement/HomeRangePolygons/north/AggregatedPolygons/kde_north_",sex[j],"_",seasons[i],".shp"),
+      st_write(paste0("1.DataManagement/HomeRangePolygons/south/AggregatedPolygons/kde_south_",sex[j],"_",seasons[i],".shp"),
                append=FALSE)
   }
 }
