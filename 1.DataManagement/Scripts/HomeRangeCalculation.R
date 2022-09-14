@@ -219,9 +219,14 @@ for (i in 1:length(seasons)) {
 
 #        [Seasonal Home Ranges - By Sex]                                    ####
 
+# Creating SpatialPointsDataFrame
+spdf <- data_aggregated
+coordinates(spdf) <- ~location.long + location.lat
+proj4string(spdf) <- CRS("+init=epsg:5070")
+
 # Subsetting parameters
 seasons <- unique(spdf$season)
-sex <- unique(spdf$season)
+sex <- unique(spdf$sex)
 
 for (i in 1:length(seasons)) {
   
