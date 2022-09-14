@@ -61,7 +61,15 @@ season_sf <- north_locs %>%
 mcp_hr_polygon <- north_hr_polygons %>% filter(hr_type == "mcp" & season == season_class)
 kde_hr_polygon <- north_hr_polygons %>% filter(hr_type == "kde" & season == season_class)
 
-used <- st_intersection(season_df,mcp_hr_polygon)
+# Determining used points
+used <- st_intersection(season_sf,mcp_hr_polygon)
+
+# Sampling available at a 1:5 ratio
+available <- st_sample(x = mcp_hr_polygon,
+                      size = (nrow(used)*5))
+
+available <- st_sample(x = mcp_hr_polygon,
+                       size = 200) %>% as.data.frame()
 
 ###############################################################################
 #   [Sampling Availability: South]                                          ####
