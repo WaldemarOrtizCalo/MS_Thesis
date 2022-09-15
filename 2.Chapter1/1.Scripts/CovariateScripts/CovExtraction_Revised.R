@@ -41,4 +41,8 @@ covs_southeast <- list.files(path = "1.DataManagement/CovRasters/cov_layers_fina
   str_subset(pattern = "aux",negate = T) %>%
   rast()
 
+# Fixed Layer Names
+names(covs_southeast[[1]])<- "southeast_contag"
+names(covs_southeast[[13]])<- "southeast_shdi"
+
 ###############################################################################
