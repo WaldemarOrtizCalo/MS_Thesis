@@ -69,6 +69,7 @@ South_StudyArea <- Missouri_shp[which(lengths(South_StudyArea)!=0),]
 
 Southeast_StudyArea <- st_intersects(Missouri_shp,deer_sf_southeast)
 Southeast_StudyArea <- Missouri_shp[which(lengths(Southeast_StudyArea)!=0),]
+
 #        [Study Area Exports]                                               ####
 
 # North
