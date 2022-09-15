@@ -625,6 +625,48 @@ for (i in 1:length(seasons)) {
              append=FALSE)
 }
 
+#        [Seasonal Home Ranges - By Sex]                                    ####
+
+# Creating SpatialPointsDataFrame
+spdf <- data_aggregated
+coordinates(spdf) <- ~location.long + location.lat
+proj4string(spdf) <- CRS("+init=epsg:5070")
+
+# Subsetting parameters
+seasons <- unique(spdf$season)
+sex <- unique(spdf$sex)
+
+for (i in 1:length(seasons)) {
+  
+  # Progress
+  print(seasons[i])
+  
+  for(j in 1:length(sex)){
+    
+    # Progress
+    print(sex[j])
+    
+    # Subsetting by season
+    spdf_season <- spdf %>% subset(season == seasons[i]) %>% 
+      subset(sex == sex[j])
+    
+    # Creating MCP 
+    mcp <- mcp(spdf_season, percent= 95, 
+               unin = c("m"),
+               unout = c("km2")) %>% 
+      st_as_sf() %>% 
+      st_write(paste0("1.DataManagement/HomeRangePolygons/southeast/AggregatedPolygons/mcp_southeast_",sex[j],"_",seasons[i],".shp"),
+               append=FALSE)
+    
+    # Creating KDE
+    kde <- kernelUD(spdf_season, h = "href",grid = 500, extent = 5)
+    kde_UD <- getverticeshr(kde, 95)%>% 
+      st_as_sf() %>% 
+      st_write(paste0("1.DataManagement/HomeRangePolygons/southeast/AggregatedPolygons/kde_southeast_",sex[j],"_",seasons[i],".shp"),
+               append=FALSE)
+  }
+}
+
 #      [Individual Home Ranges - All Locations]                             ####
 #        [Setting Up Cluster for Parallel Computing]                        ####
 
