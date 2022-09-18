@@ -200,16 +200,15 @@ foreach(i = 1:length(data_southeast)) %dopar% {
   df <- data_southeast[[i]] 
   
   # Model
-  model <- glm(choice ~ south_lsi + 
-                 south_contag +
-                 south_meanshape +
-                 south_shdi +
-                 south_proportion_2_buffer600m +
-                 south_proportion_4_buffer600m +
-                 south_proportion_5_buffer600m +
-                 south_proportion_6_buffer600m +
-                 south_proportion_8_buffer600m +
-                 south_proportion_9_buffer600m, 
+  model <- glm(choice ~ southeast_lsi + 
+                 southeast_contag +
+                 southeast_shdi +
+                 southeast_proportion_2_buffer600m +
+                 southeast_proportion_4_buffer600m +
+                 southeast_proportion_5_buffer600m +
+                 southeast_proportion_6_buffer600m +
+                 southeast_proportion_8_buffer600m +
+                 southeast_proportion_9_buffer600m, 
                data = df, 
                family = "binomial",na.action = "na.fail")
   
