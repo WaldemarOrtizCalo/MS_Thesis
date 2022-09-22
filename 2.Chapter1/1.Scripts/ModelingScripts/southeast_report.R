@@ -150,30 +150,8 @@ stopCluster(cl)
 
 ###############################################################################
 #   [Discrete Choice]                                                       ####
-southeast_model_01_scaled <- data_southeast_scaled %>% 
-  fit_clogit(choice ~ contagion + 
-               landscapeshapeindex +
-               meanshapeindex + 
-               proportion_water + 
-               proportion_wetland + 
-               proportion_developed + 
-               proportion_barren + 
-               proportion_decidousforest +
-               proportion_evergreenforest + 
-               proportion_mixedforest + 
-               proportion_shrub + 
-               proportion_grassland +
-               proportion_cropland + 
-               meanpatcharea_decidousforest +
-               meanpatcharea_evergreenforest +
-               meanpatcharea_mixedforest +
-               meanpatcharea_grassland +
-               meanpatcharea_cropland +
-               strata(observation_id))
 
-summary(southeast_model_01_scaled)
-# Global Model with all covariates included 
-southeast_model_01_scaled <- data_southeast_scaled %>% 
+southeast_model_01_scaled <- data_southeast_dc_scaled %>% 
   fit_clogit(choice ~ contagion + 
                landscapeshapeindex +
                meanshapeindex + 
@@ -189,4 +167,4 @@ southeast_model_01_scaled <- data_southeast_scaled %>%
                proportion_cropland + 
                strata(observation_id))
 
-summary(southeast_model_01_scaled)
+###############################################################################
