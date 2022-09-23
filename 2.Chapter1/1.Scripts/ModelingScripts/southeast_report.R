@@ -92,61 +92,240 @@ for (i in 13:ncol(data_southeast_dc)) {
 
 ###############################################################################
 #   [Logistic Regression]                                                   ####
-#      [Setting up Cluster]                                                 ####
+#      [Fall]                                                               ####
+#        [Data]                                                             ####
 
-# Cluster Number
-cl <- makeCluster(4)
-registerDoParallel(cl)
+# Separating specific dataframe
+df <- data_southeast_logreg[[1]] 
 
-# Exporting Packages
-clusterEvalQ(cl,
-             {
-               library(tidyverse)
-               library(MuMIn)
-               library(foreach)
-               library(tidyverse)
-             })
+#        [Global Model]                                                     ####
 
-# Exporting data to clusters
-clusterExport(cl=cl, varlist=c("data_southeast","names_southeast"), envir=environment())
+# Model
+model_fall <- glm(choice ~ southeast_lsi + 
+               southeast_contag +
+               southeast_shdi +
+               southeast_proportion_2_buffer600m +
+               southeast_proportion_4_buffer600m +
+               southeast_proportion_5_buffer600m +
+               southeast_proportion_6_buffer600m +
+               southeast_proportion_8_buffer600m +
+               southeast_proportion_9_buffer600m, 
+             data = df, 
+             family = "binomial",na.action = "na.fail")
 
-#      [Modeling]                                                           ####
+# Summary 
 
-# Modelling Protocol
+summary(model_fall)
 
-foreach(i = 1:length(data_southeast)) %dopar% {
-  
-  # Separating specific dataframe
-  df <- data_southeast[[i]] 
-  
-  # Model
-  model <- glm(choice ~ southeast_lsi + 
-                 southeast_contag +
-                 southeast_shdi +
-                 southeast_proportion_2_buffer600m +
-                 southeast_proportion_4_buffer600m +
-                 southeast_proportion_5_buffer600m +
-                 southeast_proportion_6_buffer600m +
-                 southeast_proportion_8_buffer600m +
-                 southeast_proportion_9_buffer600m, 
-               data = df, 
-               family = "binomial",na.action = "na.fail")
-  
-  # Model Dredging
-  dredge <- dredge(model)
-  
-  # Dredge Export
-  write_csv(x = dredge,
-            file = paste0("2.Chapter1/3.Output/models_dredge/southeast/",names_southeast[i],"_dredge.csv"),
-            append = F)
-  
-  # Return of the for loop
-  print(i)
-}
+#      [Winter]                                                             ####
+#        [Data]                                                             ####
 
-#      [Stopping Cluster]                                                   ####
+# Separating specific dataframe
+df <- data_southeast_logreg[[4]] 
 
-stopCluster(cl)
+#        [Global Model]                                                     ####
+
+# Model
+model_winter <- glm(choice ~ southeast_lsi + 
+               southeast_contag +
+               southeast_shdi +
+               southeast_proportion_2_buffer600m +
+               southeast_proportion_4_buffer600m +
+               southeast_proportion_5_buffer600m +
+               southeast_proportion_6_buffer600m +
+               southeast_proportion_8_buffer600m +
+               southeast_proportion_9_buffer600m, 
+             data = df, 
+             family = "binomial",na.action = "na.fail")
+
+# Summary
+summary(model_winter)
+
+#      [Spring]                                                             ####
+#        [Data]                                                             ####
+
+# Separating specific dataframe
+df <- data_southeast_logreg[[2]] 
+
+#        [Global Model]                                                     ####
+
+# Model
+model_spring <- glm(choice ~ southeast_lsi + 
+               southeast_contag +
+               southeast_shdi +
+               southeast_proportion_2_buffer600m +
+               southeast_proportion_4_buffer600m +
+               southeast_proportion_5_buffer600m +
+               southeast_proportion_6_buffer600m +
+               southeast_proportion_8_buffer600m +
+               southeast_proportion_9_buffer600m, 
+             data = df, 
+             family = "binomial",na.action = "na.fail")
+
+# Summary 
+summary(model_spring)
+
+#        [model_v2]                                                         ####
+
+# Global model had one covariate that did not cross the 0.05 threshold
+# Covariate: southeast_proportion_5_buffer600m (p-value: 0.433)
+
+# Model
+model_spring <- glm(choice ~ southeast_lsi + 
+                      southeast_contag +
+                      southeast_shdi +
+                      southeast_proportion_2_buffer600m +
+                      southeast_proportion_4_buffer600m +
+                      southeast_proportion_6_buffer600m +
+                      southeast_proportion_8_buffer600m +
+                      southeast_proportion_9_buffer600m, 
+                    data = df, 
+                    family = "binomial",na.action = "na.fail")
+
+# Summary 
+summary(model_spring)
+#      [Summer]                                                             ####
+#        [Data]                                                             ####
+
+# Separating specific dataframe
+df <- data_southeast_logreg[[3]] 
+
+#        [Global Model]                                                     ####
+
+# Model
+model_summer <- glm(choice ~ southeast_lsi + 
+               southeast_contag +
+               southeast_shdi +
+               southeast_proportion_2_buffer600m +
+               southeast_proportion_4_buffer600m +
+               southeast_proportion_5_buffer600m +
+               southeast_proportion_6_buffer600m +
+               southeast_proportion_8_buffer600m +
+               southeast_proportion_9_buffer600m, 
+             data = df, 
+             family = "binomial",na.action = "na.fail")
+
+# Summary
+summary(model_summer)
+
+###############################################################################
+#   [Logistic Regression - Scaled]                                          ####
+#      [Fall]                                                               ####
+#        [Data]                                                             ####
+
+# Separating specific dataframe
+df <- data_southeast_logreg_scaled[[1]] 
+
+#        [Global Model]                                                     ####
+
+# Model
+model_fall_scaled <- glm(choice ~ southeast_lsi + 
+                    southeast_contag +
+                    southeast_shdi +
+                    southeast_proportion_2_buffer600m +
+                    southeast_proportion_4_buffer600m +
+                    southeast_proportion_5_buffer600m +
+                    southeast_proportion_6_buffer600m +
+                    southeast_proportion_8_buffer600m +
+                    southeast_proportion_9_buffer600m, 
+                  data = df, 
+                  family = "binomial",na.action = "na.fail")
+
+# Summary 
+
+summary(model_fall_scaled)
+
+#      [Winter]                                                             ####
+#        [Data]                                                             ####
+
+# Separating specific dataframe
+df <- data_southeast_logreg_scaled[[4]] 
+
+#        [Global Model]                                                     ####
+
+# Model
+model_winter_scaled <- glm(choice ~ southeast_lsi + 
+                      southeast_contag +
+                      southeast_shdi +
+                      southeast_proportion_2_buffer600m +
+                      southeast_proportion_4_buffer600m +
+                      southeast_proportion_5_buffer600m +
+                      southeast_proportion_6_buffer600m +
+                      southeast_proportion_8_buffer600m +
+                      southeast_proportion_9_buffer600m, 
+                    data = df, 
+                    family = "binomial",na.action = "na.fail")
+
+# Summary
+summary(model_winter_scaled)
+
+#      [Spring]                                                             ####
+#        [Data]                                                             ####
+
+# Separating specific dataframe
+df <- data_southeast_logreg_scaled[[2]] 
+
+#        [Global Model]                                                     ####
+
+# Model
+model_spring_scaled <- glm(choice ~ southeast_lsi + 
+                      southeast_contag +
+                      southeast_shdi +
+                      southeast_proportion_2_buffer600m +
+                      southeast_proportion_4_buffer600m +
+                      southeast_proportion_5_buffer600m +
+                      southeast_proportion_6_buffer600m +
+                      southeast_proportion_8_buffer600m +
+                      southeast_proportion_9_buffer600m, 
+                    data = df, 
+                    family = "binomial",na.action = "na.fail")
+
+# Summary 
+summary(model_spring_scaled)
+
+#        [model_v2]                                                         ####
+
+# Global model had one covariate that did not cross the 0.05 threshold
+# Covariate: southeast_proportion_5_buffer600m (p-value: 0.433)
+
+# Model
+model_spring_scaled <- glm(choice ~ southeast_lsi + 
+                      southeast_contag +
+                      southeast_shdi +
+                      southeast_proportion_2_buffer600m +
+                      southeast_proportion_4_buffer600m +
+                      southeast_proportion_6_buffer600m +
+                      southeast_proportion_8_buffer600m +
+                      southeast_proportion_9_buffer600m, 
+                    data = df, 
+                    family = "binomial",na.action = "na.fail")
+
+# Summary 
+summary(model_spring_scaled)
+
+#      [Summer]                                                             ####
+#        [Data]                                                             ####
+
+# Separating specific dataframe
+df <- data_southeast_logreg_scaled[[3]] 
+
+#        [Global Model]                                                     ####
+
+# Model
+model_summer_scaled <- glm(choice ~ southeast_lsi + 
+                      southeast_contag +
+                      southeast_shdi +
+                      southeast_proportion_2_buffer600m +
+                      southeast_proportion_4_buffer600m +
+                      southeast_proportion_5_buffer600m +
+                      southeast_proportion_6_buffer600m +
+                      southeast_proportion_8_buffer600m +
+                      southeast_proportion_9_buffer600m, 
+                    data = df, 
+                    family = "binomial",na.action = "na.fail")
+
+# Summary
+summary(model_summer_scaled)
 
 ###############################################################################
 #   [Discrete Choice]                                                       ####
@@ -154,15 +333,10 @@ stopCluster(cl)
 southeast_model_01_scaled <- data_southeast_dc_scaled %>% 
   fit_clogit(choice ~ contagion + 
                landscapeshapeindex +
-               meanshapeindex + 
-               proportion_water + 
-               proportion_wetland + 
                proportion_developed + 
-               proportion_barren + 
                proportion_decidousforest +
                proportion_evergreenforest + 
                proportion_mixedforest + 
-               proportion_shrub + 
                proportion_grassland +
                proportion_cropland + 
                strata(observation_id))
