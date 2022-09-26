@@ -15,6 +15,7 @@ library(MuMIn)
 library(foreach)
 library(doParallel)
 library(amt)
+library(lubridate)
 
 #      Functions                                                            ####
 
@@ -73,20 +74,103 @@ data_southeast_dc <- read_csv("1.DataManagement/CleanData/Chapter1_FinalData/Sou
 # Making sure sex is formatted correctly 
 data_southeast_dc$sex <- ifelse(data_southeast_dc$sex == F, "F", "M")
 
-
 # Changing Used/Available data to right format 
 data_southeast_dc$choice <- ifelse(data_southeast_dc$choice == "used",1,0)
 
 # Changing NAs to zero
 data_southeast_dc[is.na(data_southeast_dc)] = 0
 
-# Making Choice a factor 
-data_southeast_dc$choice <- as.factor(data_southeast_dc$choice)
+# Changing timestamp column
+data_southeast_dc$t <-  as_datetime(data_southeast_dc$t)
+
+data_southeast_dc <- data_southeast_dc %>% rename(timestamp = t)
+
+#           [Adding Seasonality]                                            ####
+
+# Spring:  1 March – 31 May (3 mo.)
+# Summer:  1 June – 30 August (3 mo.)
+# Fall:  1 September – 30 November (3 mo.)
+# Winter:  1 December – 28 February (3 mo.)
+
+# Start
+time_partition_start <- expand_grid(year = (data_southeast_dc$timestamp %>% year() %>% unique() %>% .[1]-1) : 
+                                      (data_southeast_dc$timestamp %>% year() %>% unique() %>% .[length(.)]+1),
+                                    month = c("03","06","09","12"),
+                                    day = "01") %>% 
+  mutate(season = ifelse(month == "03", "spring",
+                         ifelse(month == "06", "summer",
+                                ifelse(month == "09", "fall",
+                                       ifelse(month == "12", "winter",NA))))) %>% 
+  mutate(date = paste(year,month,day,sep = "-"),.keep = "unused",.before = 1) %>% 
+  mutate(date = paste0(date, " 00:00:00"))
+
+# End
+time_partition_end <- expand_grid(year = (data_southeast_dc$timestamp %>% year() %>% unique() %>% .[1]-1) : 
+                                    (data_southeast_dc$timestamp %>% year() %>% unique() %>% .[length(.)]+1),
+                                  month = c("05","08","11","02"))
+
+time_partition_end <- time_partition_end %>% 
+  mutate(day = ifelse(time_partition_end$month == "05","31",
+                      ifelse(time_partition_end$month == "08","31",
+                             ifelse(time_partition_end$month == "11","30",
+                                    ifelse(time_partition_end$month == "02","28",NA))))) %>% 
+  mutate(year = ifelse(.$month == "02",year + 1, year)) %>% 
+  mutate(date = paste(year,month,day,sep = "-"),.keep = "unused") %>% 
+  mutate(date = paste0(date, " 23:59:59"))
+
+# Creating Time Partition dataframe
+time_partitions <- data.frame(start = time_partition_start$date,
+                              end = time_partition_end$date,
+                              season = time_partition_start$season)
+
+ints <- list()
+
+for (i in 1:nrow(time_partitions)) {
+  ints[[i]] <- interval(time_partitions[i,1], time_partitions[i,2])
+}
+
+# Mutating dataframe and adding season
+data_southeast_dc <- data_southeast_dc %>% 
+  mutate(season = case_when(
+    timestamp %within% ints[[1]] ~ time_partitions$season %>% unique() %>% .[1],
+    timestamp %within% ints[[2]] ~ time_partitions$season %>% unique() %>% .[2],
+    timestamp %within% ints[[3]] ~ time_partitions$season %>% unique() %>% .[3],
+    timestamp %within% ints[[4]] ~ time_partitions$season %>% unique() %>% .[4],
+    timestamp %within% ints[[5]] ~ time_partitions$season %>% unique() %>% .[1],
+    timestamp %within% ints[[6]] ~ time_partitions$season %>% unique() %>% .[2],
+    timestamp %within% ints[[7]] ~ time_partitions$season %>% unique() %>% .[3],
+    timestamp %within% ints[[8]] ~ time_partitions$season %>% unique() %>% .[4],
+    timestamp %within% ints[[9]] ~ time_partitions$season %>% unique() %>% .[1],
+    timestamp %within% ints[[10]] ~ time_partitions$season %>% unique() %>% .[2],
+    timestamp %within% ints[[11]] ~ time_partitions$season %>% unique() %>% .[3],
+    timestamp %within% ints[[12]] ~ time_partitions$season %>% unique() %>% .[4],
+    timestamp %within% ints[[13]] ~ time_partitions$season %>% unique() %>% .[1],
+    timestamp %within% ints[[14]] ~ time_partitions$season %>% unique() %>% .[2],
+    timestamp %within% ints[[15]] ~ time_partitions$season %>% unique() %>% .[3],
+    timestamp %within% ints[[16]] ~ time_partitions$season %>% unique() %>% .[4],
+    timestamp %within% ints[[17]] ~ time_partitions$season %>% unique() %>% .[1],
+    timestamp %within% ints[[18]] ~ time_partitions$season %>% unique() %>% .[2],
+    timestamp %within% ints[[19]] ~ time_partitions$season %>% unique() %>% .[3],
+    timestamp %within% ints[[20]] ~ time_partitions$season %>% unique() %>% .[4],
+    timestamp %within% ints[[21]] ~ time_partitions$season %>% unique() %>% .[1],
+    timestamp %within% ints[[22]] ~ time_partitions$season %>% unique() %>% .[2],
+    timestamp %within% ints[[23]] ~ time_partitions$season %>% unique() %>% .[3],
+    timestamp %within% ints[[24]] ~ time_partitions$season %>% unique() %>% .[4],
+    timestamp %within% ints[[25]] ~ time_partitions$season %>% unique() %>% .[1],
+    timestamp %within% ints[[26]] ~ time_partitions$season %>% unique() %>% .[2],
+    timestamp %within% ints[[27]] ~ time_partitions$season %>% unique() %>% .[3],
+    timestamp %within% ints[[28]] ~ time_partitions$season %>% unique() %>% .[4],
+    TRUE ~ "NA"),.after = timestamp)
+
+# Fixing leap years
+data_southeast_dc$season <- ifelse(month(data_southeast_dc$timestamp) == 2 & day(data_southeast_dc$timestamp) == 29, "winter",data_southeast_dc$season)
+
+#           [Scaling]                                                       ####
 
 # Scaling
 data_southeast_dc_scaled <- data_southeast_dc
 
-for (i in 13:ncol(data_southeast_dc)) {
+for (i in 14:ncol(data_southeast_dc)) {
   data_southeast_dc_scaled[ ,i] <- scale(data_southeast_dc_scaled[ ,i])
 }
 
@@ -329,8 +413,137 @@ summary(model_summer_scaled)
 
 ###############################################################################
 #   [Discrete Choice]                                                       ####
+#      [Fall]                                                               ####
+#        [Data]                                                             ####
 
-southeast_model_01_scaled <- data_southeast_dc_scaled %>% 
+# Separating specific dataframe
+df <- data_southeast_dc %>% filter(season == "fall")
+
+#        [Global Model]                                                     ####
+
+# Model
+model_dc_fall <- df %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               meanshapeindex +
+               proportion_developed + 
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_mixedforest + 
+               proportion_grassland +
+               proportion_cropland + 
+               strata(observation_id))
+
+# Summary 
+
+summary(model_dc_fall)
+
+#        [model_v2]                                                         ####
+
+# Eliminated proportion_evergreenforest (p-value of 0.541)
+
+# Model
+model_dc_fall <- df %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               meanshapeindex +
+               proportion_developed + 
+               proportion_decidousforest +
+               proportion_mixedforest + 
+               proportion_grassland +
+               proportion_cropland + 
+               strata(observation_id))
+
+# Summary 
+
+summary(model_dc_fall)
+
+
+#        [model_v3]                                                         ####
+
+# Eliminated contagion (p-value of 0.392)
+
+# Model
+model_dc_fall <- df %>% 
+  fit_clogit(choice ~ landscapeshapeindex +
+               meanshapeindex +
+               proportion_developed + 
+               proportion_decidousforest +
+               proportion_mixedforest + 
+               proportion_grassland +
+               proportion_cropland + 
+               strata(observation_id))
+
+# Summary 
+
+summary(model_dc_fall)
+
+#        [model_v4]                                                         ####
+
+# Eliminated proportion_mixedforest (p-value of 0.2098)
+
+# Model
+model_dc_fall <- df %>% 
+  fit_clogit(choice ~ landscapeshapeindex +
+               meanshapeindex +
+               proportion_developed + 
+               proportion_decidousforest +
+               proportion_grassland +
+               proportion_cropland + 
+               strata(observation_id))
+
+# Summary 
+
+summary(model_dc_fall)
+
+#        [model_v5]                                                         ####
+
+# Eliminated meanshapeindex (p-value of 0.0573)
+
+# Model
+model_dc_fall <- df %>% 
+  fit_clogit(choice ~ landscapeshapeindex +
+               proportion_developed + 
+               proportion_decidousforest +
+               proportion_grassland +
+               proportion_cropland + 
+               strata(observation_id))
+
+# Summary 
+
+summary(model_dc_fall)
+
+#      [Winter]                                                             ####
+#        [Data]                                                             ####
+
+# Separating specific dataframe
+df <- data_southeast_dc %>% filter(season == "winter")
+
+#        [Global Model]                                                     ####
+
+# Model
+model_dc_winter <- df %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               meanshapeindex +
+               proportion_developed + 
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_mixedforest + 
+               proportion_grassland +
+               proportion_cropland + 
+               strata(observation_id))
+
+# Summary 
+
+summary(model_dc_winter)
+
+#        [model_v2]                                                         ####
+
+# Eliminated meanshapeindex (p-value of 0.06278)
+
+# Model
+model_dc_winter <- df %>% 
   fit_clogit(choice ~ contagion + 
                landscapeshapeindex +
                proportion_developed + 
@@ -340,5 +553,412 @@ southeast_model_01_scaled <- data_southeast_dc_scaled %>%
                proportion_grassland +
                proportion_cropland + 
                strata(observation_id))
+
+# Summary 
+
+summary(model_dc_winter)
+
+#      [Spring]                                                             ####
+#        [Data]                                                             ####
+
+# Separating specific dataframe
+df <- data_southeast_dc %>% filter(season == "spring")
+
+#        [Global Model]                                                     ####
+
+# Model
+model_dc_spring <- df %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               meanshapeindex +
+               proportion_developed + 
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_mixedforest + 
+               proportion_grassland +
+               proportion_cropland + 
+               strata(observation_id))
+
+# Summary 
+
+summary(model_dc_spring)
+
+#        [model_v2]                                                         ####
+
+# Eliminated proportion_mixedforest (p-value of 0.3694)
+
+# Model
+model_dc_spring <- df %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               meanshapeindex +
+               proportion_developed + 
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_grassland +
+               proportion_cropland + 
+               strata(observation_id))
+
+# Summary 
+
+summary(model_dc_spring)
+
+#        [model_v3]                                                         ####
+
+# Eliminated proportion_evergreenforest (p-value of 0.0730)
+
+# Model
+model_dc_spring <- df %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               meanshapeindex +
+               proportion_developed + 
+               proportion_decidousforest +
+               proportion_grassland +
+               proportion_cropland + 
+               strata(observation_id))
+
+# Summary 
+
+summary(model_dc_spring)
+
+#      [Summer]                                                             ####
+#        [Data]                                                             ####
+
+# Separating specific dataframe
+df <- data_southeast_dc %>% filter(season == "summer")
+
+#        [Global Model]                                                     ####
+
+# Model
+model_dc_summer <- df %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               meanshapeindex +
+               proportion_developed + 
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_mixedforest + 
+               proportion_grassland +
+               proportion_cropland + 
+               strata(observation_id))
+
+# Summary 
+
+summary(model_dc_summer)
+
+#        [model_v2]                                                         ####
+
+# Eliminated proportion_developed (p-value of 0.62213)
+
+# Model
+model_dc_summer <- df %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               meanshapeindex +
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_mixedforest + 
+               proportion_grassland +
+               proportion_cropland + 
+               strata(observation_id))
+
+# Summary 
+
+summary(model_dc_summer)
+
+#        [model_v3]                                                         ####
+
+# Eliminated proportion_mixedforest (p-value of 0.3659)
+
+# Model
+model_dc_summer <- df %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               meanshapeindex +
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_grassland +
+               proportion_cropland + 
+               strata(observation_id))
+
+# Summary 
+
+summary(model_dc_summer)
+
+###############################################################################
+#   [Discrete Choice - Scaled]                                              ####
+#      [Fall]                                                               ####
+#        [Data]                                                             ####
+
+# Separating specific dataframe
+df <- data_southeast_dc_scaled %>% filter(season == "fall")
+
+#        [Global Model]                                                     ####
+
+# Model
+model_dc_scaled_fall <- df %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               meanshapeindex +
+               proportion_developed + 
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_mixedforest + 
+               proportion_grassland +
+               proportion_cropland + 
+               strata(observation_id))
+
+# Summary 
+
+summary(model_dc_scaled_fall)
+
+#        [model_v2]                                                         ####
+
+# Eliminated proportion_evergreenforest (p-value of 0.541)
+
+# Model
+model_dc_scaled_fall <- df %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               meanshapeindex +
+               proportion_developed + 
+               proportion_decidousforest +
+               proportion_mixedforest + 
+               proportion_grassland +
+               proportion_cropland + 
+               strata(observation_id))
+
+# Summary 
+
+summary(model_dc_scaled_fall)
+
+#        [model_v3]                                                         ####
+
+# Eliminated contagion (p-value of 0.392)
+
+# Model
+model_dc_scaled_fall <- df %>% 
+  fit_clogit(choice ~ landscapeshapeindex +
+               meanshapeindex +
+               proportion_developed + 
+               proportion_decidousforest +
+               proportion_mixedforest + 
+               proportion_grassland +
+               proportion_cropland + 
+               strata(observation_id))
+
+# Summary 
+
+summary(model_dc_scaled_fall)
+
+#        [model_v4]                                                         ####
+
+# Eliminated proportion_mixedforest (p-value of 0.2098)
+
+# Model
+model_dc_scaled_fall <- df %>% 
+  fit_clogit(choice ~ landscapeshapeindex +
+               meanshapeindex +
+               proportion_developed + 
+               proportion_decidousforest +
+               proportion_grassland +
+               proportion_cropland + 
+               strata(observation_id))
+
+# Summary 
+
+summary(model_dc_scaled_fall)
+
+#        [model_v5]                                                         ####
+
+# Eliminated meanshapeindex (p-value of 0.0573)
+
+# Model
+model_dc_scaled_fall <- df %>% 
+  fit_clogit(choice ~ landscapeshapeindex +
+               proportion_developed + 
+               proportion_decidousforest +
+               proportion_grassland +
+               proportion_cropland + 
+               strata(observation_id))
+
+# Summary 
+
+summary(model_dc_scaled_fall)
+
+#      [Winter]                                                             ####
+#        [Data]                                                             ####
+
+# Separating specific dataframe
+df <- data_southeast_dc_scaled %>% filter(season == "winter")
+
+#        [Global Model]                                                     ####
+
+# Model
+model_dc_scaled_winter <- df %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               meanshapeindex +
+               proportion_developed + 
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_mixedforest + 
+               proportion_grassland +
+               proportion_cropland + 
+               strata(observation_id))
+
+# Summary 
+
+summary(model_dc_scaled_winter)
+
+#        [model_v2]                                                         ####
+
+# Eliminated meanshapeindex (p-value of 0.06278)
+
+# Model
+model_dc_scaled_winter <- df %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               proportion_developed + 
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_mixedforest + 
+               proportion_grassland +
+               proportion_cropland + 
+               strata(observation_id))
+
+# Summary 
+
+summary(model_dc_scaled_winter)
+
+#      [Spring]                                                             ####
+#        [Data]                                                             ####
+
+# Separating specific dataframe
+df <- data_southeast_dc_scaled %>% filter(season == "spring")
+
+#        [Global Model]                                                     ####
+
+# Model
+model_dc_scaled_spring <- df %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               meanshapeindex +
+               proportion_developed + 
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_mixedforest + 
+               proportion_grassland +
+               proportion_cropland + 
+               strata(observation_id))
+
+# Summary 
+
+summary(model_dc_scaled_spring)
+
+#        [model_v2]                                                         ####
+
+# Eliminated proportion_mixedforest (p-value of 0.3694)
+
+# Model
+model_dc_scaled_spring <- df %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               meanshapeindex +
+               proportion_developed + 
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_grassland +
+               proportion_cropland + 
+               strata(observation_id))
+
+# Summary 
+
+summary(model_dc_scaled_spring)
+
+#        [model_v3]                                                         ####
+
+# Eliminated proportion_evergreenforest (p-value of 0.0730)
+
+# Model
+model_dc_scaled_spring <- df %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               meanshapeindex +
+               proportion_developed + 
+               proportion_decidousforest +
+               proportion_grassland +
+               proportion_cropland + 
+               strata(observation_id))
+
+# Summary 
+
+summary(model_dc_scaled_spring)
+
+
+#      [Summer]                                                             ####
+#        [Data]                                                             ####
+
+# Separating specific dataframe
+df <- data_southeast_dc_scaled %>% filter(season == "summer")
+
+#        [Global Model]                                                     ####
+
+# Model
+model_dc_scaled_summer <- df %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               meanshapeindex +
+               proportion_developed + 
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_mixedforest + 
+               proportion_grassland +
+               proportion_cropland + 
+               strata(observation_id))
+
+# Summary 
+
+summary(model_dc_scaled_summer)
+
+#        [model_v2]                                                         ####
+
+# Eliminated proportion_developed (p-value of 0.62213)
+
+# Model
+model_dc_scaled_summer <- df %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               meanshapeindex +
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_mixedforest + 
+               proportion_grassland +
+               proportion_cropland + 
+               strata(observation_id))
+
+# Summary 
+
+summary(model_dc_scaled_summer)
+
+#        [model_v3]                                                         ####
+
+# Eliminated proportion_mixedforest (p-value of 0.3659)
+
+# Model
+model_dc_scaled_summer <- df %>% 
+  fit_clogit(choice ~ contagion + 
+               landscapeshapeindex +
+               meanshapeindex +
+               proportion_decidousforest +
+               proportion_evergreenforest + 
+               proportion_grassland +
+               proportion_cropland + 
+               strata(observation_id))
+
+# Summary 
+
+summary(model_dc_scaled_summer)
 
 ###############################################################################
