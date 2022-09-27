@@ -16,6 +16,8 @@ library(foreach)
 library(doParallel)
 library(amt)
 library(lubridate)
+library(broom)
+library(jtools)
 
 #      Functions                                                            ####
 
@@ -1095,7 +1097,97 @@ saveRDS(plot,
 #   [Predictive Plots - Discrete Choice Scaled]                             ####
 ###############################################################################
 
+library(jtools)
 
+effect_plot(model_fall, pred = southeast_proportion_5_buffer600m, interval = TRUE, plot.points = F)
+
+
+
+names(m$coefficients)
+
+covnames_logreg <- data.frame(cov_names = names(data_southeast_logreg[[1]])[3:length(names(data_southeast_logreg[[1]]))]) %>% 
+  mutate(cov_label = case_when(cov_names == "southeast_contag" ~ "Contagion",
+                               cov_names == "southeast_lsi" ~ "Landscape Shape Index",
+                               cov_names == "southeast_shdi" ~ "Shannon's Diversity Index",
+                               cov_names == "southeast_proportion_1_buffer600m"  ~ "Proportion of Water",
+                               cov_names == "southeast_proportion_2_buffer600m"  ~ "Proportion of Developed",
+                               cov_names == "southeast_proportion_3_buffer600m"  ~ "Proportion of Barren",
+                               cov_names == "southeast_proportion_4_buffer600m"  ~ "Proportion of Deciduous Forest",
+                               cov_names == "southeast_proportion_5_buffer600m"  ~ "Proportion of Evergreen Forest",
+                               cov_names == "southeast_proportion_6_buffer600m"  ~ "Proportion of Mixed Forest",
+                               cov_names == "southeast_proportion_7_buffer600m"  ~ "Proportion of Shrub",
+                               cov_names == "southeast_proportion_8_buffer600m"  ~ "Proportion of Grassland",
+                               cov_names == "southeast_proportion_9_buffer600m"  ~ "Proportion of Cropland",
+                               cov_names == "southeast_proportion_10_buffer600m" ~ "Proportion of Wetland"
+  ))
+
+covnames_dc<- data.frame(cov_names = names(data_southeast_dc)[14:length(names(data_southeast_dc))]) %>% 
+  mutate(cov_label = case_when(cov_names == "contagion" ~ "Contagion",
+                               cov_names == "landscapeshapeindex" ~ "Landscape Shape Index",
+                               cov_names == "southeast_shdi" ~ "Shannon's Diversity Index",
+                               cov_names == "proportion_water"  ~ "Proportion of Water",
+                               cov_names == "proportion_developed"  ~ "Proportion of Developed",
+                               cov_names == "proportion_barren"  ~ "Proportion of Barren",
+                               cov_names == "proportion_decidousforest"  ~ "Proportion of Deciduous Forest",
+                               cov_names == "proportion_evergreenforest"  ~ "Proportion of Evergreen Forest",
+                               cov_names == "proportion_mixedforest"  ~ "Proportion of Mixed Forest",
+                               cov_names == "proportion_shrub"  ~ "Proportion of Shrub",
+                               cov_names == "proportion_grassland"  ~ "Proportion of Grassland",
+                               cov_names == "proportion_cropland"  ~ "Proportion of Cropland",
+                               cov_names == "proportion_wetland" ~ "Proportion of Wetland"))
+
+
+logreg_model_list <- list(model_fall,
+                          model_winter,
+                          model_spring,
+                          model_summer,
+                          model_fall_scaled,
+                          model_winter_scaled,
+                          model_spring_scaled,
+                          model_summer_scaled)
+
+logreg_model_list_names <- list('model_fall',
+                                "model_winter",
+                                "model_spring",
+                                "model_summer",
+                                "model_fall_scaled",
+                                "model_winter_scaled",
+                                "model_spring_scaled",
+                                "model_summer_scaled")
+
+dc_model_list <- list(model_dc_fall,
+                      model_dc_winter,
+                      model_dc_spring,
+                      model_dc_summer,
+                      model_dc_scaled_fall,
+                      model_dc_scaled_winter,
+                      model_dc_scaled_spring,
+                      model_dc_scaled_summer)
+
+dc_model_list_names <- list('model_dc_fall',
+                            "model_dc_winter",
+                            "model_dc_spring",
+                            "model_dc_summer",
+                            "model_dc_scaled_fall",
+                            "model_dc_scaled_winter",
+                            "model_dc_scaled_spring",
+                            "model_dc_scaled_summer")
+
+
+model <- logreg_model_list[[1]]
+
+model$coefficients %>% names()
+p<-effect_plot(model, pred = 'southeast_proportion_8_buffer600m', interval = TRUE, plot.points = F)
+
+
+ggsave(filename = paste0("2.Chapter1/3.Output/southeast_predictedprob/",logreg_model_list_names[1],".png"),
+       plot = p,
+       device = "png",
+       width = 6,
+       height = 4,
+       units = "in")
+
+"G:\My Drive\Research\UMontana\2.INPROGRESS\1.Masters\MS_Thesis_Analysis\2.Chapter1\3.Output\southeast_predictedprob"
 
 
 
