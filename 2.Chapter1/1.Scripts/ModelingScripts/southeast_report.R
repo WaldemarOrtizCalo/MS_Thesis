@@ -962,3 +962,142 @@ model_dc_scaled_summer <- df %>%
 summary(model_dc_scaled_summer)
 
 ###############################################################################
+#   [Model_results table]                                                   ####
+model_list_logreg <- list(model_fall,
+                          model_fall_scaled,
+                          model_winter,
+                          model_winter_scaled,
+                          model_spring,
+                          model_spring_scaled,
+                          model_summer,
+                          model_summer_scaled)
+
+model_list_dc <- list(model_dc_fall,
+                      model_dc_scaled_fall,
+                      model_dc_winter,
+                      model_dc_scaled_winter,
+                      model_dc_spring,
+                      model_dc_scaled_spring,
+                      model_dc_summer,
+                      model_dc_scaled_summer)
+
+broom::tidy(model_list_dc[[1]]$model)
+
+broom::tidy(model_fall)
+
+###############################################################################
+#   [Predictive Plots - Log Reg]                                            ####
+#      [Fall]                                                               ####
+
+# Data
+df <- data_southeast_logreg[[1]] 
+
+# Model Object
+summary(model_fall)
+
+#        [Cov 1]                                                            ####
+
+ # Prediction dataset
+pred_data <- with(data = df, 
+                  data.frame(southeast_lsi = seq(from = 0, to = max(df$southeast_lsi),by = 0.1),
+                             southeast_contag = mean(southeast_contag,na.rm = T),
+                             southeast_shdi = mean(southeast_shdi,na.rm = T),
+                             southeast_proportion_2_buffer600m = mean(southeast_proportion_2_buffer600m, na.rm=TRUE),
+                             southeast_proportion_4_buffer600m = mean(southeast_proportion_4_buffer600m, na.rm=TRUE),
+                             southeast_proportion_5_buffer600m = mean(southeast_proportion_5_buffer600m, na.rm=TRUE),
+                             southeast_proportion_6_buffer600m = mean(southeast_proportion_6_buffer600m, na.rm=TRUE),
+                             southeast_proportion_8_buffer600m = mean(southeast_proportion_8_buffer600m, na.rm=TRUE),
+                             southeast_proportion_9_buffer600m = mean(southeast_proportion_9_buffer600m, na.rm=TRUE)))
+
+preds <- predict(m, pred_data, type="response", se.fit=TRUE)
+
+predf <- preds$fit # predicted
+lower <- preds$fit - (1.96*preds$se.fit) # lower bounds
+upper <- preds$fit + (1.96*preds$se.fit) # upper bounds
+
+plotdata <- data.frame("x" = pred_data[,1],
+                       "predicted" = predf,
+                       "lower" = lower,
+                       "upper" = upper)
+
+plot <- ggplot(data = plotdata, aes(x = x, y = predicted)) + 
+  geom_line(size = 1)+
+  geom_line(aes(x = x, y = lower), color = "blue")+
+  geom_line(aes(x = x, y = upper), color = "blue")+
+  labs(x = "Landscape Shape Index", y = "Probability of Use")+
+  theme_bw()+
+  theme(axis.text = element_text(size = 10))
+
+name_file <-  "2.Chapter1/3.Output/predicticed_probabilityuse/logreg_fall_lsi"
+
+ggsave(filename = paste0(name_file,".png"),
+       plot = plot,
+       device = "png",
+       width = 6,
+       height = 4,
+       units = "in")
+
+saveRDS(plot,
+        file = paste0(name_file,".rds"))
+
+#        [Cov 2]                                                            ####
+
+# Prediction dataset
+pred_data <- with(data = df, 
+                  data.frame(southeast_lsi = mean(southeast_lsi,na.rm = T),
+                             southeast_contag = seq(from = 0, to = 1, by = 0.1),
+                             southeast_shdi = mean(southeast_shdi,na.rm = T),
+                             southeast_proportion_2_buffer600m = mean(southeast_proportion_2_buffer600m, na.rm=TRUE),
+                             southeast_proportion_4_buffer600m = mean(southeast_proportion_4_buffer600m, na.rm=TRUE),
+                             southeast_proportion_5_buffer600m = mean(southeast_proportion_5_buffer600m, na.rm=TRUE),
+                             southeast_proportion_6_buffer600m = mean(southeast_proportion_6_buffer600m, na.rm=TRUE),
+                             southeast_proportion_8_buffer600m = mean(southeast_proportion_8_buffer600m, na.rm=TRUE),
+                             southeast_proportion_9_buffer600m = mean(southeast_proportion_9_buffer600m, na.rm=TRUE)))
+
+preds <- predict(m, pred_data, type="response", se.fit=TRUE)
+
+predf <- preds$fit # predicted
+lower <- preds$fit - (1.96*preds$se.fit) # lower bounds
+upper <- preds$fit + (1.96*preds$se.fit) # upper bounds
+
+plotdata <- data.frame("x" = pred_data[,1],
+                       "predicted" = predf,
+                       "lower" = lower,
+                       "upper" = upper)
+
+plot <- ggplot(data = plotdata, aes(x = x, y = predicted)) + 
+  geom_line(size = 1)+
+  geom_line(aes(x = x, y = lower), color = "blue")+
+  geom_line(aes(x = x, y = upper), color = "blue")+
+  labs(x = "Landscape Shape Index", y = "Probability of Use")+
+  theme_bw()+
+  theme(axis.text = element_text(size = 10))
+
+name_file <-  "2.Chapter1/3.Output/predicticed_probabilityuse/logreg_fall_lsi"
+
+ggsave(filename = paste0(name_file,".png"),
+       plot = plot,
+       device = "png",
+       width = 6,
+       height = 4,
+       units = "in")
+
+saveRDS(plot,
+        file = paste0(name_file,".rds"))
+
+
+#      [Winter]                                                             ####
+#      [Spring]                                                             ####
+#      [Summer]                                                             ####
+
+#   [Predictive Plots - Log Reg Scaled]                                     ####
+#   [Predictive Plots - Discrete Choice]                                    ####
+#   [Predictive Plots - Discrete Choice Scaled]                             ####
+###############################################################################
+
+
+
+
+
+
+
