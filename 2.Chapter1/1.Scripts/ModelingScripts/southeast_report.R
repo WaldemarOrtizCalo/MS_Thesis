@@ -988,122 +988,9 @@ broom::tidy(model_list_dc[[1]]$model)
 broom::tidy(model_fall)
 
 ###############################################################################
-#   [Predictive Plots - Log Reg]                                            ####
-#      [Fall]                                                               ####
+#   [Plotting LogReg - Effect Graphs]                                       ####
+#      [Plot Metadata]                                                      ####
 
-# Data
-df <- data_southeast_logreg[[1]] 
-
-# Model Object
-summary(model_fall)
-
-#        [Cov 1]                                                            ####
-
- # Prediction dataset
-pred_data <- with(data = df, 
-                  data.frame(southeast_lsi = seq(from = 0, to = max(df$southeast_lsi),by = 0.1),
-                             southeast_contag = mean(southeast_contag,na.rm = T),
-                             southeast_shdi = mean(southeast_shdi,na.rm = T),
-                             southeast_proportion_2_buffer600m = mean(southeast_proportion_2_buffer600m, na.rm=TRUE),
-                             southeast_proportion_4_buffer600m = mean(southeast_proportion_4_buffer600m, na.rm=TRUE),
-                             southeast_proportion_5_buffer600m = mean(southeast_proportion_5_buffer600m, na.rm=TRUE),
-                             southeast_proportion_6_buffer600m = mean(southeast_proportion_6_buffer600m, na.rm=TRUE),
-                             southeast_proportion_8_buffer600m = mean(southeast_proportion_8_buffer600m, na.rm=TRUE),
-                             southeast_proportion_9_buffer600m = mean(southeast_proportion_9_buffer600m, na.rm=TRUE)))
-
-preds <- predict(m, pred_data, type="response", se.fit=TRUE)
-
-predf <- preds$fit # predicted
-lower <- preds$fit - (1.96*preds$se.fit) # lower bounds
-upper <- preds$fit + (1.96*preds$se.fit) # upper bounds
-
-plotdata <- data.frame("x" = pred_data[,1],
-                       "predicted" = predf,
-                       "lower" = lower,
-                       "upper" = upper)
-
-plot <- ggplot(data = plotdata, aes(x = x, y = predicted)) + 
-  geom_line(size = 1)+
-  geom_line(aes(x = x, y = lower), color = "blue")+
-  geom_line(aes(x = x, y = upper), color = "blue")+
-  labs(x = "Landscape Shape Index", y = "Probability of Use")+
-  theme_bw()+
-  theme(axis.text = element_text(size = 10))
-
-name_file <-  "2.Chapter1/3.Output/predicticed_probabilityuse/logreg_fall_lsi"
-
-ggsave(filename = paste0(name_file,".png"),
-       plot = plot,
-       device = "png",
-       width = 6,
-       height = 4,
-       units = "in")
-
-saveRDS(plot,
-        file = paste0(name_file,".rds"))
-
-#        [Cov 2]                                                            ####
-
-# Prediction dataset
-pred_data <- with(data = df, 
-                  data.frame(southeast_lsi = mean(southeast_lsi,na.rm = T),
-                             southeast_contag = seq(from = 0, to = 1, by = 0.1),
-                             southeast_shdi = mean(southeast_shdi,na.rm = T),
-                             southeast_proportion_2_buffer600m = mean(southeast_proportion_2_buffer600m, na.rm=TRUE),
-                             southeast_proportion_4_buffer600m = mean(southeast_proportion_4_buffer600m, na.rm=TRUE),
-                             southeast_proportion_5_buffer600m = mean(southeast_proportion_5_buffer600m, na.rm=TRUE),
-                             southeast_proportion_6_buffer600m = mean(southeast_proportion_6_buffer600m, na.rm=TRUE),
-                             southeast_proportion_8_buffer600m = mean(southeast_proportion_8_buffer600m, na.rm=TRUE),
-                             southeast_proportion_9_buffer600m = mean(southeast_proportion_9_buffer600m, na.rm=TRUE)))
-
-preds <- predict(m, pred_data, type="response", se.fit=TRUE)
-
-predf <- preds$fit # predicted
-lower <- preds$fit - (1.96*preds$se.fit) # lower bounds
-upper <- preds$fit + (1.96*preds$se.fit) # upper bounds
-
-plotdata <- data.frame("x" = pred_data[,1],
-                       "predicted" = predf,
-                       "lower" = lower,
-                       "upper" = upper)
-
-plot <- ggplot(data = plotdata, aes(x = x, y = predicted)) + 
-  geom_line(size = 1)+
-  geom_line(aes(x = x, y = lower), color = "blue")+
-  geom_line(aes(x = x, y = upper), color = "blue")+
-  labs(x = "Landscape Shape Index", y = "Probability of Use")+
-  theme_bw()+
-  theme(axis.text = element_text(size = 10))
-
-name_file <-  "2.Chapter1/3.Output/predicticed_probabilityuse/logreg_fall_lsi"
-
-ggsave(filename = paste0(name_file,".png"),
-       plot = plot,
-       device = "png",
-       width = 6,
-       height = 4,
-       units = "in")
-
-saveRDS(plot,
-        file = paste0(name_file,".rds"))
-
-
-#      [Winter]                                                             ####
-#      [Spring]                                                             ####
-#      [Summer]                                                             ####
-
-#   [Predictive Plots - Log Reg Scaled]                                     ####
-#   [Predictive Plots - Discrete Choice]                                    ####
-#   [Predictive Plots - Discrete Choice Scaled]                             ####
-###############################################################################
-
-library(jtools)
-
-effect_plot(model_fall, pred = southeast_proportion_5_buffer600m, interval = TRUE, plot.points = F)
-
-
-
-names(m$coefficients)
 
 covnames_logreg <- data.frame(cov_names = names(data_southeast_logreg[[1]])[3:length(names(data_southeast_logreg[[1]]))]) %>% 
   mutate(cov_label = case_when(cov_names == "southeast_contag" ~ "Contagion",
@@ -1146,14 +1033,14 @@ logreg_model_list <- list(model_fall,
                           model_spring_scaled,
                           model_summer_scaled)
 
-logreg_model_list_names <- list('model_fall',
-                                "model_winter",
-                                "model_spring",
-                                "model_summer",
-                                "model_fall_scaled",
-                                "model_winter_scaled",
-                                "model_spring_scaled",
-                                "model_summer_scaled")
+logreg_model_list_names <- list('model_logreg_fall',
+                                "model_logreg_winter",
+                                "model_logreg_spring",
+                                "model_logreg_summer",
+                                "model_logreg_fall_scaled",
+                                "model_logreg_winter_scaled",
+                                "model_logreg_spring_scaled",
+                                "model_logreg_summer_scaled")
 
 dc_model_list <- list(model_dc_fall,
                       model_dc_winter,
@@ -1173,23 +1060,42 @@ dc_model_list_names <- list('model_dc_fall',
                             "model_dc_scaled_spring",
                             "model_dc_scaled_summer")
 
+#      [Plotting Protocol]                                                  ####
 
-model <- logreg_model_list[[1]]
+for (i in 1:length(logreg_model_list)) {
+  
+  # Choosing Model to Plot
+  model <- logreg_model_list[[i]]
+  
+  for (v in 2:length(names(model$coefficients))) {
+    # Extracting a Covariate to Plot
+    cov<-names(model$coefficients)[v]
+    
+    # Effect Plot
+    p <- effect_plot(model, 
+                     pred = !!cov, 
+                     interval = TRUE, 
+                     plot.points = F,
+                     x.label = covnames_logreg[which(covnames_logreg[,1] == cov),2],
+                     y.label = "Probability of Use")
+    
+    # Exporting Plot
+    ggsave(filename = paste0("2.Chapter1/3.Output/southeast_predictedprob/",logreg_model_list_names[i],"_",
+                             covnames_logreg[which(covnames_logreg[,1] == cov),2],".png"),
+           plot = p,
+           device = "png",
+           width = 6,
+           height = 4,
+           units = "in")
+    
+    # Exporting RDS file for each plot
+    saveRDS(p,
+            file = paste0("2.Chapter1/3.Output/southeast_predictedprob/",logreg_model_list_names[i],"_",
+                          covnames_logreg[which(covnames_logreg[,1] == cov),2],".rds"))
+  }
+  print(paste("Progress:",i/length(logreg_model_list)*100,"%"))
+}
 
-model$coefficients %>% names()
-p<-effect_plot(model, pred = 'southeast_proportion_8_buffer600m', interval = TRUE, plot.points = F)
 
 
-ggsave(filename = paste0("2.Chapter1/3.Output/southeast_predictedprob/",logreg_model_list_names[1],".png"),
-       plot = p,
-       device = "png",
-       width = 6,
-       height = 4,
-       units = "in")
-
-"G:\My Drive\Research\UMontana\2.INPROGRESS\1.Masters\MS_Thesis_Analysis\2.Chapter1\3.Output\southeast_predictedprob"
-
-
-
-
-
+###############################################################################
