@@ -18,6 +18,7 @@ library(amt)
 library(lubridate)
 library(broom)
 library(jtools)
+library(survival)
 
 #      Functions                                                            ####
 
@@ -1121,3 +1122,5 @@ for (i in 1:length(dc_model_list_names)) {
   print(paste("Progress:",i/length(dc_model_list)*100,"%"))
   
 }
+
+###############################################################################
