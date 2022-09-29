@@ -424,8 +424,7 @@ df <- data_southeast_dc %>% filter(season == "fall")
 #        [Global Model]                                                     ####
 
 # Model
-model_dc_fall <- df %>% 
-  fit_clogit(choice ~ contagion + 
+model_dc_fall <- clogit(choice ~ contagion + 
                landscapeshapeindex +
                meanshapeindex +
                proportion_developed + 
@@ -434,7 +433,7 @@ model_dc_fall <- df %>%
                proportion_mixedforest + 
                proportion_grassland +
                proportion_cropland + 
-               strata(observation_id))
+               strata(observation_id), data = df)
 
 # Summary 
 
@@ -445,8 +444,7 @@ summary(model_dc_fall)
 # Eliminated proportion_evergreenforest (p-value of 0.541)
 
 # Model
-model_dc_fall <- df %>% 
-  fit_clogit(choice ~ contagion + 
+model_dc_fall <- clogit(choice ~ contagion + 
                landscapeshapeindex +
                meanshapeindex +
                proportion_developed + 
@@ -454,7 +452,7 @@ model_dc_fall <- df %>%
                proportion_mixedforest + 
                proportion_grassland +
                proportion_cropland + 
-               strata(observation_id))
+               strata(observation_id), data = df)
 
 # Summary 
 
@@ -466,15 +464,14 @@ summary(model_dc_fall)
 # Eliminated contagion (p-value of 0.392)
 
 # Model
-model_dc_fall <- df %>% 
-  fit_clogit(choice ~ landscapeshapeindex +
+model_dc_fall <- clogit(choice ~ landscapeshapeindex +
                meanshapeindex +
                proportion_developed + 
                proportion_decidousforest +
                proportion_mixedforest + 
                proportion_grassland +
                proportion_cropland + 
-               strata(observation_id))
+               strata(observation_id), data = df)
 
 # Summary 
 
@@ -485,14 +482,13 @@ summary(model_dc_fall)
 # Eliminated proportion_mixedforest (p-value of 0.2098)
 
 # Model
-model_dc_fall <- df %>% 
-  fit_clogit(choice ~ landscapeshapeindex +
+model_dc_fall <- clogit(choice ~ landscapeshapeindex +
                meanshapeindex +
                proportion_developed + 
                proportion_decidousforest +
                proportion_grassland +
                proportion_cropland + 
-               strata(observation_id))
+               strata(observation_id), data = df)
 
 # Summary 
 
@@ -503,13 +499,12 @@ summary(model_dc_fall)
 # Eliminated meanshapeindex (p-value of 0.0573)
 
 # Model
-model_dc_fall <- df %>% 
-  fit_clogit(choice ~ landscapeshapeindex +
+model_dc_fall <- clogit(choice ~ landscapeshapeindex +
                proportion_developed + 
                proportion_decidousforest +
                proportion_grassland +
                proportion_cropland + 
-               strata(observation_id))
+               strata(observation_id), data = df)
 
 # Summary 
 
@@ -524,8 +519,7 @@ df <- data_southeast_dc %>% filter(season == "winter")
 #        [Global Model]                                                     ####
 
 # Model
-model_dc_winter <- df %>% 
-  fit_clogit(choice ~ contagion + 
+model_dc_winter <- clogit(choice ~ contagion + 
                landscapeshapeindex +
                meanshapeindex +
                proportion_developed + 
@@ -534,7 +528,7 @@ model_dc_winter <- df %>%
                proportion_mixedforest + 
                proportion_grassland +
                proportion_cropland + 
-               strata(observation_id))
+               strata(observation_id), data = df)
 
 # Summary 
 
@@ -545,8 +539,7 @@ summary(model_dc_winter)
 # Eliminated meanshapeindex (p-value of 0.06278)
 
 # Model
-model_dc_winter <- df %>% 
-  fit_clogit(choice ~ contagion + 
+model_dc_winter <- clogit(choice ~ contagion + 
                landscapeshapeindex +
                proportion_developed + 
                proportion_decidousforest +
@@ -554,7 +547,7 @@ model_dc_winter <- df %>%
                proportion_mixedforest + 
                proportion_grassland +
                proportion_cropland + 
-               strata(observation_id))
+               strata(observation_id), data = df)
 
 # Summary 
 
@@ -569,8 +562,7 @@ df <- data_southeast_dc %>% filter(season == "spring")
 #        [Global Model]                                                     ####
 
 # Model
-model_dc_spring <- df %>% 
-  fit_clogit(choice ~ contagion + 
+model_dc_spring <- clogit(choice ~ contagion + 
                landscapeshapeindex +
                meanshapeindex +
                proportion_developed + 
@@ -579,7 +571,7 @@ model_dc_spring <- df %>%
                proportion_mixedforest + 
                proportion_grassland +
                proportion_cropland + 
-               strata(observation_id))
+               strata(observation_id), data = df)
 
 # Summary 
 
@@ -590,8 +582,7 @@ summary(model_dc_spring)
 # Eliminated proportion_mixedforest (p-value of 0.3694)
 
 # Model
-model_dc_spring <- df %>% 
-  fit_clogit(choice ~ contagion + 
+model_dc_spring <- clogit(choice ~ contagion + 
                landscapeshapeindex +
                meanshapeindex +
                proportion_developed + 
@@ -599,7 +590,7 @@ model_dc_spring <- df %>%
                proportion_evergreenforest + 
                proportion_grassland +
                proportion_cropland + 
-               strata(observation_id))
+               strata(observation_id), data = df)
 
 # Summary 
 
@@ -610,15 +601,14 @@ summary(model_dc_spring)
 # Eliminated proportion_evergreenforest (p-value of 0.0730)
 
 # Model
-model_dc_spring <- df %>% 
-  fit_clogit(choice ~ contagion + 
+model_dc_spring <- clogit(choice ~ contagion + 
                landscapeshapeindex +
                meanshapeindex +
                proportion_developed + 
                proportion_decidousforest +
                proportion_grassland +
                proportion_cropland + 
-               strata(observation_id))
+               strata(observation_id), data = df)
 
 # Summary 
 
@@ -633,8 +623,7 @@ df <- data_southeast_dc %>% filter(season == "summer")
 #        [Global Model]                                                     ####
 
 # Model
-model_dc_summer <- df %>% 
-  fit_clogit(choice ~ contagion + 
+model_dc_summer <- clogit(choice ~ contagion + 
                landscapeshapeindex +
                meanshapeindex +
                proportion_developed + 
@@ -643,7 +632,7 @@ model_dc_summer <- df %>%
                proportion_mixedforest + 
                proportion_grassland +
                proportion_cropland + 
-               strata(observation_id))
+               strata(observation_id), data = df)
 
 # Summary 
 
@@ -654,8 +643,7 @@ summary(model_dc_summer)
 # Eliminated proportion_developed (p-value of 0.62213)
 
 # Model
-model_dc_summer <- df %>% 
-  fit_clogit(choice ~ contagion + 
+model_dc_summer <- clogit(choice ~ contagion + 
                landscapeshapeindex +
                meanshapeindex +
                proportion_decidousforest +
@@ -663,7 +651,7 @@ model_dc_summer <- df %>%
                proportion_mixedforest + 
                proportion_grassland +
                proportion_cropland + 
-               strata(observation_id))
+               strata(observation_id), data = df)
 
 # Summary 
 
@@ -674,15 +662,14 @@ summary(model_dc_summer)
 # Eliminated proportion_mixedforest (p-value of 0.3659)
 
 # Model
-model_dc_summer <- df %>% 
-  fit_clogit(choice ~ contagion + 
+model_dc_summer <- clogit(choice ~ contagion + 
                landscapeshapeindex +
                meanshapeindex +
                proportion_decidousforest +
                proportion_evergreenforest + 
                proportion_grassland +
                proportion_cropland + 
-               strata(observation_id))
+               strata(observation_id), data = df)
 
 # Summary 
 
@@ -699,8 +686,7 @@ df <- data_southeast_dc_scaled %>% filter(season == "fall")
 #        [Global Model]                                                     ####
 
 # Model
-model_dc_scaled_fall <- df %>% 
-  fit_clogit(choice ~ contagion + 
+model_dc_scaled_fall <- clogit(choice ~ contagion + 
                landscapeshapeindex +
                meanshapeindex +
                proportion_developed + 
@@ -709,7 +695,7 @@ model_dc_scaled_fall <- df %>%
                proportion_mixedforest + 
                proportion_grassland +
                proportion_cropland + 
-               strata(observation_id))
+               strata(observation_id), data = df)
 
 # Summary 
 
@@ -720,8 +706,7 @@ summary(model_dc_scaled_fall)
 # Eliminated proportion_evergreenforest (p-value of 0.541)
 
 # Model
-model_dc_scaled_fall <- df %>% 
-  fit_clogit(choice ~ contagion + 
+model_dc_scaled_fall <- clogit(choice ~ contagion + 
                landscapeshapeindex +
                meanshapeindex +
                proportion_developed + 
@@ -729,7 +714,7 @@ model_dc_scaled_fall <- df %>%
                proportion_mixedforest + 
                proportion_grassland +
                proportion_cropland + 
-               strata(observation_id))
+               strata(observation_id), data = df)
 
 # Summary 
 
@@ -740,15 +725,14 @@ summary(model_dc_scaled_fall)
 # Eliminated contagion (p-value of 0.392)
 
 # Model
-model_dc_scaled_fall <- df %>% 
-  fit_clogit(choice ~ landscapeshapeindex +
+model_dc_scaled_fall <- clogit(choice ~ landscapeshapeindex +
                meanshapeindex +
                proportion_developed + 
                proportion_decidousforest +
                proportion_mixedforest + 
                proportion_grassland +
                proportion_cropland + 
-               strata(observation_id))
+               strata(observation_id), data = df)
 
 # Summary 
 
@@ -759,14 +743,13 @@ summary(model_dc_scaled_fall)
 # Eliminated proportion_mixedforest (p-value of 0.2098)
 
 # Model
-model_dc_scaled_fall <- df %>% 
-  fit_clogit(choice ~ landscapeshapeindex +
+model_dc_scaled_fall <- clogit(choice ~ landscapeshapeindex +
                meanshapeindex +
                proportion_developed + 
                proportion_decidousforest +
                proportion_grassland +
                proportion_cropland + 
-               strata(observation_id))
+               strata(observation_id), data = df)
 
 # Summary 
 
@@ -777,13 +760,12 @@ summary(model_dc_scaled_fall)
 # Eliminated meanshapeindex (p-value of 0.0573)
 
 # Model
-model_dc_scaled_fall <- df %>% 
-  fit_clogit(choice ~ landscapeshapeindex +
+model_dc_scaled_fall <- clogit(choice ~ landscapeshapeindex +
                proportion_developed + 
                proportion_decidousforest +
                proportion_grassland +
                proportion_cropland + 
-               strata(observation_id))
+               strata(observation_id), data = df)
 
 # Summary 
 
@@ -798,8 +780,7 @@ df <- data_southeast_dc_scaled %>% filter(season == "winter")
 #        [Global Model]                                                     ####
 
 # Model
-model_dc_scaled_winter <- df %>% 
-  fit_clogit(choice ~ contagion + 
+model_dc_scaled_winter <- clogit(choice ~ contagion + 
                landscapeshapeindex +
                meanshapeindex +
                proportion_developed + 
@@ -808,7 +789,7 @@ model_dc_scaled_winter <- df %>%
                proportion_mixedforest + 
                proportion_grassland +
                proportion_cropland + 
-               strata(observation_id))
+               strata(observation_id), data = df)
 
 # Summary 
 
@@ -819,8 +800,7 @@ summary(model_dc_scaled_winter)
 # Eliminated meanshapeindex (p-value of 0.06278)
 
 # Model
-model_dc_scaled_winter <- df %>% 
-  fit_clogit(choice ~ contagion + 
+model_dc_scaled_winter <- clogit(choice ~ contagion + 
                landscapeshapeindex +
                proportion_developed + 
                proportion_decidousforest +
@@ -828,7 +808,7 @@ model_dc_scaled_winter <- df %>%
                proportion_mixedforest + 
                proportion_grassland +
                proportion_cropland + 
-               strata(observation_id))
+               strata(observation_id), data = df)
 
 # Summary 
 
@@ -843,8 +823,7 @@ df <- data_southeast_dc_scaled %>% filter(season == "spring")
 #        [Global Model]                                                     ####
 
 # Model
-model_dc_scaled_spring <- df %>% 
-  fit_clogit(choice ~ contagion + 
+model_dc_scaled_spring <- clogit(choice ~ contagion + 
                landscapeshapeindex +
                meanshapeindex +
                proportion_developed + 
@@ -853,7 +832,7 @@ model_dc_scaled_spring <- df %>%
                proportion_mixedforest + 
                proportion_grassland +
                proportion_cropland + 
-               strata(observation_id))
+               strata(observation_id), data = df)
 
 # Summary 
 
@@ -864,8 +843,7 @@ summary(model_dc_scaled_spring)
 # Eliminated proportion_mixedforest (p-value of 0.3694)
 
 # Model
-model_dc_scaled_spring <- df %>% 
-  fit_clogit(choice ~ contagion + 
+model_dc_scaled_spring <- clogit(choice ~ contagion + 
                landscapeshapeindex +
                meanshapeindex +
                proportion_developed + 
@@ -873,7 +851,7 @@ model_dc_scaled_spring <- df %>%
                proportion_evergreenforest + 
                proportion_grassland +
                proportion_cropland + 
-               strata(observation_id))
+               strata(observation_id), data = df)
 
 # Summary 
 
@@ -884,15 +862,14 @@ summary(model_dc_scaled_spring)
 # Eliminated proportion_evergreenforest (p-value of 0.0730)
 
 # Model
-model_dc_scaled_spring <- df %>% 
-  fit_clogit(choice ~ contagion + 
+model_dc_scaled_spring <- clogit(choice ~ contagion + 
                landscapeshapeindex +
                meanshapeindex +
                proportion_developed + 
                proportion_decidousforest +
                proportion_grassland +
                proportion_cropland + 
-               strata(observation_id))
+               strata(observation_id), data = df)
 
 # Summary 
 
@@ -908,8 +885,7 @@ df <- data_southeast_dc_scaled %>% filter(season == "summer")
 #        [Global Model]                                                     ####
 
 # Model
-model_dc_scaled_summer <- df %>% 
-  fit_clogit(choice ~ contagion + 
+model_dc_scaled_summer <- clogit(choice ~ contagion + 
                landscapeshapeindex +
                meanshapeindex +
                proportion_developed + 
@@ -918,7 +894,7 @@ model_dc_scaled_summer <- df %>%
                proportion_mixedforest + 
                proportion_grassland +
                proportion_cropland + 
-               strata(observation_id))
+               strata(observation_id), data = df)
 
 # Summary 
 
@@ -929,8 +905,7 @@ summary(model_dc_scaled_summer)
 # Eliminated proportion_developed (p-value of 0.62213)
 
 # Model
-model_dc_scaled_summer <- df %>% 
-  fit_clogit(choice ~ contagion + 
+model_dc_scaled_summer <- clogit(choice ~ contagion + 
                landscapeshapeindex +
                meanshapeindex +
                proportion_decidousforest +
@@ -938,7 +913,7 @@ model_dc_scaled_summer <- df %>%
                proportion_mixedforest + 
                proportion_grassland +
                proportion_cropland + 
-               strata(observation_id))
+               strata(observation_id), data = df)
 
 # Summary 
 
@@ -949,15 +924,14 @@ summary(model_dc_scaled_summer)
 # Eliminated proportion_mixedforest (p-value of 0.3659)
 
 # Model
-model_dc_scaled_summer <- df %>% 
-  fit_clogit(choice ~ contagion + 
+model_dc_scaled_summer <- clogit(choice ~ contagion + 
                landscapeshapeindex +
                meanshapeindex +
                proportion_decidousforest +
                proportion_evergreenforest + 
                proportion_grassland +
                proportion_cropland + 
-               strata(observation_id))
+               strata(observation_id), data = df)
 
 # Summary 
 
@@ -1008,22 +982,6 @@ covnames_logreg <- data.frame(cov_names = names(data_southeast_logreg[[1]])[3:le
                                cov_names == "southeast_proportion_10_buffer600m" ~ "Proportion of Wetland"
   ))
 
-covnames_dc<- data.frame(cov_names = names(data_southeast_dc)[14:length(names(data_southeast_dc))]) %>% 
-  mutate(cov_label = case_when(cov_names == "contagion" ~ "Contagion",
-                               cov_names == "landscapeshapeindex" ~ "Landscape Shape Index",
-                               cov_names == "southeast_shdi" ~ "Shannon's Diversity Index",
-                               cov_names == "proportion_water"  ~ "Proportion of Water",
-                               cov_names == "proportion_developed"  ~ "Proportion of Developed",
-                               cov_names == "proportion_barren"  ~ "Proportion of Barren",
-                               cov_names == "proportion_decidousforest"  ~ "Proportion of Deciduous Forest",
-                               cov_names == "proportion_evergreenforest"  ~ "Proportion of Evergreen Forest",
-                               cov_names == "proportion_mixedforest"  ~ "Proportion of Mixed Forest",
-                               cov_names == "proportion_shrub"  ~ "Proportion of Shrub",
-                               cov_names == "proportion_grassland"  ~ "Proportion of Grassland",
-                               cov_names == "proportion_cropland"  ~ "Proportion of Cropland",
-                               cov_names == "proportion_wetland" ~ "Proportion of Wetland"))
-
-
 logreg_model_list <- list(model_fall,
                           model_winter,
                           model_spring,
@@ -1041,24 +999,6 @@ logreg_model_list_names <- list('model_logreg_fall',
                                 "model_logreg_winter_scaled",
                                 "model_logreg_spring_scaled",
                                 "model_logreg_summer_scaled")
-
-dc_model_list <- list(model_dc_fall,
-                      model_dc_winter,
-                      model_dc_spring,
-                      model_dc_summer,
-                      model_dc_scaled_fall,
-                      model_dc_scaled_winter,
-                      model_dc_scaled_spring,
-                      model_dc_scaled_summer)
-
-dc_model_list_names <- list('model_dc_fall',
-                            "model_dc_winter",
-                            "model_dc_spring",
-                            "model_dc_summer",
-                            "model_dc_scaled_fall",
-                            "model_dc_scaled_winter",
-                            "model_dc_scaled_spring",
-                            "model_dc_scaled_summer")
 
 #      [Plotting Protocol]                                                  ####
 
@@ -1096,6 +1036,88 @@ for (i in 1:length(logreg_model_list)) {
   print(paste("Progress:",i/length(logreg_model_list)*100,"%"))
 }
 
-
-
 ###############################################################################
+#   [Plotting DC - Effect Graphs]                                           ####
+#      [Plot Metadata]                                                      ####
+
+covnames_dc <- data.frame(cov_names = names(data_southeast_dc)[14:length(names(data_southeast_dc))]) %>% 
+  mutate(cov_label = case_when(cov_names == "contagion" ~ "Contagion",
+                               cov_names == "landscapeshapeindex" ~ "Landscape Shape Index",
+                               cov_names == "meanshapeindex" ~ "Mean Shape Index",
+                               cov_names == "southeast_shdi" ~ "Shannon's Diversity Index",
+                               cov_names == "proportion_water"  ~ "Proportion of Water",
+                               cov_names == "proportion_developed"  ~ "Proportion of Developed",
+                               cov_names == "proportion_barren"  ~ "Proportion of Barren",
+                               cov_names == "proportion_decidousforest"  ~ "Proportion of Deciduous Forest",
+                               cov_names == "proportion_evergreenforest"  ~ "Proportion of Evergreen Forest",
+                               cov_names == "proportion_mixedforest"  ~ "Proportion of Mixed Forest",
+                               cov_names == "proportion_shrub"  ~ "Proportion of Shrub",
+                               cov_names == "proportion_grassland"  ~ "Proportion of Grassland",
+                               cov_names == "proportion_cropland"  ~ "Proportion of Cropland",
+                               cov_names == "proportion_wetland" ~ "Proportion of Wetland"))
+
+dc_model_list <- list(model_dc_fall,
+                      model_dc_winter,
+                      model_dc_spring,
+                      model_dc_summer,
+                      model_dc_scaled_fall,
+                      model_dc_scaled_winter,
+                      model_dc_scaled_spring,
+                      model_dc_scaled_summer)
+
+dc_model_list_names <- list('model_dc_fall',
+                            "model_dc_winter",
+                            "model_dc_spring",
+                            "model_dc_summer",
+                            "model_dc_scaled_fall",
+                            "model_dc_scaled_winter",
+                            "model_dc_scaled_spring",
+                            "model_dc_scaled_summer")
+
+
+
+
+
+#      [Plotting Protocol]                                                  ####
+
+
+for (i in 1:length(dc_model_list_names)) {
+  
+  # Creating Dataframe for predicion plot
+  df <- data_southeast_dc %>% filter(season == ifelse(str_detect(dc_model_list_names[[i]],"scaled"),
+                                                      str_remove(dc_model_list_names[[i]],"model_dc_scaled_"),
+                                                      str_remove(dc_model_list_names[[i]],"model_dc_")))
+  
+  # Creating Prediction column
+  df$ssf <- predict(dc_model_list[[i]],type = "expected")
+  
+  # Extracting 
+  covs <- names(dc_model_list[[i]]$coefficients)
+  
+  for (v in 1:length(covs)) {
+    cov <- covs[[v]]
+    
+    p <- ggplot(df, aes_string(x= cov, y = "ssf")) + 
+      stat_smooth(method="glm", method.args = list(family="binomial"),color = "black") +
+      xlab(covnames_dc[which(covnames_dc[,1] == cov),2]) +
+      ylab("Probability of Use") + 
+      theme_nice()
+    
+    # Exporting Plot
+    ggsave(filename = paste0("2.Chapter1/3.Output/southeast_predictedprob/",dc_model_list_names[i],"_",
+                             covnames_dc[which(covnames_dc[,1] == cov),2],".png"),
+           plot = p,
+           device = "png",
+           width = 6,
+           height = 4,
+           units = "in")
+    
+    # Exporting RDS file for each plot
+    saveRDS(p,
+            file = paste0("2.Chapter1/3.Output/southeast_predictedprob/",dc_model_list_names[i],"_",
+                          covnames_dc[which(covnames_dc[,1] == cov),2],".rds"))
+  }
+  
+  print(paste("Progress:",i/length(dc_model_list)*100,"%"))
+  
+}
