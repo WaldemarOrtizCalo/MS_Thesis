@@ -114,7 +114,8 @@ writeRaster(DEM_Southeast,
 
 ###############################################################################
 #   North                                                                   ####
-#      Export Filepaths                                                     ####
+#      Export Filepath                                                      ####
+
 export_path <- "1.DataManagement/CovRasters_Landscape/north"
 
 #      DEM-Based Covs                                                       ####
@@ -145,23 +146,13 @@ TRI <- DEM %>% terrain(v = "TRI",
                          filename = paste0(export_path,"/north_tri.tif"),
                          overwrite = T)
 
-
-
-
-
-#      NLCD-Based Covs                                                      ####
-
-
-
+#      NLCD-Based Covariates                                                ####
 #        Data                                                               ####
 
 # Data Import 
 NLCD <- rast("1.DataManagement/CovRasters/base_layers/north_nlcd.tif") %>% subst(from = NA, to = 0)
 
-
-
 #        Patch Layer Creation                                                     ####
-
 
 patch <- classify(NLCD,
                   rcl = cbind(3),
