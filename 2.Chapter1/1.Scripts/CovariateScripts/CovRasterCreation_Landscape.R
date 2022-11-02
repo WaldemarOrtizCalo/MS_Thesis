@@ -28,7 +28,6 @@ unregister <- function() {
   
 }
 
-#      Data                                                                 ####
 #      Data [DO NOT RUN - Only Run Once]                                    ####
 #        [Deer Data]                                                        ####
 
@@ -150,12 +149,45 @@ TRI <- DEM %>% terrain(v = "TRI",
 #        Data                                                               ####
 
 # Data Import 
-NLCD <- rast("1.DataManagement/CovRasters/base_layers/north_nlcd.tif") %>% subst(from = NA, to = 0)
+NLCD <- rast("1.DataManagement/CovRasters/base_layers/north_nlcd.tif") %>% subst(from = NA, to = 0) %>% 
+  as.factor()
 
-#        Patch Layer Creation                                                     ####
+# List of Classes needed for export
+north_classes <- c("water",
+                   "developed",
+                   "barren",
+                   "forest",
+                   "shrub",
+                   "grassland",
+                   "cropland",
+                   "wetland")
 
-patch <- classify(NLCD,
-                  rcl = cbind(3),
-                  others = NA)
+south_classes <- c("water",
+                   "developed",
+                   "barren",
+                   "deciduous_forest",
+                   "evergreen_forest",
+                   "mixed_forest",
+                   "shrub",
+                   "grassland",
+                   "cropland",
+                   "wetland")
 
-mapview::mapview(raster(patch))
+#        Patch Layer Creation                                               ####
+
+# Making sure that the classes are the ones needed. In other words, removing zeros
+# from the data. 
+
+raster_sub <- NLCD %>% classify(cbind(0,NA)) %>% as.factor()
+
+# Make layers for each value
+seg_layers <- segregate(raster_sub, keep=F, other=NA)
+
+# Creating patch layers
+patch_layers <- patches(s)
+
+# Exporting Rasters
+
+# START HERE 
+
+###############################################################################
