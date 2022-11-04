@@ -184,10 +184,19 @@ raster_sub <- NLCD %>% classify(cbind(0,NA)) %>% as.factor()
 seg_layers <- segregate(raster_sub, keep=F, other=NA)
 
 # Creating patch layers
-patch_layers <- patches(s)
+patch_layers <- patches(seg_layers)
+
+plot(patch_layers)
 
 # Exporting Rasters
 
-# START HERE 
+layernames <- paste0(export_path,"/north_patches_",north_classes, ".tif")
+
+writeRaster(patch_layers, layernames, overwrite=TRUE)
+
+#        Distance to Patch Layer                                            ####
+
+# Needs to be revisited
+patch_dist <- distance(x = patch_layers,unit="m")
 
 ###############################################################################
