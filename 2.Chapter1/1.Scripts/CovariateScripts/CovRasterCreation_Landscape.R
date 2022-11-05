@@ -200,3 +200,37 @@ writeRaster(patch_layers, layernames, overwrite=TRUE)
 patch_dist <- distance(x = patch_layers,unit="m")
 
 ###############################################################################
+
+
+
+# Dev
+
+
+r <- layernames[4] %>% rast()
+plot(r)
+
+
+patch_dist <- distance(x = patch_layers,unit="m")
+
+r <- raster(ncol=3600,nrow=1800)
+values(r) <- NA
+r[500] <- 1
+
+tictoc::tic()
+dist <- distance(r,doEdge = F) 
+tictoc::toc()
+
+plot(r)
+plot(dist/1000)
+
+
+library(raster)
+p1 <- rbind(c(-180,-20), c(-140,55), c(10, 0), c(-140,-60), c(-180,-20))
+pols <- spPolygons(p1)
+r <- raster(ncol=90, nrow=45)
+r <- rasterize(pols, r)
+
+d <- distance(r)
+
+plot(d)
+plot(pols, add=T)
