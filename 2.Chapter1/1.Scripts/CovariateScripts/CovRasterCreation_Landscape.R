@@ -14,6 +14,8 @@ library(terra)
 library(sf)
 library(tidyverse)
 library(raster)
+library(whitebox)
+library(stringr)
 
 #      Functions                                                            ####
 source("2.Chapter1/2.Functions/reclass_matrices.R")
@@ -195,42 +197,82 @@ layernames <- paste0(export_path,"/north_patches_",north_classes, ".tif")
 writeRaster(patch_layers, layernames, overwrite=TRUE)
 
 #        Distance to Patch Layer                                            ####
+#           File Management                                                 ####
 
-# Needs to be revisited
-patch_dist <- distance(x = patch_layers,unit="m")
+# Export Directory
+export_dir <- "1.DataManagement\\CovRasters_Landscape\\north"
+
+# List of tif files
+tif_list <- list.files("1.DataManagement\\CovRasters_Landscape\\north",
+                       full.names = T,
+                       pattern = "patches")
+
+# List of covariate names
+cov_name <- list.files("1.DataManagement\\CovRasters_Landscape\\north",
+                       full.names = F,
+                       pattern = "patches") %>% 
+  str_remove("north_patches_") %>% 
+  str_remove(".tif")
+
+# Raster of Study area to use as mask 
+studyshp <- rast("1.DataManagement/CovRasters/base_layers/north_nlcd.tif")
+
+#           Protocol                                                        ####
+
+for (i in 1:length(tif_list)) {
+  
+  print(paste("Layer",i,"of", length(tif_list)))
+  
+  #      Preparing Whitebox raster format and export                          ####
+  
+  patch_ras <- tif_list[i] %>% rast()
+  
+  patch_ras[is.na(patch_ras)] <- 0
+  patch_ras[patch_ras != 0] <- 1
+  
+  writeRaster(patch_ras,
+              paste0(export_dir,"\\north_wbpatch_",cov_name[i],".tif"),
+              overwrite = T)
+  
+  #      Execution of Whitebox Distance protocol                              ####
+  
+  input <- paste0(export_dir,"\\north_wbpatch_",cov_name[i],".tif") 
+  output <- paste0(export_dir,"\\north_patchdist_",cov_name[i],".tif")
+  
+  wbt_euclidean_distance(input = input,
+                         output = output)
+  
+  #      Reimporting raster, clean, and export final file                     ####
+  
+  # Masking by study area raster
+  dist_raster <- rast(output) %>% mask(studyshp)
+  
+  # Raster Export
+  writeRaster(dist_raster,
+              output,
+              overwrite = T)
+  
+  # Removing whitebox formated raster
+  file.remove(paste0(export_dir,"\\north_wbpatch_",cov_name[i],".tif"))
+  
+}
+
+# Free up Memory
+gc()
 
 ###############################################################################
 
 
 
-# Dev
+# Dev for patch size distance raster
+# https://gis.stackexchange.com/questions/421257/plot-filtered-patch-sizes-in-r-terra
 
 
 r <- layernames[4] %>% rast()
 plot(r)
 
+print(Sys.time())
+patch_dist <- distance(x = r,unit="m")
+print(Sys.time())
 
-patch_dist <- distance(x = patch_layers,unit="m")
-
-r <- raster(ncol=3600,nrow=1800)
-values(r) <- NA
-r[500] <- 1
-
-tictoc::tic()
-dist <- distance(r,doEdge = F) 
-tictoc::toc()
-
-plot(r)
-plot(dist/1000)
-
-
-library(raster)
-p1 <- rbind(c(-180,-20), c(-140,55), c(10, 0), c(-140,-60), c(-180,-20))
-pols <- spPolygons(p1)
-r <- raster(ncol=90, nrow=45)
-r <- rasterize(pols, r)
-
-d <- distance(r)
-
-plot(d)
-plot(pols, add=T)
+library(terra)
