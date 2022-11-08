@@ -186,7 +186,7 @@ raster_sub <- NLCD %>% classify(cbind(0,NA)) %>% as.factor()
 seg_layers <- segregate(raster_sub, keep=F, other=NA)
 
 # Creating patch layers
-patch_layers <- patches(seg_layers)
+patch_layers <- patches(seg_layers,allowGaps = F)
 
 plot(patch_layers)
 
@@ -267,10 +267,9 @@ gc()
 # Dev for patch size distance raster
 # https://gis.stackexchange.com/questions/421257/plot-filtered-patch-sizes-in-r-terra
 
+r <- layernames[1] %>% rast()
 
-r <- layernames[4] %>% rast()
-plot(r)
-
+r_patches <- patches(r)
 print(Sys.time())
 patch_dist <- distance(x = r,unit="m")
 print(Sys.time())
