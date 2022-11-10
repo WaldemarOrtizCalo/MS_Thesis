@@ -21,13 +21,13 @@ library(stringr)
 source("2.Chapter1/2.Functions/reclass_matrices.R")
 source("2.Chapter1/2.Functions/proportion_raster_function.R")
 unregister <- function() {
-  
+
   # This function is to unregister the parallel backend of the doParallel and
   # foreach loop. Original source: https://stackoverflow.com/questions/25097729/un-register-a-doparallel-cluster
-  
+
   env <- foreach:::.foreachGlobals
   rm(list=ls(name=env), pos=env)
-  
+
 }
 
 #      Data [DO NOT RUN - Only Run Once]                                    ####
@@ -186,7 +186,9 @@ raster_sub <- NLCD %>% classify(cbind(0,NA)) %>% as.factor()
 seg_layers <- segregate(raster_sub, keep=F, other=NA)
 
 # Creating patch layers
-patch_layers <- patches(seg_layers,allowGaps = F)
+patch_layers <- patches(seg_layers,
+                        directions = 4,
+                        allowGaps = F)
 
 plot(patch_layers)
 
@@ -262,16 +264,81 @@ gc()
 
 ###############################################################################
 
+# zero as background instead of NA
+r <- rast(nrows=10, ncols=10, xmin=0, vals=0)
+r[3, 3] <- 10
+r[4, 4] <- 10
+r[5, 5:8] <- 12
+r[6, 6:9] <- 12
+
+# treat zeros as NA
+
+p4 <- patches(r, zeroAsNA=TRUE,allowGaps = F)
+
+plot(p4)
 
 
-# Dev for patch size distance raster
-# https://gis.stackexchange.com/questions/421257/plot-filtered-patch-sizes-in-r-terra
+writeRaster(p4,
+            "1.DataManagement\\CovRasters_Landscape\\test\\test.tif",
+            overwrite = T)
 
-r <- layernames[1] %>% rast()
+######################################################################
 
-r_patches <- patches(r)
-print(Sys.time())
-patch_dist <- distance(x = r,unit="m")
-print(Sys.time())
+export_dir <- "1.DataManagement\\CovRasters_Landscape\\test"
 
-library(terra)
+patch_ras <- rast("1.DataManagement\\CovRasters_Landscape\\test\\test.tif")
+
+patch_ras[is.na(patch_ras)] <- 0
+patch_ras[patch_ras != 0] <- 1
+
+writeRaster(patch_ras,
+            paste0(export_dir,"\\test_wbpatch.tif"),
+            overwrite = T)
+
+input <- paste0(export_dir,"\\test_wbpatch.tif") 
+output <- paste0(export_dir,"\\test_patchdist.tif")
+
+wbt_euclidean_distance(input = input,
+                       output = output)
+
+
+result <- rast(output)
+
+plot(result)
+######################################################################
+
+patch_ras <- rast("1.DataManagement\\CovRasters_Landscape\\test\\test.tif")
+
+patch_ras[is.na(patch_ras)] <- 0
+
+writeRaster(patch_ras,
+            "1.DataManagement\\CovRasters_Landscape\\test\\test_wbarea.tif",
+            overwrite = T)
+
+input <- paste0(export_dir,"\\test_wbarea.tif") 
+output <- paste0(export_dir,"\\test_area.tif")
+
+wbt_raster_area(input = input,
+                output = output,
+                zero_back = T)
+
+result <- rast(output)
+plot(result)
+
+result[result<=3.564019e+12]<-NA
+
+patch_cat <- patches(result)
+patch_cat[is.na(patch_cat)] <- 0
+
+plot(patch_cat)
+writeRaster(patch_cat,
+            "1.DataManagement\\CovRasters_Landscape\\test\\test_patchcat.tif",
+            overwrite = T)
+
+input <- "1.DataManagement\\CovRasters_Landscape\\test\\test_patchcat.tif"
+output <- "1.DataManagement\\CovRasters_Landscape\\test\\test_patchcat_large.tif"
+
+wbt_euclidean_distance(input = input,
+                       output = output)
+
+plot(rast(output))
