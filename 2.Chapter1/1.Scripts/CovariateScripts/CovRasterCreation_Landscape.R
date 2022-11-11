@@ -16,6 +16,7 @@ library(tidyverse)
 library(raster)
 library(whitebox)
 library(stringr)
+library(classInt)
 
 #      Functions                                                            ####
 source("2.Chapter1/2.Functions/reclass_matrices.R")
@@ -244,7 +245,7 @@ for (i in 1:length(tif_list)) {
   wbt_euclidean_distance(input = input,
                          output = output)
   
-  #      Reimporting raster, clean, and export final file                     ####
+  #      Re-importing raster, clean, and export final file                    ####
   
   # Masking by study area raster
   dist_raster <- rast(output) %>% mask(studyshp)
@@ -254,7 +255,7 @@ for (i in 1:length(tif_list)) {
               output,
               overwrite = T)
   
-  # Removing whitebox formated raster
+  # Removing whitebox formatted raster
   file.remove(paste0(export_dir,"\\north_wbpatch_",cov_name[i],".tif"))
   
 }
@@ -263,26 +264,310 @@ for (i in 1:length(tif_list)) {
 gc()
 
 ###############################################################################
+#   South                                                                   ####
+#      Export Filepath                                                      ####
+
+export_path <- "1.DataManagement/CovRasters_Landscape/south"
+
+#      DEM-Based Covs                                                       ####
+#        Data                                                               ####
+
+DEM <- rast("1.DataManagement/CovRasters/base_layers/south_dem.tif")
+
+#        Elevation                                                          ####
+
+DEM <- rast("1.DataManagement/CovRasters/base_layers/south_dem.tif")
+
+writeRaster(DEM,
+            filename = paste0(export_path,"/south_dem.tif"),
+            overwrite = T)
+
+#        Slope                                                              ####
+
+Slope <- DEM %>% terrain(v = "slope",
+                         neighbors = 8,
+                         unit = "degrees",
+                         filename = paste0(export_path,"/south_slope.tif"),
+                         overwrite = T)
+
+#        TRI                                                                ####
+
+TRI <- DEM %>% terrain(v = "TRI",
+                       neighbors = 8,
+                       filename = paste0(export_path,"/south_tri.tif"),
+                       overwrite = T)
+
+#      NLCD-Based Covariates                                                ####
+#        Data                                                               ####
+
+# Data Import 
+NLCD <- rast("1.DataManagement/CovRasters/base_layers/south_nlcd.tif") %>% subst(from = NA, to = 0) %>% 
+  as.factor()
+
+# List of Classes needed for export
+south_classes <- c("water",
+                   "developed",
+                   "barren",
+                   "deciduous_forest",
+                   "evergreen_forest",
+                   "mixed_forest",
+                   "shrub",
+                   "grassland",
+                   "cropland",
+                   "wetland")
+
+#        Patch Layer Creation                                               ####
+
+# Making sure that the classes are the ones needed. In other words, removing zeros
+# from the data. 
+
+raster_sub <- NLCD %>% classify(cbind(0,NA)) %>% as.factor()
+
+# Make layers for each value
+seg_layers <- segregate(raster_sub, keep=F, other=NA)
+
+# Creating patch layers
+patch_layers <- patches(seg_layers,
+                        directions = 4,
+                        allowGaps = F)
+
+plot(patch_layers)
+
+# Exporting Rasters
+
+layernames <- paste0(export_path,"/south_patches_",south_classes, ".tif")
+
+writeRaster(patch_layers, layernames, overwrite=TRUE)
+
+#        Distance to Patch Layer                                            ####
+#           File Management                                                 ####
+
+# Export Directory
+export_dir <- "1.DataManagement\\CovRasters_Landscape\\south"
+
+# List of tif files
+tif_list <- list.files("1.DataManagement\\CovRasters_Landscape\\south",
+                       full.names = T,
+                       pattern = "patches")
+
+# List of covariate names
+cov_name <- list.files("1.DataManagement\\CovRasters_Landscape\\south",
+                       full.names = F,
+                       pattern = "patches") %>% 
+  str_remove("south_patches_") %>% 
+  str_remove(".tif")
+
+# Raster of Study area to use as mask 
+studyshp <- rast("1.DataManagement/CovRasters/base_layers/south_nlcd.tif")
+
+#           Protocol                                                        ####
+
+for (i in 1:length(tif_list)) {
+  
+  print(paste("Layer",i,"of", length(tif_list)))
+  
+  #      Preparing Whitebox raster format and export                          ####
+  
+  patch_ras <- tif_list[i] %>% rast()
+  
+  patch_ras[is.na(patch_ras)] <- 0
+  patch_ras[patch_ras != 0] <- 1
+  
+  writeRaster(patch_ras,
+              paste0(export_dir,"\\south_wbpatch_",cov_name[i],".tif"),
+              overwrite = T)
+  
+  #      Execution of Whitebox Distance protocol                              ####
+  
+  input <- paste0(export_dir,"\\south_wbpatch_",cov_name[i],".tif") 
+  output <- paste0(export_dir,"\\south_patchdist_",cov_name[i],".tif")
+  
+  wbt_euclidean_distance(input = input,
+                         output = output)
+  
+  #      Re-importing raster, clean, and export final file                    ####
+  
+  # Masking by study area raster
+  dist_raster <- rast(output) %>% mask(studyshp)
+  
+  # Raster Export
+  writeRaster(dist_raster,
+              output,
+              overwrite = T)
+  
+  # Removing whitebox formatted raster
+  file.remove(paste0(export_dir,"\\south_wbpatch_",cov_name[i],".tif"))
+  
+}
+
+# Free up Memory
+gc()
+
+###############################################################################
+#   Southeast                                                               ####
+#      Export Filepath                                                      ####
+
+export_path <- "1.DataManagement/CovRasters_Landscape/southeast"
+
+#      DEM-Based Covs                                                       ####
+#        Data                                                               ####
+
+DEM <- rast("1.DataManagement/CovRasters/base_layers/southeast_dem.tif")
+
+#        Elevation                                                          ####
+
+DEM <- rast("1.DataManagement/CovRasters/base_layers/southeast_dem.tif")
+
+writeRaster(DEM,
+            filename = paste0(export_path,"/southeast_dem.tif"),
+            overwrite = T)
+
+#        Slope                                                              ####
+
+Slope <- DEM %>% terrain(v = "slope",
+                         neighbors = 8,
+                         unit = "degrees",
+                         filename = paste0(export_path,"/southeast_slope.tif"),
+                         overwrite = T)
+
+#        TRI                                                                ####
+
+TRI <- DEM %>% terrain(v = "TRI",
+                       neighbors = 8,
+                       filename = paste0(export_path,"/southeast_tri.tif"),
+                       overwrite = T)
+
+#      NLCD-Based Covariates                                                ####
+#        Data                                                               ####
+
+# Data Import 
+NLCD <- rast("1.DataManagement/CovRasters/base_layers/southeast_nlcd.tif") %>% subst(from = NA, to = 0) %>% 
+  as.factor()
+
+# List of Classes needed for export
+southeast_classes <- c("water",
+                   "developed",
+                   "barren",
+                   "deciduous_forest",
+                   "evergreen_forest",
+                   "mixed_forest",
+                   "shrub",
+                   "grassland",
+                   "cropland",
+                   "wetland")
+
+#        Patch Layer Creation                                               ####
+
+# Making sure that the classes are the ones needed. In other words, removing zeros
+# from the data. 
+
+raster_sub <- NLCD %>% classify(cbind(0,NA)) %>% as.factor()
+
+# Make layers for each value
+seg_layers <- segregate(raster_sub, keep=F, other=NA)
+
+# Creating patch layers
+patch_layers <- patches(seg_layers,
+                        directions = 4,
+                        allowGaps = F)
+
+plot(patch_layers)
+
+# Exporting Rasters
+
+layernames <- paste0(export_path,"/southeast_patches_",southeast_classes, ".tif")
+
+writeRaster(patch_layers, layernames, overwrite=TRUE)
+
+#        Distance to Patch Layer                                            ####
+#           File Management                                                 ####
+
+# Export Directory
+export_dir <- "1.DataManagement\\CovRasters_Landscape\\southeast"
+
+# List of tif files
+tif_list <- list.files("1.DataManagement\\CovRasters_Landscape\\southeast",
+                       full.names = T,
+                       pattern = "patches")
+
+# List of covariate names
+cov_name <- list.files("1.DataManagement\\CovRasters_Landscape\\southeast",
+                       full.names = F,
+                       pattern = "patches") %>% 
+  str_remove("southeast_patches_") %>% 
+  str_remove(".tif")
+
+# Raster of Study area to use as mask 
+studyshp <- rast("1.DataManagement/CovRasters/base_layers/southeast_nlcd.tif")
+
+#           Protocol                                                        ####
+
+for (i in 1:length(tif_list)) {
+  
+  print(paste("Layer",i,"of", length(tif_list)))
+  
+  #      Preparing Whitebox raster format and export                          ####
+  
+  patch_ras <- tif_list[i] %>% rast()
+  
+  patch_ras[is.na(patch_ras)] <- 0
+  patch_ras[patch_ras != 0] <- 1
+  
+  writeRaster(patch_ras,
+              paste0(export_dir,"\\southeast_wbpatch_",cov_name[i],".tif"),
+              overwrite = T)
+  
+  #      Execution of Whitebox Distance protocol                              ####
+  
+  input <- paste0(export_dir,"\\southeast_wbpatch_",cov_name[i],".tif") 
+  output <- paste0(export_dir,"\\southeast_patchdist_",cov_name[i],".tif")
+  
+  wbt_euclidean_distance(input = input,
+                         output = output)
+  
+  #      Re-importing raster, clean, and export final file                    ####
+  
+  # Masking by study area raster
+  dist_raster <- rast(output) %>% mask(studyshp)
+  
+  # Raster Export
+  writeRaster(dist_raster,
+              output,
+              overwrite = T)
+  
+  # Removing whitebox formatted raster
+  file.remove(paste0(export_dir,"\\southeast_wbpatch_",cov_name[i],".tif"))
+  
+}
+
+# Free up Memory
+gc()
+
+###############################################################################
+#   [DEV]                                                                   ####
+
+
 
 # zero as background instead of NA
-r <- rast(nrows=10, ncols=10, xmin=0, vals=0)
-r[3, 3] <- 10
-r[4, 4] <- 10
-r[5, 5:8] <- 12
-r[6, 6:9] <- 12
+r <- rast(nrows=100, ncols=100, xmin=0, vals=0)
+r[30, 3] <- 10
+r[4, 40] <- 10
+r[50:52, 50:80] <- 12
+r[53:55, 60:90] <- 12
 
 # treat zeros as NA
 
-p4 <- patches(r, zeroAsNA=TRUE,allowGaps = F)
+p8 <- patches(r, 
+              directions = 8,
+              zeroAsNA=TRUE,
+              allowGaps = F)
 
-plot(p4)
+plot(p8)
 
-
-writeRaster(p4,
+writeRaster(p8,
             "1.DataManagement\\CovRasters_Landscape\\test\\test.tif",
             overwrite = T)
 
-######################################################################
 
 export_dir <- "1.DataManagement\\CovRasters_Landscape\\test"
 
@@ -301,11 +586,9 @@ output <- paste0(export_dir,"\\test_patchdist.tif")
 wbt_euclidean_distance(input = input,
                        output = output)
 
-
 result <- rast(output)
 
 plot(result)
-######################################################################
 
 patch_ras <- rast("1.DataManagement\\CovRasters_Landscape\\test\\test.tif")
 
@@ -342,3 +625,5 @@ wbt_euclidean_distance(input = input,
                        output = output)
 
 plot(rast(output))
+
+###############################################################################
