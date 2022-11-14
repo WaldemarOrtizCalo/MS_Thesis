@@ -165,17 +165,6 @@ north_classes <- c("water",
                    "cropland",
                    "wetland")
 
-south_classes <- c("water",
-                   "developed",
-                   "barren",
-                   "deciduous_forest",
-                   "evergreen_forest",
-                   "mixed_forest",
-                   "shrub",
-                   "grassland",
-                   "cropland",
-                   "wetland")
-
 #        Patch Layer Creation                                               ####
 
 # Making sure that the classes are the ones needed. In other words, removing zeros
@@ -188,7 +177,7 @@ seg_layers <- segregate(raster_sub, keep=F, other=NA)
 
 # Creating patch layers
 patch_layers <- patches(seg_layers,
-                        directions = 4,
+                        directions = 8,
                         allowGaps = F)
 
 plot(patch_layers)
@@ -328,7 +317,7 @@ seg_layers <- segregate(raster_sub, keep=F, other=NA)
 
 # Creating patch layers
 patch_layers <- patches(seg_layers,
-                        directions = 4,
+                        directions = 8,
                         allowGaps = F)
 
 plot(patch_layers)
@@ -468,7 +457,7 @@ seg_layers <- segregate(raster_sub, keep=F, other=NA)
 
 # Creating patch layers
 patch_layers <- patches(seg_layers,
-                        directions = 4,
+                        directions = 8,
                         allowGaps = F)
 
 plot(patch_layers)
