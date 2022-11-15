@@ -566,4 +566,65 @@ for (i in 1:length(rast_list)) {
 
 #           Creating Distance by Size                                       ####
 
+#               Importing Rasters and preparing metadata                    ####
+
+# Importing Area raster
+rast_list <- list.files(directory,
+                        pattern = "patcharea",
+                        full.names = T)
+
+raster_name <- list.files(directory,
+                          pattern = "patcharea",
+                          full.names = F) %>% 
+  str_split("_") %>% 
+  .[[1]] %>% #add iterator here
+  .[3] 
+
+# Classes to Consider
+classes <- c("small","medium","large")
+
+#               Protocol                                                    ####
+
+# Fisher test data prep
+
+patchID <- list.files(directory,
+                      pattern = "patches",
+                      full.names = T) %>% 
+  .[1] %>% 
+  rast() %>% 
+  values(dataframe = T,
+         mat = F,
+         na.rm = F)
+
+patch_area <- list.files(directory,
+                         pattern = "patcharea",
+                         full.names = T) %>% 
+  .[1] %>% 
+  rast() %>% 
+  values(dataframe = T,
+         mat = F,
+         na.rm = F)
+
+FisherInterval_data <- data.frame(patchID,patch_area) %>% 
+  rename("patchID" = names(.)[1],
+         "area" = names(.)[2]) %>% 
+  filter(!is.na(area)) %>% 
+  unique()
+
+# Calculating Fisher breaks
+intervals <- classIntervals(var = FisherInterval_data[,2],
+                            n = length(classes),
+                            style = "fisher",
+                            samp_prop = .25)
+
+FisherBreaks <- matrix(data = c(intervals[[2]][1],intervals[[2]][2],
+                                intervals[[2]][2],intervals[[2]][3],
+                                intervals[[2]][3],intervals[[2]][4]),
+                       nrow = 3,
+                       ncol = 2,
+                       byrow = T) %>% 
+  data.frame() %>% 
+  rename("start" = "X1","end" = "X2") %>% 
+  mutate(class = classes,.before = "start")
+
 ###############################################################################
