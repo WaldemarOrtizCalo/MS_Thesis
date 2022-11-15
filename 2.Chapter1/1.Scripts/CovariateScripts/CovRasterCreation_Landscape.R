@@ -533,86 +533,37 @@ for (i in 1:length(tif_list)) {
 gc()
 
 ###############################################################################
-#   [DEV]                                                                   ####
+#        Distance to Patch by Size                                          ####
+#           Directory Information                                           ####
+
+# Layer Directory
+directory <- "1.DataManagement/CovRasters_Landscape/north"
+
+#           Creating Size Raster                                            ####
+
+rast_list <- list.files(directory,
+                        pattern = "patches",
+                        full.names = T)
 
 
-
-# zero as background instead of NA
-r <- rast(nrows=100, ncols=100, xmin=0, vals=0)
-r[30, 3] <- 10
-r[4, 40] <- 10
-r[50:52, 50:80] <- 12
-r[53:55, 60:90] <- 12
-
-# treat zeros as NA
-
-p8 <- patches(r, 
-              directions = 8,
-              zeroAsNA=TRUE,
-              allowGaps = F)
-
-plot(p8)
-
-writeRaster(p8,
-            "1.DataManagement\\CovRasters_Landscape\\test\\test.tif",
-            overwrite = T)
+for (i in 1:length(rast_list)) {
+  
+  raster_name <- list.files(directory,
+                            pattern = "patches",
+                            full.names = F) %>% 
+    str_split("_") %>% 
+    .[[i]] %>% #add iterator here
+    .[3] 
+  
+  wbt_raster_area(input = rast_list[[i]],
+                  output = paste0(directory,"/north_patcharea_",raster_name),
+                  units = "map units",
+                  zero_back = T)
+  
+  print(i)
+}
 
 
-export_dir <- "1.DataManagement\\CovRasters_Landscape\\test"
-
-patch_ras <- rast("1.DataManagement\\CovRasters_Landscape\\test\\test.tif")
-
-patch_ras[is.na(patch_ras)] <- 0
-patch_ras[patch_ras != 0] <- 1
-
-writeRaster(patch_ras,
-            paste0(export_dir,"\\test_wbpatch.tif"),
-            overwrite = T)
-
-input <- paste0(export_dir,"\\test_wbpatch.tif") 
-output <- paste0(export_dir,"\\test_patchdist.tif")
-
-wbt_euclidean_distance(input = input,
-                       output = output)
-
-result <- rast(output)
-
-plot(result)
-
-patch_ras <- rast("1.DataManagement\\CovRasters_Landscape\\test\\test.tif")
-
-patch_ras[is.na(patch_ras)] <- 0
-
-writeRaster(patch_ras,
-            "1.DataManagement\\CovRasters_Landscape\\test\\test_wbarea.tif",
-            overwrite = T)
-
-input <- paste0(export_dir,"\\test_wbarea.tif") 
-output <- paste0(export_dir,"\\test_area.tif")
-
-wbt_raster_area(input = input,
-                output = output,
-                zero_back = T)
-
-result <- rast(output)
-plot(result)
-
-result[result<=3.564019e+12]<-NA
-
-patch_cat <- patches(result)
-patch_cat[is.na(patch_cat)] <- 0
-
-plot(patch_cat)
-writeRaster(patch_cat,
-            "1.DataManagement\\CovRasters_Landscape\\test\\test_patchcat.tif",
-            overwrite = T)
-
-input <- "1.DataManagement\\CovRasters_Landscape\\test\\test_patchcat.tif"
-output <- "1.DataManagement\\CovRasters_Landscape\\test\\test_patchcat_large.tif"
-
-wbt_euclidean_distance(input = input,
-                       output = output)
-
-plot(rast(output))
+#           Creating Distance by Size                                       ####
 
 ###############################################################################
