@@ -966,10 +966,11 @@ for (i in 1:length(rast_list)) {
                             full.names = F) %>% 
     str_split("_") %>% 
     .[[i]] %>% #add iterator here
-    .[3] 
+    .[3] %>% 
+    str_remove(".tif")
   
   wbt_raster_area(input = rast_list[[i]],
-                  output = paste0(directory,"/north_patcharea_",raster_name),
+                  output = paste0(directory,"/southeast_patcharea_",raster_name,".tif"),
                   units = "map units",
                   zero_back = T)
   
@@ -1105,10 +1106,11 @@ for (i in 1:length(rast_list)) {
                             full.names = F) %>% 
     str_split("_") %>% 
     .[[i]] %>% #add iterator here
-    .[3] 
+    .[3] %>% 
+    str_remove(".tif")
   
   wbt_raster_area(input = rast_list[[i]],
-                  output = paste0(directory,"/south_patcharea_",raster_name),
+                  output = paste0(directory,"/southeast_patcharea_",raster_name,".tif"),
                   units = "map units",
                   zero_back = T)
   
@@ -1243,10 +1245,11 @@ for (i in 1:length(rast_list)) {
                             full.names = F) %>% 
     str_split("_") %>% 
     .[[i]] %>% #add iterator here
-    .[3] 
+    .[3] %>% 
+    str_remove(".tif")
   
   wbt_raster_area(input = rast_list[[i]],
-                  output = paste0(directory,"/southeast_patcharea_",raster_name),
+                  output = paste0(directory,"/southeast_patcharea_",raster_name,".tif"),
                   units = "map units",
                   zero_back = T)
   
