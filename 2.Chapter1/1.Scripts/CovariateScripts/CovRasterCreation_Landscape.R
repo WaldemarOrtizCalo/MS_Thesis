@@ -17,6 +17,7 @@ library(raster)
 library(whitebox)
 library(stringr)
 library(classInt)
+library(foreach)
 
 #      Functions                                                            ####
 source("2.Chapter1/2.Functions/reclass_matrices.R")
@@ -563,68 +564,111 @@ for (i in 1:length(rast_list)) {
   print(i)
 }
 
-
 #           Creating Distance by Size                                       ####
 
-#               Importing Rasters and preparing metadata                    ####
-
-# Importing Area raster
+# Raster List
 rast_list <- list.files(directory,
                         pattern = "patcharea",
-                        full.names = T)
+                        full.names = T) %>% 
+  str_subset("small", negate = T) %>% 
+  str_subset("medium", negate = T) %>% 
+  str_subset("large", negate = T)
 
-raster_name <- list.files(directory,
-                          pattern = "patcharea",
-                          full.names = F) %>% 
-  str_split("_") %>% 
-  .[[1]] %>% #add iterator here
-  .[3] 
-
-# Classes to Consider
-classes <- c("small","medium","large")
-
-#               Protocol                                                    ####
-
-# Fisher test data prep
-
-patchID <- list.files(directory,
-                      pattern = "patches",
-                      full.names = T) %>% 
-  .[1] %>% 
-  rast() %>% 
-  values(dataframe = T,
-         mat = F,
-         na.rm = F)
-
-patch_area <- list.files(directory,
-                         pattern = "patcharea",
-                         full.names = T) %>% 
-  .[1] %>% 
-  rast() %>% 
-  values(dataframe = T,
-         mat = F,
-         na.rm = F)
-
-FisherInterval_data <- data.frame(patchID,patch_area) %>% 
-  rename("patchID" = names(.)[1],
-         "area" = names(.)[2]) %>% 
-  filter(!is.na(area)) %>% 
-  unique()
-
-# Calculating Fisher breaks
-intervals <- classIntervals(var = FisherInterval_data[,2],
-                            n = length(classes),
-                            style = "fisher",
-                            samp_prop = .25)
-
-FisherBreaks <- matrix(data = c(intervals[[2]][1],intervals[[2]][2],
-                                intervals[[2]][2],intervals[[2]][3],
-                                intervals[[2]][3],intervals[[2]][4]),
-                       nrow = 3,
-                       ncol = 2,
-                       byrow = T) %>% 
-  data.frame() %>% 
-  rename("start" = "X1","end" = "X2") %>% 
-  mutate(class = classes,.before = "start")
+for (i in 1:length(rast_list)) {
+  
+  #   File Metdata                                                         ####
+  
+  # Extracting landcover name
+  raster_name <- list.files(directory,
+                            pattern = "patcharea",
+                            full.names = F) %>% 
+    str_subset("small", negate = T) %>% 
+    str_subset("medium", negate = T) %>% 
+    str_subset("large", negate = T) %>%  
+    str_split("_") %>% 
+    .[[i]] %>% #add iterator here
+    .[3] %>% 
+    str_remove(".tif")
+  
+  # Classes to Consider
+  classes <- c("small","medium","large")
+  
+  #   Jenks                                                                ####
+  
+  # Patch ID values
+  patchID <- list.files(directory,
+                        pattern = "patches",
+                        full.names = T) %>% 
+    .[i] %>% 
+    rast() %>% 
+    values(dataframe = T,
+           mat = F,
+           na.rm = F)
+  
+  # Patch Area values
+  patch_area <- rast_list %>% 
+    .[i] %>%
+    rast() %>% 
+    values(dataframe = T,
+           mat = F,
+           na.rm = F)
+  
+  FisherInterval_data <- data.frame(patchID,patch_area) %>% 
+    rename("patchID" = names(.)[1],
+           "area" = names(.)[2]) %>% 
+    filter(!is.na(area)) %>% 
+    unique()
+  
+  # Calculating Fisher breaks
+  intervals <- classIntervals(var = FisherInterval_data[,2],
+                              n = length(classes),
+                              style = "fisher",
+                              samp_prop = .25)
+  
+  FisherBreaks <- matrix(data = c(intervals[[2]][1],intervals[[2]][2],
+                                  intervals[[2]][2],intervals[[2]][3],
+                                  intervals[[2]][3],intervals[[2]][4]),
+                         nrow = 3,
+                         ncol = 2,
+                         byrow = T) %>% 
+    data.frame() %>% 
+    rename("start" = "X1","end" = "X2") %>% 
+    mutate(class = classes,.before = "start")
+  
+  
+  #   Distance to Patch by Area                                            ####
+  
+  # Creating Patch area raster
+  raster_patcharea <- rast_list[i] %>% rast()
+  
+  for (j in 1:length(classes)) {
+    
+    # Making a copy of the raster
+    ras <- raster_patcharea
+    
+    # Fisher Intervals and Class
+    class <- FisherBreaks[j,1]
+    lowint <- FisherBreaks[j,2]
+    highint <- FisherBreaks[j,3]
+    
+    # Subsetting Rasters
+    ras[is.na(ras)]<- 0
+    ras[ras <= lowint]<- 0
+    ras[ras > highint]<- 0
+    
+    # Exporting
+    writeRaster(ras,
+                filename = paste0(directory,"/north_patcharea_",raster_name,"_",class,".tif"),
+                overwrite = T)
+    
+    # Creating Distance Raster
+    wbt_euclidean_distance(input = paste0(directory,"/north_patcharea_",raster_name,"_",class,".tif"),
+                           output = paste0(directory,"/north_patchdist_",raster_name,"_",class,".tif"))
+  }
+  
+  # Iterator Update and Memory clearer
+  print(paste0(i, " out of ",length(rast_list)," raster have been completed"))
+  gc()
+}
 
 ###############################################################################
