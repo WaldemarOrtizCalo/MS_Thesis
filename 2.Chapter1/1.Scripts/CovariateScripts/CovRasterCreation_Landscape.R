@@ -253,6 +253,143 @@ for (i in 1:length(tif_list)) {
 # Free up Memory
 gc()
 
+#        Distance to Patch by Size                                          ####
+#           Directory Information                                           ####
+
+# Layer Directory
+directory <- "1.DataManagement/CovRasters_Landscape/north"
+
+#           Creating Size Raster                                            ####
+
+rast_list <- list.files(directory,
+                        pattern = "patches",
+                        full.names = T)
+
+
+for (i in 1:length(rast_list)) {
+  
+  raster_name <- list.files(directory,
+                            pattern = "patches",
+                            full.names = F) %>% 
+    str_split("_") %>% 
+    .[[i]] %>% #add iterator here
+    .[3] 
+  
+  wbt_raster_area(input = rast_list[[i]],
+                  output = paste0(directory,"/north_patcharea_",raster_name),
+                  units = "map units",
+                  zero_back = T)
+  
+  print(i)
+}
+
+#           Creating Distance by Size                                       ####
+
+# Raster List
+rast_list <- list.files(directory,
+                        pattern = "patcharea",
+                        full.names = T) %>% 
+  str_subset("small", negate = T) %>% 
+  str_subset("medium", negate = T) %>% 
+  str_subset("large", negate = T)
+
+for (i in 1:length(rast_list)) {
+  
+  #   File Metadata                                                         ####
+  
+  # Extracting landcover name
+  raster_name <- list.files(directory,
+                            pattern = "patcharea",
+                            full.names = F) %>% 
+    str_subset("small", negate = T) %>% 
+    str_subset("medium", negate = T) %>% 
+    str_subset("large", negate = T) %>%  
+    str_split("_") %>% 
+    .[[i]] %>% #add iterator here
+    .[3] %>% 
+    str_remove(".tif")
+  
+  # Classes to Consider
+  classes <- c("small","medium","large")
+  
+  #   Jenks                                                                ####
+  
+  # Patch ID values
+  patchID <- list.files(directory,
+                        pattern = "patches",
+                        full.names = T) %>% 
+    .[i] %>% 
+    rast() %>% 
+    values(dataframe = T,
+           mat = F,
+           na.rm = F)
+  
+  # Patch Area values
+  patch_area <- rast_list %>% 
+    .[i] %>%
+    rast() %>% 
+    values(dataframe = T,
+           mat = F,
+           na.rm = F)
+  
+  FisherInterval_data <- data.frame(patchID,patch_area) %>% 
+    rename("patchID" = names(.)[1],
+           "area" = names(.)[2]) %>% 
+    filter(!is.na(area)) %>% 
+    unique()
+  
+  # Calculating Fisher breaks
+  intervals <- classIntervals(var = FisherInterval_data[,2],
+                              n = length(classes),
+                              style = "fisher",
+                              samp_prop = .25)
+  
+  FisherBreaks <- matrix(data = c(intervals[[2]][1],intervals[[2]][2],
+                                  intervals[[2]][2],intervals[[2]][3],
+                                  intervals[[2]][3],intervals[[2]][4]),
+                         nrow = 3,
+                         ncol = 2,
+                         byrow = T) %>% 
+    data.frame() %>% 
+    rename("start" = "X1","end" = "X2") %>% 
+    mutate(class = classes,.before = "start")
+  
+  
+  #   Distance to Patch by Area                                            ####
+  
+  # Creating Patch area raster
+  raster_patcharea <- rast_list[i] %>% rast()
+  
+  for (j in 1:length(classes)) {
+    
+    # Making a copy of the raster
+    ras <- raster_patcharea
+    
+    # Fisher Intervals and Class
+    class <- FisherBreaks[j,1]
+    lowint <- FisherBreaks[j,2]
+    highint <- FisherBreaks[j,3]
+    
+    # Subsetting Rasters
+    ras[is.na(ras)]<- 0
+    ras[ras <= lowint]<- 0
+    ras[ras > highint]<- 0
+    
+    # Exporting
+    writeRaster(ras,
+                filename = paste0(directory,"/north_patcharea_",raster_name,"_",class,".tif"),
+                overwrite = T)
+    
+    # Creating Distance Raster
+    wbt_euclidean_distance(input = paste0(directory,"/north_patcharea_",raster_name,"_",class,".tif"),
+                           output = paste0(directory,"/north_patchdist_",raster_name,"_",class,".tif"))
+  }
+  
+  # Iterator Update and Memory clearer
+  print(paste0(i, " out of ",length(rast_list)," raster have been completed"))
+  gc()
+}
+
 ###############################################################################
 #   South                                                                   ####
 #      Export Filepath                                                      ####
@@ -392,6 +529,143 @@ for (i in 1:length(tif_list)) {
 
 # Free up Memory
 gc()
+
+#        Distance to Patch by Size                                          ####
+#           Directory Information                                           ####
+
+# Layer Directory
+directory <- "1.DataManagement/CovRasters_Landscape/south"
+
+#           Creating Size Raster                                            ####
+
+rast_list <- list.files(directory,
+                        pattern = "patches",
+                        full.names = T)
+
+
+for (i in 1:length(rast_list)) {
+  
+  raster_name <- list.files(directory,
+                            pattern = "patches",
+                            full.names = F) %>% 
+    str_split("_") %>% 
+    .[[i]] %>% #add iterator here
+    .[3] 
+  
+  wbt_raster_area(input = rast_list[[i]],
+                  output = paste0(directory,"/south_patcharea_",raster_name),
+                  units = "map units",
+                  zero_back = T)
+  
+  print(i)
+}
+
+#           Creating Distance by Size                                       ####
+
+# Raster List
+rast_list <- list.files(directory,
+                        pattern = "patcharea",
+                        full.names = T) %>% 
+  str_subset("small", negate = T) %>% 
+  str_subset("medium", negate = T) %>% 
+  str_subset("large", negate = T)
+
+for (i in 1:length(rast_list)) {
+  
+  #   File Metadata                                                         ####
+  
+  # Extracting landcover name
+  raster_name <- list.files(directory,
+                            pattern = "patcharea",
+                            full.names = F) %>% 
+    str_subset("small", negate = T) %>% 
+    str_subset("medium", negate = T) %>% 
+    str_subset("large", negate = T) %>%  
+    str_split("_") %>% 
+    .[[i]] %>% #add iterator here
+    .[3] %>% 
+    str_remove(".tif")
+  
+  # Classes to Consider
+  classes <- c("small","medium","large")
+  
+  #   Jenks                                                                ####
+  
+  # Patch ID values
+  patchID <- list.files(directory,
+                        pattern = "patches",
+                        full.names = T) %>% 
+    .[i] %>% 
+    rast() %>% 
+    values(dataframe = T,
+           mat = F,
+           na.rm = F)
+  
+  # Patch Area values
+  patch_area <- rast_list %>% 
+    .[i] %>%
+    rast() %>% 
+    values(dataframe = T,
+           mat = F,
+           na.rm = F)
+  
+  FisherInterval_data <- data.frame(patchID,patch_area) %>% 
+    rename("patchID" = names(.)[1],
+           "area" = names(.)[2]) %>% 
+    filter(!is.na(area)) %>% 
+    unique()
+  
+  # Calculating Fisher breaks
+  intervals <- classIntervals(var = FisherInterval_data[,2],
+                              n = length(classes),
+                              style = "fisher",
+                              samp_prop = .25)
+  
+  FisherBreaks <- matrix(data = c(intervals[[2]][1],intervals[[2]][2],
+                                  intervals[[2]][2],intervals[[2]][3],
+                                  intervals[[2]][3],intervals[[2]][4]),
+                         nrow = 3,
+                         ncol = 2,
+                         byrow = T) %>% 
+    data.frame() %>% 
+    rename("start" = "X1","end" = "X2") %>% 
+    mutate(class = classes,.before = "start")
+  
+  
+  #   Distance to Patch by Area                                            ####
+  
+  # Creating Patch area raster
+  raster_patcharea <- rast_list[i] %>% rast()
+  
+  for (j in 1:length(classes)) {
+    
+    # Making a copy of the raster
+    ras <- raster_patcharea
+    
+    # Fisher Intervals and Class
+    class <- FisherBreaks[j,1]
+    lowint <- FisherBreaks[j,2]
+    highint <- FisherBreaks[j,3]
+    
+    # Subsetting Rasters
+    ras[is.na(ras)]<- 0
+    ras[ras <= lowint]<- 0
+    ras[ras > highint]<- 0
+    
+    # Exporting
+    writeRaster(ras,
+                filename = paste0(directory,"/south_patcharea_",raster_name,"_",class,".tif"),
+                overwrite = T)
+    
+    # Creating Distance Raster
+    wbt_euclidean_distance(input = paste0(directory,"/south_patcharea_",raster_name,"_",class,".tif"),
+                           output = paste0(directory,"/south_patchdist_",raster_name,"_",class,".tif"))
+  }
+  
+  # Iterator Update and Memory clearer
+  print(paste0(i, " out of ",length(rast_list)," raster have been completed"))
+  gc()
+}
 
 ###############################################################################
 #   Southeast                                                               ####
@@ -533,6 +807,143 @@ for (i in 1:length(tif_list)) {
 # Free up Memory
 gc()
 
+#        Distance to Patch by Size                                          ####
+#           Directory Information                                           ####
+
+# Layer Directory
+directory <- "1.DataManagement/CovRasters_Landscape/southeast"
+
+#           Creating Size Raster                                            ####
+
+rast_list <- list.files(directory,
+                        pattern = "patches",
+                        full.names = T)
+
+
+for (i in 1:length(rast_list)) {
+  
+  raster_name <- list.files(directory,
+                            pattern = "patches",
+                            full.names = F) %>% 
+    str_split("_") %>% 
+    .[[i]] %>% #add iterator here
+    .[3] 
+  
+  wbt_raster_area(input = rast_list[[i]],
+                  output = paste0(directory,"/southeast_patcharea_",raster_name),
+                  units = "map units",
+                  zero_back = T)
+  
+  print(i)
+}
+
+#           Creating Distance by Size                                       ####
+
+# Raster List
+rast_list <- list.files(directory,
+                        pattern = "patcharea",
+                        full.names = T) %>% 
+  str_subset("small", negate = T) %>% 
+  str_subset("medium", negate = T) %>% 
+  str_subset("large", negate = T)
+
+for (i in 1:length(rast_list)) {
+  
+  #   File Metadata                                                         ####
+  
+  # Extracting landcover name
+  raster_name <- list.files(directory,
+                            pattern = "patcharea",
+                            full.names = F) %>% 
+    str_subset("small", negate = T) %>% 
+    str_subset("medium", negate = T) %>% 
+    str_subset("large", negate = T) %>%  
+    str_split("_") %>% 
+    .[[i]] %>% #add iterator here
+    .[3] %>% 
+    str_remove(".tif")
+  
+  # Classes to Consider
+  classes <- c("small","medium","large")
+  
+  #   Jenks                                                                ####
+  
+  # Patch ID values
+  patchID <- list.files(directory,
+                        pattern = "patches",
+                        full.names = T) %>% 
+    .[i] %>% 
+    rast() %>% 
+    values(dataframe = T,
+           mat = F,
+           na.rm = F)
+  
+  # Patch Area values
+  patch_area <- rast_list %>% 
+    .[i] %>%
+    rast() %>% 
+    values(dataframe = T,
+           mat = F,
+           na.rm = F)
+  
+  FisherInterval_data <- data.frame(patchID,patch_area) %>% 
+    rename("patchID" = names(.)[1],
+           "area" = names(.)[2]) %>% 
+    filter(!is.na(area)) %>% 
+    unique()
+  
+  # Calculating Fisher breaks
+  intervals <- classIntervals(var = FisherInterval_data[,2],
+                              n = length(classes),
+                              style = "fisher",
+                              samp_prop = .25)
+  
+  FisherBreaks <- matrix(data = c(intervals[[2]][1],intervals[[2]][2],
+                                  intervals[[2]][2],intervals[[2]][3],
+                                  intervals[[2]][3],intervals[[2]][4]),
+                         nrow = 3,
+                         ncol = 2,
+                         byrow = T) %>% 
+    data.frame() %>% 
+    rename("start" = "X1","end" = "X2") %>% 
+    mutate(class = classes,.before = "start")
+  
+  
+  #   Distance to Patch by Area                                            ####
+  
+  # Creating Patch area raster
+  raster_patcharea <- rast_list[i] %>% rast()
+  
+  for (j in 1:length(classes)) {
+    
+    # Making a copy of the raster
+    ras <- raster_patcharea
+    
+    # Fisher Intervals and Class
+    class <- FisherBreaks[j,1]
+    lowint <- FisherBreaks[j,2]
+    highint <- FisherBreaks[j,3]
+    
+    # Subsetting Rasters
+    ras[is.na(ras)]<- 0
+    ras[ras <= lowint]<- 0
+    ras[ras > highint]<- 0
+    
+    # Exporting
+    writeRaster(ras,
+                filename = paste0(directory,"/southeast_patcharea_",raster_name,"_",class,".tif"),
+                overwrite = T)
+    
+    # Creating Distance Raster
+    wbt_euclidean_distance(input = paste0(directory,"/southeast_patcharea_",raster_name,"_",class,".tif"),
+                           output = paste0(directory,"/southeast_patchdist_",raster_name,"_",class,".tif"))
+  }
+  
+  # Iterator Update and Memory clearer
+  print(paste0(i, " out of ",length(rast_list)," raster have been completed"))
+  gc()
+}
+
 ###############################################################################
 #        Distance to Patch by Size                                          ####
 #           Directory Information                                           ####
@@ -576,7 +987,7 @@ rast_list <- list.files(directory,
 
 for (i in 1:length(rast_list)) {
   
-  #   File Metdata                                                         ####
+  #   File Metadata                                                         ####
   
   # Extracting landcover name
   raster_name <- list.files(directory,
