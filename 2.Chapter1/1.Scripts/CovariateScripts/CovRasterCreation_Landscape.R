@@ -41,7 +41,7 @@ deer_all <- lapply(list.files(path = "1.DataManagement/CleanData/Chapter1_UsedAv
 deer_all  <- do.call(rbind,deer_all)
 
 
-#        [Raster Data]                                                      ####
+#        [Cov Data]                                                         ####
 
 #      [NLCD Data]                                                          
 Missouri_NLCD <- raster("1.DataManagement/CleanData/NLCD_Missouri.tif") %>% ratify()
@@ -51,6 +51,9 @@ Missouri_DEM <- raster("1.DataManagement\\CleanData\\DEM_Missouri.tif")
 
 #      [Missouri Shapefiles]
 Missouri_shp <- st_read("1.DataManagement\\CleanData\\shp_Missouri.shp") 
+
+#      [Roads]                                                           
+roads_missouri <- st_read("1.DataManagement\\CleanData\\Missouri_Roads.shp")
 
 #        [SF objects]                                                       ####
 
@@ -85,6 +88,11 @@ writeRaster(DEM_North,
             filename = paste0("1.DataManagement/CovRasters/base_layers/north_dem.tif"),
             overwrite = T)
 
+roads_north <- st_intersection(roads_missouri, North_StudyArea)
+
+st_write(obj = roads_north,
+         dsn = "1.DataManagement/CleanData/roads_north.shp")
+
 # South
 NLCD_South <- crop(Missouri_NLCD,South_StudyArea) %>% mask(South_StudyArea) %>% 
   ratify() %>% 
@@ -100,6 +108,11 @@ writeRaster(DEM_South,
             filename = paste0("1.DataManagement/CovRasters/base_layers/south_dem.tif"),
             overwrite = T)
 
+roads_south <- st_intersection(roads_missouri, South_StudyArea)
+
+st_write(obj = roads_south,
+         dsn = "1.DataManagement/CleanData/roads_south.shp")
+
 # Southeast
 NLCD_Southeast <- crop(Missouri_NLCD,Southeast_StudyArea) %>% mask(Southeast_StudyArea) %>% 
   ratify() %>% 
@@ -114,6 +127,11 @@ DEM_Southeast <- crop(Missouri_DEM,Southeast_StudyArea) %>% mask(Southeast_Study
 writeRaster(DEM_Southeast,
             filename = paste0("1.DataManagement/CovRasters/base_layers/southeast_dem.tif"),
             overwrite = T)
+
+roads_southeast <- st_intersection(roads_missouri, Southeast_StudyArea)
+
+st_write(obj = roads_southeast,
+         dsn = "1.DataManagement/CleanData/roads_southeast.shp")
 
 ###############################################################################
 #   North                                                                   ####
