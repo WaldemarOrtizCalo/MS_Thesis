@@ -18,6 +18,7 @@ library(whitebox)
 library(stringr)
 library(classInt)
 library(foreach)
+library(stars)
 
 #      Functions                                                            ####
 source("2.Chapter1/2.Functions/reclass_matrices.R")
@@ -966,3 +967,17 @@ for (i in 1:length(rast_list)) {
 }
 
 ###############################################################################
+#   Dev                                                                     ####
+
+
+
+nlcd <- st_as_stars(rast("1.DataManagement/CovRasters/base_layers/southeast_nlcd.tif"))
+
+roads <- st_read("1.DataManagement/CleanData/roads_southeast.shp")
+
+road_rast <- st_rasterize(sf = roads,
+                          template = nlcd)
+
+plot(road_rast)
+
+mapview::mapview(road_rast)
