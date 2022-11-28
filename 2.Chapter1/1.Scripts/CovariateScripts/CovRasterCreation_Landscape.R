@@ -971,13 +971,18 @@ for (i in 1:length(rast_list)) {
 
 
 
-nlcd <- st_as_stars(rast("1.DataManagement/CovRasters/base_layers/southeast_nlcd.tif"))
+nlcd <- rast("1.DataManagement/CovRasters/base_layers/southeast_nlcd.tif")
 
-roads <- st_read("1.DataManagement/CleanData/roads_southeast.shp")
+empty_rast <- nlcd
+values(empty_rast) <- 0
 
-road_rast <- st_rasterize(sf = roads,
-                          template = nlcd)
+roads_shp <- st_read("1.DataManagement/CleanData/roads_southeast.shp")
+roads_vect <- st_read("1.DataManagement/CleanData/roads_southeast.shp") %>% vect()
 
-plot(road_rast)
+mask <- mask(empty_rast, roads_vect, inverse=T,
+             touches=TRUE)
 
-mapview::mapview(road_rast)
+plot(mask)
+
+mapview::mapview(raster(mask)) + mapview::mapview(roads_shp)
+
