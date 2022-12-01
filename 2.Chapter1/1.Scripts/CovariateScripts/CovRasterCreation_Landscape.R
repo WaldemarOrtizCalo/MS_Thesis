@@ -431,8 +431,6 @@ mask <- mask(x = empty_rast,
 mask[is.na(mask)] <- 0
 mask[mask != 0] <- 1
 
-plot(mask)
-
 writeRaster(mask,
             paste0(export_path,"/north_roadraster.tif"),
             overwrite = T)
@@ -444,7 +442,6 @@ output <- paste0(export_path,"/north_dist2road.tif")
 
 wbt_euclidean_distance(input = input,
                        output = output)
-
 
 ###############################################################################
 #   South                                                                   ####
