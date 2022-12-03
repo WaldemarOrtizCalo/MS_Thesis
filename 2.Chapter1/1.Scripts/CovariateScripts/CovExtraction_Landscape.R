@@ -80,7 +80,9 @@ foreach(i = 1:length(sex_list), .errorhandling = "pass") %do% {
       st_as_sf(coords = c("location.long","location.lat"),crs = 5070)
     
     # Joining used and available
-    final <- bind_rows(used,avail)
+    final <- bind_rows(used,avail) %>% 
+      sfheaders::sf_to_df(fill = T) %>% 
+      dplyr::select(!c("point_id","sfg_id"))
     
     # Exporting used-available dataset
     write_csv(x = final,
@@ -149,7 +151,9 @@ used <- deer_sub %>%
   st_as_sf(coords = c("location.long","location.lat"),crs = 5070)
 
 # Joining used and available
-final <- bind_rows(used,avail)
+final <- bind_rows(used,avail) %>%    
+  sfheaders::sf_to_df(fill = T) %>%    
+  dplyr::select(!c("point_id","sfg_id"))
 
 # Exporting used-available dataset
 write_csv(x = final,
@@ -221,7 +225,9 @@ foreach(i = 1:length(sex_list), .errorhandling = "pass") %do% {
       st_as_sf(coords = c("location.long","location.lat"),crs = 5070)
     
     # Joining used and available
-    final <- bind_rows(used,avail)
+    final <- bind_rows(used,avail) %>% 
+      sfheaders::sf_to_df(fill = T) %>%    
+      dplyr::select(!c("point_id","sfg_id"))
     
     # Exporting used-available dataset
     write_csv(x = final,
@@ -296,7 +302,9 @@ foreach(i = 1:length(sex_list), .errorhandling = "pass") %do% {
       st_as_sf(coords = c("location.long","location.lat"),crs = 5070)
     
     # Joining used and available
-    final <- bind_rows(used,avail)
+    final <- bind_rows(used,avail) %>%   
+      sfheaders::sf_to_df(fill = T) %>%    
+      dplyr::select(!c("point_id","sfg_id"))
     
     # Exporting used-available dataset
     write_csv(x = final,
@@ -371,7 +379,9 @@ used <- deer_sub %>%
   st_as_sf(coords = c("location.long","location.lat"),crs = 5070)
 
 # Joining used and available
-final <- bind_rows(used,avail)
+final <- bind_rows(used,avail) %>%    
+  sfheaders::sf_to_df(fill = T) %>%    
+  dplyr::select(!c("point_id","sfg_id"))
 
 # Exporting used-available dataset
 write_csv(x = final,
@@ -381,4 +391,161 @@ write_csv(x = final,
                         season_list[j],
                         ".csv"))
 print(paste0(sex_list[i],":",season_list[j]," Completed"))
+###############################################################################
+#      Covariate Sampling                                                   ####
+#        Clearing Environment due to RAM limitations                        ####
+
+rm(list=ls())
+gc()
+
+#        Data Import                                                        ####
+
+# Used - Available 
+used_available_locs <- list.files("1.DataManagement/ch1_data/north/used_available",
+                                  full.names = T)
+
+# Covariates
+cov_rasts <- list.files("1.DataManagement/CovRasters_Landscape/north",
+                        full.names = T) %>% 
+  str_subset("patches",negate = T) %>% 
+  str_subset("patcharea",negate = T) %>%  
+  str_subset("roadraster",negate = T) %>% 
+  rast()
+
+#        Extracting Covariate Values                                        ####
+
+# Running a Parallel for loop
+foreach(i = 1:length(used_available_locs),
+        .errorhandling = "pass") %do% {
+          
+          # Preparing Location Data
+          dataset_name <- str_remove(used_available_locs[i],
+                                     "1.DataManagement/ch1_data/north/used_available/") %>% 
+            str_replace(pattern = "data",
+                        replacement = "final")
+          
+          data <- used_available_locs[i] %>% 
+            read_csv() %>% 
+            st_as_sf(coords = c('x',"y"), crs = 5070) %>% 
+            mutate(ID = 1:nrow(.),.before = 1)
+          
+          # Extracting Covariate Values
+          values <- extract(cov_rasts,vect(data))
+          
+          # Joining Data and Export 
+          final <- left_join(data,values,by = "ID")
+          
+          write_csv(final,
+                    paste0("1.DataManagement/ch1_data/north/model_data/",dataset_name))
+          
+          # Iteration Output
+          print(paste0("Data set ",i, " of ", length(used_available_locs)," is completed"))
+          
+          return(paste0("Data set ",i, " of ", length(used_available_locs)," is completed"))
+        }
+
+###############################################################################
+#      Covariate Sampling                                                   ####
+#        Clearing Environment due to RAM limitations                        ####
+
+rm(list=ls())
+gc()
+
+#        Data Import                                                        ####
+# Used - Available 
+used_available_locs <- list.files("1.DataManagement/ch1_data/south/used_available",
+                                  full.names = T)
+
+# Covariates
+cov_rasts <- list.files("1.DataManagement/CovRasters_Landscape/south",
+                        full.names = T) %>% 
+  str_subset("patches",negate = T) %>% 
+  str_subset("patcharea",negate = T) %>%  
+  str_subset("roadraster",negate = T) %>% 
+  rast()
+
+#        Extracting Covariate Values                                        ####
+
+foreach(i = 1:length(used_available_locs),
+        .errorhandling = "pass") %do% {
+          
+          # Preparing Location Data
+          dataset_name <- str_remove(used_available_locs[i],
+                                     "1.DataManagement/ch1_data/south/used_available/") %>% 
+            str_replace(pattern = "data",
+                        replacement = "final")
+          
+          data <- used_available_locs[i] %>% 
+            read_csv() %>% 
+            st_as_sf(coords = c('x',"y"), crs = 5070) %>% 
+            mutate(ID = 1:nrow(.),.before = 1)
+          
+          # Extracting Covariate Values
+          values <- extract(cov_rasts,vect(data))
+          
+          # Joining Data and Export 
+          final <- left_join(data,values,by = "ID")
+          
+          write_csv(final,
+                    paste0("1.DataManagement/ch1_data/south/model_data/",dataset_name))
+          
+          # Iteration Output
+          print(paste0("Data set ",i, " of ", length(used_available_locs)," is completed"))
+          
+          return(paste0("Data set ",i, " of ", length(used_available_locs)," is completed"))
+        }
+
+###############################################################################
+#      Covariate Sampling                                                   ####
+#        Clearing Environment due to RAM limitations                        ####
+
+rm(list=ls())
+gc()
+
+#        Data Import                                                        ####
+
+# Used - Available 
+used_available_locs <- list.files("1.DataManagement/ch1_data/southeast/used_available",
+                                  full.names = T)
+
+# Covariates
+cov_rasts <- list.files("1.DataManagement/CovRasters_Landscape/southeast",
+                        full.names = T) %>% 
+  str_subset("patches",negate = T) %>%
+  str_subset("patcharea",negate = T) %>%  
+  str_subset("roadraster",negate = T) %>% 
+  rast()
+
+#        Extracting Covariate Values                                        ####
+
+# Running a Parallel for loop
+foreach(i = 1:length(used_available_locs),
+        .errorhandling = "pass") %do% {
+          
+          # Preparing Location Data
+          dataset_name <- str_remove(used_available_locs[i],
+                                     "1.DataManagement/ch1_data/southeast/used_available/") %>% 
+            str_replace(pattern = "data",
+                        replacement = "final")
+          
+          data <- used_available_locs[i] %>% 
+            read_csv() %>% 
+            st_as_sf(coords = c('x',"y"), crs = 5070) %>% 
+            mutate(ID = 1:nrow(.),.before = 1)
+          
+          # Extracting Covariate Values
+          values <- extract(cov_rasts,vect(data))
+          
+          # Joining Data and Export 
+          final <- left_join(data,values,by = "ID")
+          
+          write_csv(final,
+                    paste0("1.DataManagement/ch1_data/southeast/model_data/",dataset_name))
+          
+          # Iteration Output
+          print(paste0("Data set ",i, " of ", length(used_available_locs)," is completed"))
+          
+          return(paste0("Data set ",i, " of ", length(used_available_locs)," is completed"))
+        }
+
 ###############################################################################

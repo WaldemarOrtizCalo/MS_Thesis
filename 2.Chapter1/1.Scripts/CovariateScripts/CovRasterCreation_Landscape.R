@@ -410,39 +410,6 @@ for (i in 1:length(rast_list)) {
   gc()
 }
 
-#        Distance to Road Raster                                            ####
-#           Creating Road Raster                                            ####
-
-# Creating Empty Raster
-nlcd <- rast("1.DataManagement/CovRasters/base_layers/north_nlcd.tif")
-empty_rast <- nlcd
-values(empty_rast) <- 0
-
-# Loading road shapefile
-roads_vect <- st_read("1.DataManagement/CleanData/roads_north.shp") %>% vect()
-
-# Creating Mask
-mask <- mask(x = empty_rast, 
-             mask = roads_vect,
-             updatevalue = 1, 
-             touches=TRUE,
-             inverse = T)
-
-mask[is.na(mask)] <- 0
-mask[mask != 0] <- 1
-
-writeRaster(mask,
-            paste0(export_path,"/north_roadraster.tif"),
-            overwrite = T)
-
-#           Distance to Road                                                ####
-
-input <- paste0(export_path,"/north_roadraster.tif") 
-output <- paste0(export_path,"/north_dist2road.tif")
-
-wbt_euclidean_distance(input = input,
-                       output = output)
-
 ###############################################################################
 #   South                                                                   ####
 #      Export Filepath                                                      ####
@@ -720,40 +687,6 @@ for (i in 1:length(rast_list)) {
   print(paste0(i, " out of ",length(rast_list)," raster have been completed"))
   gc()
 }
-
-#        Distance to Road Raster                                            ####
-#           Creating Road Raster                                            ####
-
-# Creating Empty Raster
-nlcd <- rast("1.DataManagement/CovRasters/base_layers/south_nlcd.tif")
-empty_rast <- nlcd
-values(empty_rast) <- 0
-
-# Loading road shapefile
-roads_vect <- st_read("1.DataManagement/CleanData/roads_south.shp") %>% vect()
-
-# Creating Mask
-mask <- mask(x = empty_rast, 
-             mask = roads_vect,
-             updatevalue = 1, 
-             touches=TRUE,
-             inverse = T)
-
-mask[is.na(mask)] <- 0
-mask[mask != 0] <- 1
-
-writeRaster(mask,
-            paste0(export_path,"/south_roadraster.tif"),
-            overwrite = T)
-
-#           Distance to Road                                                ####
-
-input <- paste0(export_path,"/south_roadraster.tif") 
-output <- paste0(export_path,"/south_dist2road.tif")
-
-wbt_euclidean_distance(input = input,
-                       output = output)
-
 
 ###############################################################################
 #   Southeast                                                               ####
@@ -1033,40 +966,16 @@ for (i in 1:length(rast_list)) {
   gc()
 }
 
-#        Distance to Road Raster                                            ####
-#           Creating Road Raster                                            ####
-
-# Creating Empty Raster
-nlcd <- rast("1.DataManagement/CovRasters/base_layers/southeast_nlcd.tif")
-empty_rast <- nlcd
-values(empty_rast) <- 0
-
-# Loading road shapefile
-roads_vect <- st_read("1.DataManagement/CleanData/roads_southeast.shp") %>% vect()
-
-# Creating Mask
-mask <- mask(x = empty_rast, 
-             mask = roads_vect,
-             updatevalue = 1, 
-             touches=TRUE,
-             inverse = T)
-
-mask[is.na(mask)] <- 0
-mask[mask != 0] <- 1
-
-plot(mask)
-
-writeRaster(mask,
-            paste0(export_path,"/southeast_roadraster.tif"),
-            overwrite = T)
-
-#           Distance to Road                                                ####
-
-input <- paste0(export_path,"/southeast_roadraster.tif") 
-output <- paste0(export_path,"/southeast_dist2road.tif")
-
-wbt_euclidean_distance(input = input,
-                       output = output)
-
-
 ###############################################################################
+#   Dev                                                                     ####
+
+nlcd <- rast("1.DataManagement/CovRasters/base_layers/southeast_nlcd.tif")
+
+roads <- st_read("1.DataManagement/CleanData/roads_southeast.shp")
+
+spatvect <- vect(roads)
+
+polyrast <- as.polygons(nlcd, trunc= FALSE, dissolve= FALSE, values=FALSE,
+                        na.rm=FALSE, na.all=TRUE, extent=FALSE)
+
+mapview::mapview(road_rast)
