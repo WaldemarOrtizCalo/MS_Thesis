@@ -14,6 +14,7 @@ library(tidyverse)
 library(lares)
 library(foreach)
 library(doParallel)
+library(MuMIn)
 
 #      Functions                                                            ####
 
@@ -80,11 +81,42 @@ for (i in 1:length(data_north)) {
 
 
 #      Models                                                               ####
+#        Global Models                                                      ####
+
+foreach(i = 1:length(data)) %do% {
+  
+  # Separating specific dataframe
+  df <- data[[i]]
+  name <- names_north[[i]]
+  
+  # Making the list of covariate names and eliminating undesired covariates
+  covs <- names(df) %>% 
+    .[(str_which(.,"geometry")+1):length(.)] %>% 
+    str_subset("shrub",negate = T) %>% 
+    str_subset("wetland",negate = T) %>% 
+    str_subset("barren",negate = T) 
+  
+  # Building the formula
+  formula <- as.formula(paste("choice ~ ", paste(covs, collapse= "+")))
+  
+  # Model
+  model <- glm(formula = formula, 
+               data = df, 
+               family = "binomial",na.action = "na.fail")
+  
+  # Export
+  saveRDS(model,
+          file = paste0("2.Chapter1/3.Output/models_global_landscapelevel/north/",names_north[i],"_global.rds"))
+  
+  print(paste0(i," out of ",length(data)," completed"))
+}
+
+
 #        Dredge Models                                                      ####
 #           Start of Cluster                                                ####
 
 # Cluster Number
-cl <- makeCluster(4)
+cl <- makeCluster(2)
 registerDoParallel(cl)
 
 # Exporting Packages
@@ -126,12 +158,13 @@ foreach(i = 1:length(data)) %dopar% {
   
   # Dredge Export
   write_csv(x = dredge,
-            file = paste0("2.Chapter1/3.Output/models_dredge_landscapelevel/",names_north[i],"_dredge.csv"),
+            file = paste0("2.Chapter1/3.Output/models_dredge_landscapelevel/north/",names_north[i],"_dredge.csv"),
             append = F)
   
   # Return of the for loop
   print(i)
 }
+
 
 ###############################################################################
 #   South                                                                   ####
@@ -167,6 +200,38 @@ for (i in 1:length(data_south)) {
 
 
 
+#      Models                                                               ####
+#        Global Models                                                      ####
+
+foreach(i = 1:length(data)) %do% {
+  
+  # Separating specific dataframe
+  df <- data[[i]]
+  name <- names_south[[i]]
+  
+  # Making the list of covariate names and eliminating undesired covariates
+  covs <- names(df) %>% 
+    .[(str_which(.,"geometry")+1):length(.)] %>% 
+    str_subset("shrub",negate = T) %>% 
+    str_subset("wetland",negate = T) %>% 
+    str_subset("barren",negate = T) 
+  
+  # Building the formula
+  formula <- as.formula(paste("choice ~ ", paste(covs, collapse= "+")))
+  
+  # Model
+  model <- glm(formula = formula, 
+               data = df, 
+               family = "binomial",na.action = "na.fail")
+  
+  # Export
+  saveRDS(model,
+          file = paste0("2.Chapter1/3.Output/models_global_landscapelevel/south/",names_south[i],"_global.rds"))
+  
+  print(paste0(i," out of ",length(data)," completed"))
+}
+
+
 ###############################################################################
 #   Southeast                                                               ####
 #      Data                                                                 ####
@@ -199,6 +264,38 @@ for (i in 1:length(data_southeast)) {
   print(i)
 }
 
+
+
+#      Models                                                               ####
+#        Global Models                                                      ####
+
+foreach(i = 1:length(data)) %do% {
+  
+  # Separating specific dataframe
+  df <- data[[i]]
+  name <- names_southeast[[i]]
+  
+  # Making the list of covariate names and eliminating undesired covariates
+  covs <- names(df) %>% 
+    .[(str_which(.,"geometry")+1):length(.)] %>% 
+    str_subset("shrub",negate = T) %>% 
+    str_subset("wetland",negate = T) %>% 
+    str_subset("barren",negate = T) 
+  
+  # Building the formula
+  formula <- as.formula(paste("choice ~ ", paste(covs, collapse= "+")))
+  
+  # Model
+  model <- glm(formula = formula, 
+               data = df, 
+               family = "binomial",na.action = "na.fail")
+  
+  # Export
+  saveRDS(model,
+          file = paste0("2.Chapter1/3.Output/models_global_landscapelevel/southeast/",names_southeast[i],"_global.rds"))
+  
+  print(paste0(i," out of ",length(data)," completed"))
+}
 
 
 ###############################################################################
