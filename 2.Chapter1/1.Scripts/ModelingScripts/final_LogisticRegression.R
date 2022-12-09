@@ -15,7 +15,8 @@ library(lares)
 library(foreach)
 library(doParallel)
 library(MuMIn)
-
+library(jtools)
+library(rstanarm)
 #      Functions                                                            ####
 
 #      Data                                                                 ####
@@ -63,9 +64,23 @@ for (i in 1:length(data_north)) {
     str_replace(".csv",".png") %>% 
     str_replace("final","corplot")
   
+  covs <- names(df) %>% 
+    .[(str_which(.,"geometry")+1):length(.)] %>% 
+    str_subset("shrub",negate = T) %>% 
+    str_subset("wetland",negate = T) %>% 
+    str_subset("barren",negate = T) %>% c()
   
-  cor_bargraph <-corr_cross(df[(str_which(names(df), "geometry")+1):ncol(df)], rm.na = T, max_pvalue = 0.06, 
-                            top = 20, grid = T)
+  covlist <- foreach(v = 1:length(covs),.combine = c) %do% {str_which(names(df),pattern = covs[v])} %>% unique()
+  
+  cov_df <- df[covlist]
+  
+  cor_bargraph <-corr_cross(cov_df, rm.na = T, max_pvalue = 0.06, 
+                            top = 40,
+                            plot = T)
+  
+  cor_data <-corr_cross(cov_df, rm.na = T, max_pvalue = 0.06, 
+                        top = 60,
+                        plot = F)
   
   ggsave(filename = name,
          plot = cor_bargraph,
@@ -75,13 +90,15 @@ for (i in 1:length(data_north)) {
          height = 6,
          units = "in")
   
+  write_csv(cor_data,
+            paste0("2.Chapter1/3.Output/covariate_analysis/north/",str_remove(name,",png"),".csv"))
+  
   print(i)
 }
 
-
-
 #      Models                                                               ####
 #        Global Models                                                      ####
+#           Models                                                          ####
 
 foreach(i = 1:length(data)) %do% {
   
@@ -112,11 +129,57 @@ foreach(i = 1:length(data)) %do% {
 }
 
 
+#           Effect Plots                                                    ####
+
+# Importing Data
+north_models <- list.files("2.Chapter1/3.Output/models_global_landscapelevel/north",
+                           full.names = T) %>% 
+  str_subset(".rds")%>% 
+  lapply(readRDS)
+
+north_names <- list.files("2.Chapter1/3.Output/models_global_landscapelevel/north",
+                          full.names = F) %>% str_remove(".rds")
+
+# Making Plots
+for (i in 1:length(north_models)) {
+  
+  # Choosing Model to Plot
+  model <- north_models[[1]]
+  model_dir <- paste0("2.Chapter1/3.Output/models_global_landscapelevel/north/effectplots/",north_names[i])
+  
+  for (v in 2:length(names(model$coefficients))) {
+    
+    # Extracting a Covariate to Plot
+    cov<-names(model$coefficients)[v]
+    
+    # Effect Plot
+    plot <- effect_plot(model, 
+                        pred = !!cov, 
+                        interval = TRUE, 
+                        plot.points = F,
+                        x.label = cov,
+                        y.label = "Probability of Use")
+    
+    p <- plot + ylim(0, 1)
+    
+    # Exporting Plot
+    ggsave(filename = paste0(model_dir,"/",cov,".png"),
+           plot = p,
+           device = "png",
+           width = 6,
+           height = 4,
+           units = "in")
+    
+    print(paste0("Model ",i, " Coefficient ", v, " out of ", length(names(model$coefficients))))
+    
+  }
+}
+
 #        Dredge Models                                                      ####
 #           Start of Cluster                                                ####
 
 # Cluster Number
-cl <- makeCluster(2)
+cl <- makeCluster(3)
 registerDoParallel(cl)
 
 # Exporting Packages
@@ -183,9 +246,23 @@ for (i in 1:length(data_south)) {
     str_replace(".csv",".png") %>% 
     str_replace("final","corplot")
   
+  covs <- names(df) %>% 
+    .[(str_which(.,"geometry")+1):length(.)] %>% 
+    str_subset("shrub",negate = T) %>% 
+    str_subset("wetland",negate = T) %>% 
+    str_subset("barren",negate = T) %>% c()
   
-  cor_bargraph <-corr_cross(df[(str_which(names(df), "geometry")+1):ncol(df)], rm.na = T, max_pvalue = 0.06, 
-                            top = 20, grid = T)
+  covlist <- foreach(v = 1:length(covs),.combine = c) %do% {str_which(names(df),pattern = covs[v])} %>% unique()
+  
+  cov_df <- df[covlist]
+  
+  cor_bargraph <-corr_cross(cov_df, rm.na = T, max_pvalue = 0.06, 
+                            top = 40,
+                            plot = T)
+  
+  cor_data <-corr_cross(cov_df, rm.na = T, max_pvalue = 0.06, 
+                        top = 60,
+                        plot = F)
   
   ggsave(filename = name,
          plot = cor_bargraph,
@@ -195,10 +272,11 @@ for (i in 1:length(data_south)) {
          height = 6,
          units = "in")
   
+  write_csv(cor_data,
+            paste0("2.Chapter1/3.Output/covariate_analysis/south/",str_remove(name,",png"),".csv"))
+  
   print(i)
 }
-
-
 
 #      Models                                                               ####
 #        Global Models                                                      ####
@@ -232,6 +310,51 @@ foreach(i = 1:length(data)) %do% {
 }
 
 
+#           Effect Plots                                                    ####
+
+# Importing Data
+south_models <- list.files("2.Chapter1/3.Output/models_global_landscapelevel/south",
+                           full.names = T) %>% str_subset(".rds")%>% 
+  lapply(readRDS)
+
+south_names <- list.files("2.Chapter1/3.Output/models_global_landscapelevel/south",
+                          full.names = F) %>% str_remove(".rds")
+
+# Making Plots
+for (i in 1:length(south_models)) {
+  
+  # Choosing Model to Plot
+  model <- south_models[[1]]
+  model_dir <- paste0("2.Chapter1/3.Output/models_global_landscapelevel/south/effectplots/",south_names[i])
+  
+  for (v in 2:length(names(model$coefficients))) {
+    
+    # Extracting a Covariate to Plot
+    cov<-names(model$coefficients)[v]
+    
+    # Effect Plot
+    plot <- effect_plot(model, 
+                        pred = !!cov, 
+                        interval = TRUE, 
+                        plot.points = F,
+                        x.label = cov,
+                        y.label = "Probability of Use")
+    
+    p <- plot + ylim(0, 1)
+    
+    # Exporting Plot
+    ggsave(filename = paste0(model_dir,"/",cov,".png"),
+           plot = p,
+           device = "png",
+           width = 6,
+           height = 4,
+           units = "in")
+    
+    print(paste0("Model ",i, " Coefficient ", v, " out of ", length(names(model$coefficients))))
+    
+  }
+}
+
 ###############################################################################
 #   Southeast                                                               ####
 #      Data                                                                 ####
@@ -249,9 +372,23 @@ for (i in 1:length(data_southeast)) {
     str_replace(".csv",".png") %>% 
     str_replace("final","corplot")
   
+  covs <- names(df) %>% 
+    .[(str_which(.,"geometry")+1):length(.)] %>% 
+    str_subset("shrub",negate = T) %>% 
+    str_subset("wetland",negate = T) %>% 
+    str_subset("barren",negate = T) %>% c()
   
-  cor_bargraph <-corr_cross(df[(str_which(names(df), "geometry")+1):ncol(df)], rm.na = T, max_pvalue = 0.06, 
-                            top = 20, grid = T)
+  covlist <- foreach(v = 1:length(covs),.combine = c) %do% {str_which(names(df),pattern = covs[v])} %>% unique()
+  
+  cov_df <- df[covlist]
+  
+  cor_bargraph <-corr_cross(cov_df, rm.na = T, max_pvalue = 0.06, 
+                            top = 40,
+                            plot = T)
+  
+  cor_data <-corr_cross(cov_df, rm.na = T, max_pvalue = 0.06, 
+                        top = 60,
+                        plot = F)
   
   ggsave(filename = name,
          plot = cor_bargraph,
@@ -261,10 +398,11 @@ for (i in 1:length(data_southeast)) {
          height = 6,
          units = "in")
   
+  write_csv(cor_data,
+            paste0("2.Chapter1/3.Output/covariate_analysis/southeast/",str_remove(name,",png"),".csv"))
+  
   print(i)
 }
-
-
 
 #      Models                                                               ####
 #        Global Models                                                      ####
@@ -298,4 +436,64 @@ foreach(i = 1:length(data)) %do% {
 }
 
 
+#           Effect Plots                                                    ####
+
+# Importing Data
+southeast_models <- list.files("2.Chapter1/3.Output/models_global_landscapelevel/southeast",
+                           full.names = T) %>% str_subset(".rds")%>% 
+  lapply(readRDS)
+
+southeast_names <- list.files("2.Chapter1/3.Output/models_global_landscapelevel/southeast",
+                          full.names = F) %>% str_remove(".rds")
+
+# Making Plots
+for (i in 1:length(southeast_models)) {
+  
+  # Choosing Model to Plot
+  model <- southeast_models[[1]]
+  model_dir <- paste0("2.Chapter1/3.Output/models_global_landscapelevel/southeast/effectplots/",southeast_names[i])
+  
+  for (v in 2:length(names(model$coefficients))) {
+    
+    # Extracting a Covariate to Plot
+    cov<-names(model$coefficients)[v]
+    
+    # Effect Plot
+    plot <- effect_plot(model, 
+                        pred = !!cov, 
+                        interval = TRUE, 
+                        plot.points = F,
+                        x.label = cov,
+                        y.label = "Probability of Use")
+    
+    p <- plot + ylim(0, 1)
+    
+    # Exporting Plot
+    ggsave(filename = paste0(model_dir,"/",cov,".png"),
+           plot = p,
+           device = "png",
+           width = 6,
+           height = 4,
+           units = "in")
+    
+    print(paste0("Model ",i, " Coefficient ", v, " out of ", length(names(model$coefficients))))
+    
+  }
+}
+
 ###############################################################################
+#   Bayesian                                                                ####
+
+pplot<-plot(model2, "areas", prob = 0.95, prob_outer = 1)
+pplot+ geom_vline(xintercept = 0)
+
+###############################################################################
+# Notes 
+
+# Dredging the model takes a incredible amount of time. 
+# 3 Variable Dredge = 10s
+# 6 Variable Dredge = 97s
+# 9 Variable Dredge = 858s
+# 12 Variable Dredge = 7722s
+# 15 Variable Dredge = 69498s
+# 18 Variable Dredge = 625401s
