@@ -16,8 +16,9 @@ library(doParallel)
 library(MuMIn)
 library(jtools)
 library(rstanarm)
-#      Functions                                                            ####
+library(brms)
 
+#      Functions                                                            ####
 #      Data                                                                 ####
 #        North                                                              ####
 data_north <- list.files("1.DataManagement/ch1_data/north/model_data",
@@ -67,7 +68,11 @@ for (i in 1:length(data_north)) {
     .[(str_which(.,"geometry")+1):length(.)] %>% 
     str_subset("shrub",negate = T) %>% 
     str_subset("wetland",negate = T) %>% 
-    str_subset("barren",negate = T) %>% c()
+    str_subset("barren",negate = T) %>% 
+    str_subset("water",negate = T)  %>%
+    str_subset("TRI",negate = T) %>% 
+    str_subset("developed",negate = T) %>% 
+    c()
   
   covlist <- foreach(v = 1:length(covs),.combine = c) %do% {str_which(names(df),pattern = covs[v])} %>% unique()
   
@@ -90,7 +95,7 @@ for (i in 1:length(data_north)) {
          units = "in")
   
   write_csv(cor_data,
-            paste0("2.Chapter1/3.Output/covariate_analysis/north/",str_remove(name,",png"),".csv"))
+            paste0("2.Chapter1/3.Output/covariate_analysis/north/",str_remove(name,".png"),".csv"))
   
   print(i)
 }
@@ -98,58 +103,62 @@ for (i in 1:length(data_north)) {
 #      Model                                                                ####
 #        Bayesian Model                                                     ####
 
-foreach(i = 1:length(data_north)) %do% {
-
-# Separating specific dataframe
-df_raw <- data[[i]]
-name <- names_north[[i]]
-
-df <- df_raw
-
-for (j in (str_which(names(df),"geometry")+1):ncol(df)) {
-  df[,j] <- scale(df[,j])
-}
-
-# Making the list of covariate names and eliminating undesired covariates
-covs <- names(df) %>% 
-  .[(str_which(.,"geometry")+1):length(.)] %>% 
-  str_subset("shrub",negate = T) %>% 
-  str_subset("wetland",negate = T) %>% 
-  str_subset("barren",negate = T) 
-
-# Building the formula
-formula <- as.formula(paste("choice ~ ", paste(covs, collapse= "+")))
-
-# Model
-
+#           [Model Settings]                                                ####
 # Model Settings
-chains <- 4 
-iter <- 5000
+chains <- 3 
+iter <- 1000
 warmup <- iter*.25
 thin <- 1
 cores <- chains
 refresh <- iter/10
 
-model <- stan_glm(
-  formula = formula,
-  data = df,
-  family = binomial(link = "logit"),
-  prior_intercept = normal(0, 1),
-  prior = normal(0, 1),
-  QR = TRUE,
-  refresh = refresh,
-  chains = chains, 
-  iter = iter,
-  warmup = warmup,
-  thin = thin,
-  cores = cores
-)
+#           [Model]                                                         ####
 
-saveRDS(object = model,
-  file = paste0("2.Chapter1/3.Output/models_bayesian/north/bayesian_",name,".RDS"))
+foreach(i = 1:length(data_north)) %do% {
 
-return(print(paste0(i," out of ", length(data_north), " is completed")))
-
+  # Separating specific dataframe
+  df_raw <- data[[i]]
+  name <- names_north[[i]]
+  
+  df <- df_raw
+  
+  for (j in (str_which(names(df),"geometry")+1):ncol(df)) {
+    df[,j] <- scale(df[,j])
+  }
+  
+  # Making the list of covariate names and eliminating undesired covariates
+  covs <- names(df) %>% 
+    .[(str_which(.,"geometry")+1):length(.)] %>% 
+    str_subset("shrub",negate = T) %>% 
+    str_subset("wetland",negate = T) %>% 
+    str_subset("barren",negate = T) %>% 
+    str_subset("water",negate = T)  %>%
+    str_subset("TRI",negate = T) %>% 
+    str_subset("developed",negate = T) %>% 
+    c()
+  
+  # Building the formula
+  formula <- as.formula(paste("choice ~ ", paste(covs, collapse= "+")))
+  
+  # Model
+  
+  model <- brm(
+    formula = formula,
+    data = df,
+    family = binomial(link = "logit"),
+    prior = prior(normal(0, 1)),
+    refresh = refresh,
+    chains = chains, 
+    iter = iter,
+    warmup = warmup,
+    thin = thin,
+    cores = cores
+  )
+  
+  saveRDS(object = model,
+          file = paste0("2.Chapter1/3.Output/models_bayesian/north/bayesian_",name,".RDS"))
+  
+  return(print(paste0(i," out of ", length(data_north), " is completed")))
 }
 
 
@@ -174,7 +183,13 @@ for (i in 1:length(data_south)) {
     .[(str_which(.,"geometry")+1):length(.)] %>% 
     str_subset("shrub",negate = T) %>% 
     str_subset("wetland",negate = T) %>% 
-    str_subset("barren",negate = T) %>% c()
+    str_subset("barren",negate = T) %>% 
+    str_subset("water",negate = T)  %>%
+    str_subset("TRI",negate = T) %>% 
+    str_subset("developed",negate = T) %>%
+    str_subset("evergreen",negate = T) %>%
+    str_subset("mixed",negate = T) %>%
+    c()
   
   covlist <- foreach(v = 1:length(covs),.combine = c) %do% {str_which(names(df),pattern = covs[v])} %>% unique()
   
@@ -197,7 +212,7 @@ for (i in 1:length(data_south)) {
          units = "in")
   
   write_csv(cor_data,
-            paste0("2.Chapter1/3.Output/covariate_analysis/south/",str_remove(name,",png"),".csv"))
+            paste0("2.Chapter1/3.Output/covariate_analysis/south/",str_remove(name,".png"),".csv"))
   
   print(i)
 }
@@ -224,7 +239,17 @@ for (i in 1:length(data_southeast)) {
     .[(str_which(.,"geometry")+1):length(.)] %>% 
     str_subset("shrub",negate = T) %>% 
     str_subset("wetland",negate = T) %>% 
-    str_subset("barren",negate = T) %>% c()
+    str_subset("barren",negate = T) %>% 
+    str_subset("water",negate = T)  %>%
+    str_subset("TRI",negate = T) %>% 
+    str_subset("developed",negate = T) %>% 
+    str_subset("evergreen",negate = T) %>%
+    str_subset("mixed",negate = T) %>%
+    str_subset("grassland",negate = T) %>%
+    str_subset("southeast_patchdist_deciduous_small",negate = T) %>%
+    str_subset("southeast_dem",negate = T) %>%
+    str_subset("southeast_patchdist_deciduous_forest",negate = T) %>%
+    c()
   
   covlist <- foreach(v = 1:length(covs),.combine = c) %do% {str_which(names(df),pattern = covs[v])} %>% unique()
   
@@ -247,7 +272,7 @@ for (i in 1:length(data_southeast)) {
          units = "in")
   
   write_csv(cor_data,
-            paste0("2.Chapter1/3.Output/covariate_analysis/southeast/",str_remove(name,",png"),".csv"))
+            paste0("2.Chapter1/3.Output/covariate_analysis/southeast/",str_remove(name,".png"),".csv"))
   
   print(i)
 }
@@ -257,67 +282,7 @@ for (i in 1:length(data_southeast)) {
 #   [brm]                                                                   ####
 library(brms)
 i <- 1
-# Separating specific dataframe
-df_raw <- data[[i]]
-name <- names_north[[i]]
 
-df <- df_raw
-
-for (j in (str_which(names(df),"geometry")+1):ncol(df)) {
-  df[,j] <- scale(df[,j])
-}
-
-# Making the list of covariate names and eliminating undesired covariates
-covs <- names(df) %>% 
-  .[(str_which(.,"geometry")+1):length(.)] %>% 
-  str_subset("shrub",negate = T) %>% 
-  str_subset("wetland",negate = T) %>% 
-  str_subset("barren",negate = T) 
-
-# Building the formula
-formula <- as.formula(paste("choice ~ ", paste(covs[1:3], collapse= "+")))
-
-# Model
-
-# Model Settings
-chains <- 4 
-iter <- 1000
-warmup <- iter*.25
-thin <- 1
-cores <- chains
-refresh <- iter/10
-
-model_stan <- stan_glm(
-  formula = formula,
-  data = df,
-  family = binomial(link = "logit"),
-  prior_intercept = normal(0, 1),
-  prior = normal(0, 1),
-  QR = TRUE,
-  refresh = refresh,
-  chains = chains, 
-  iter = iter,
-  warmup = warmup,
-  thin = thin,
-  cores = cores
-)
-
-model_brm <- brm(
-  formula = formula,
-  data = df,
-  family = binomial(link = "logit"),
-  prior = prior(normal(0, 1)),
-  refresh = refresh,
-  chains = chains, 
-  iter = iter,
-  warmup = warmup,
-  thin = thin,
-  cores = cores
-)
-
-summary(model_brm)
-
-summary(model_stan)
 
 
 ###############################################################################
