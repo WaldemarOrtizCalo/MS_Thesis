@@ -101,18 +101,16 @@ for (i in 1:length(data_north)) {
 }
 
 #      Model                                                                ####
-#        Bayesian Model                                                     ####
-
-#           [Model Settings]                                                ####
+#        [Model Settings]                                                   ####
 # Model Settings
 chains <- 3 
-iter <- 1000
+iter <- 4000
 warmup <- iter*.25
 thin <- 1
 cores <- chains
-refresh <- iter/10
+refresh <- iter * 0.05
 
-#           [Model]                                                         ####
+#        [Model]                                                            ####
 
 foreach(i = 1:length(data_north)) %do% {
 
@@ -158,7 +156,7 @@ foreach(i = 1:length(data_north)) %do% {
   saveRDS(object = model,
           file = paste0("2.Chapter1/3.Output/models_bayesian/north/bayesian_",name,".RDS"))
   
-  return(print(paste0(i," out of ", length(data_north), " is completed")))
+  return(print(paste0("North: ",i," out of ", length(data_north), " is completed")))
 }
 
 
@@ -217,7 +215,67 @@ for (i in 1:length(data_south)) {
   print(i)
 }
 
-#      Models                                                               ####
+#      Model                                                                ####
+#        [Model Settings]                                                   ####
+# Model Settings
+chains <- 3 
+iter <- 4000
+warmup <- iter*.25
+thin <- 1
+cores <- chains
+refresh <- iter * 0.05
+
+#        [Model]                                                            ####
+
+foreach(i = 1:length(data_south)) %do% {
+  
+  # Separating specific dataframe
+  df_raw <- data[[i]]
+  name <- names_south[[i]]
+  
+  df <- df_raw
+  
+  for (j in (str_which(names(df),"geometry")+1):ncol(df)) {
+    df[,j] <- scale(df[,j])
+  }
+  
+  # Making the list of covariate names and eliminating undesired covariates
+  covs <- names(df) %>% 
+    .[(str_which(.,"geometry")+1):length(.)] %>% 
+    str_subset("shrub",negate = T) %>% 
+    str_subset("wetland",negate = T) %>% 
+    str_subset("barren",negate = T) %>% 
+    str_subset("water",negate = T)  %>%
+    str_subset("TRI",negate = T) %>% 
+    str_subset("developed",negate = T) %>%
+    str_subset("evergreen",negate = T) %>%
+    str_subset("mixed",negate = T) %>%
+    c()
+  
+  # Building the formula
+  formula <- as.formula(paste("choice ~ ", paste(covs, collapse= "+")))
+  
+  # Model
+  
+  model <- brm(
+    formula = formula,
+    data = df,
+    family = binomial(link = "logit"),
+    prior = prior(normal(0, 1)),
+    refresh = refresh,
+    chains = chains, 
+    iter = iter,
+    warmup = warmup,
+    thin = thin,
+    cores = cores
+  )
+  
+  saveRDS(object = model,
+          file = paste0("2.Chapter1/3.Output/models_bayesian/south/bayesian_",name,".RDS"))
+  
+  return(print(paste0("South: ",i," out of ", length(data_south), " is completed")))
+}
+
 ###############################################################################
 #   Southeast                                                               ####
 #      Data                                                                 ####
@@ -277,12 +335,69 @@ for (i in 1:length(data_southeast)) {
   print(i)
 }
 
-#      Models                                                               ####
-###############################################################################
-#   [brm]                                                                   ####
-library(brms)
-i <- 1
+#      Model                                                                ####
+#        [Model Settings]                                                   ####
+# Model Settings
+chains <- 3 
+iter <- 4000
+warmup <- iter*.25
+thin <- 1
+cores <- chains
+refresh <- iter * 0.05
 
+#        [Model]                                                            ####
 
+foreach(i = 1:length(data_southeast)) %do% {
+  
+  # Separating specific dataframe
+  df_raw <- data[[i]]
+  name <- names_southeast[[i]]
+  
+  df <- df_raw
+  
+  for (j in (str_which(names(df),"geometry")+1):ncol(df)) {
+    df[,j] <- scale(df[,j])
+  }
+  
+  # Making the list of covariate names and eliminating undesired covariates
+  covs <- names(df) %>% 
+    .[(str_which(.,"geometry")+1):length(.)] %>% 
+    str_subset("shrub",negate = T) %>% 
+    str_subset("wetland",negate = T) %>% 
+    str_subset("barren",negate = T) %>% 
+    str_subset("water",negate = T)  %>%
+    str_subset("TRI",negate = T) %>% 
+    str_subset("developed",negate = T) %>% 
+    str_subset("evergreen",negate = T) %>%
+    str_subset("mixed",negate = T) %>%
+    str_subset("grassland",negate = T) %>%
+    str_subset("southeast_patchdist_deciduous_small",negate = T) %>%
+    str_subset("southeast_dem",negate = T) %>%
+    str_subset("southeast_patchdist_deciduous_forest",negate = T) %>%
+    c()
+  
+  # Building the formula
+  formula <- as.formula(paste("choice ~ ", paste(covs, collapse= "+")))
+  
+  # Model
+  
+  model <- brm(
+    formula = formula,
+    data = df,
+    family = binomial(link = "logit"),
+    prior = prior(normal(0, 1)),
+    refresh = refresh,
+    chains = chains, 
+    iter = iter,
+    warmup = warmup,
+    thin = thin,
+    cores = cores
+  )
+  
+  saveRDS(object = model,
+          file = paste0("2.Chapter1/3.Output/models_bayesian/southeast/bayesian_",name,".RDS"))
+  
+  return(print(paste0("Southeast: ",i," out of ", length(data_southeast), " is completed")))
+}
 
 ###############################################################################
