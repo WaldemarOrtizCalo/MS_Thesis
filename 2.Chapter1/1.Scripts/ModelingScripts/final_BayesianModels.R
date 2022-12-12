@@ -100,6 +100,79 @@ for (i in 1:length(data_north)) {
   print(i)
 }
 
+#        UsedAvail Plots                                                    ####
+
+for (i in 1:length(data_north)) {
+  
+  # Iteration Monitor 1 
+  print(paste0("Starting Dataset ",i, " out of ",length(data_north)))
+  
+  # Dataframe Extraction and Name
+  df <- data[[i]]
+  name <- list.files("1.DataManagement/ch1_data/north/model_data",
+                     full.names = F,pattern = ".csv") %>% 
+    .[[i]] %>% 
+    str_remove(".csv") %>% 
+    str_replace("final","_usedavail")
+  
+  # Making a List of Covariates
+  covs <- names(df) %>% 
+    .[(str_which(.,"geometry")+1):length(.)] %>% 
+    str_subset("shrub",negate = T) %>% 
+    str_subset("wetland",negate = T) %>% 
+    str_subset("barren",negate = T) %>% 
+    str_subset("water",negate = T)  %>%
+    str_subset("TRI",negate = T) %>% 
+    str_subset("developed",negate = T) %>% 
+    append("choice",after = 0) %>% 
+    c()
+  
+  # Covariate List 
+  covlist <- foreach(v = 1:length(covs),.combine = c) %do% 
+    {str_which(names(df),pattern = covs[v])} %>% 
+    unique()
+  
+  # Subsetting Covariates from dataframe
+  cov_df <- df[covlist]
+  
+  # Preparing the data in box and whisker plot format
+  boxwhisk_data <- pivot_longer(cov_df,
+                                cols = 2:ncol(cov_df))
+  
+  # Replacing NA values with Zero
+  boxwhisk_data$value <- ifelse(is.na(boxwhisk_data$value),
+                                0,
+                                boxwhisk_data$value)
+  
+  # Extracting covariates Names
+  cov_name <- covs[2:length(covs)]
+  
+  # Export folder
+  export_dir <- paste0("2.Chapter1/3.Output/covariate_analysis/north/used_avail_plots","/",name)
+  
+  for (v in 1:length(cov_name)) {
+    
+    # Box and Whisker Plot
+    boxwhisk_plot <- ggplot(subset(boxwhisk_data, name == cov_name[[v]]),
+                            aes(x = name, y = value, fill = as.factor(choice)))+
+      geom_boxplot()+
+      labs(fill = "Choice", x = "Covariate") +
+      theme_bw()
+    
+    # Plot Export
+    ggsave(filename = paste0(cov_name[[v]],".png"),
+           plot = boxwhisk_plot,
+           device = "png",
+           path = export_dir,
+           width = 6,
+           height = 6,
+           units = "in")
+    
+    # Iteration Monitor
+    print(paste0(v," out of ", length(cov_name)))
+  }
+}
+
 #      Model                                                                ####
 #        [Model Settings]                                                   ####
 # Model Settings
@@ -213,6 +286,81 @@ for (i in 1:length(data_south)) {
             paste0("2.Chapter1/3.Output/covariate_analysis/south/",str_remove(name,".png"),".csv"))
   
   print(i)
+}
+
+#        UsedAvail Plots                                                    ####
+
+for (i in 1:length(data_south)) {
+  
+  # Iteration Monitor 1 
+  print(paste0("Starting Dataset ",i, " out of ",length(data_south)))
+  
+  # Dataframe Extraction and Name
+  df <- data[[i]]
+  name <- list.files("1.DataManagement/ch1_data/south/model_data",
+                     full.names = F,pattern = ".csv") %>% 
+    .[[i]] %>% 
+    str_remove(".csv") %>% 
+    str_replace("final","_usedavail")
+  
+  # Making a List of Covariates
+  covs <- names(df) %>% 
+    .[(str_which(.,"geometry")+1):length(.)] %>% 
+    str_subset("shrub",negate = T) %>% 
+    str_subset("wetland",negate = T) %>% 
+    str_subset("barren",negate = T) %>% 
+    str_subset("water",negate = T)  %>%
+    str_subset("TRI",negate = T) %>% 
+    str_subset("developed",negate = T) %>%
+    str_subset("evergreen",negate = T) %>%
+    str_subset("mixed",negate = T) %>%
+    append("choice",after = 0) %>% 
+    c()
+  
+  # Covariate List 
+  covlist <- foreach(v = 1:length(covs),.combine = c) %do% 
+    {str_which(names(df),pattern = covs[v])} %>% 
+    unique()
+  
+  # Subsetting Covariates from dataframe
+  cov_df <- df[covlist]
+  
+  # Preparing the data in box and whisker plot format
+  boxwhisk_data <- pivot_longer(cov_df,
+                                cols = 2:ncol(cov_df))
+  
+  # Replacing NA values with Zero
+  boxwhisk_data$value <- ifelse(is.na(boxwhisk_data$value),
+                                0,
+                                boxwhisk_data$value)
+  
+  # Extracting covariates Names
+  cov_name <- covs[2:length(covs)]
+  
+  # Export folder
+  export_dir <- paste0("2.Chapter1/3.Output/covariate_analysis/south/used_avail_plots","/",name)
+  
+  for (v in 1:length(cov_name)) {
+    
+    # Box and Whisker Plot
+    boxwhisk_plot <- ggplot(subset(boxwhisk_data, name == cov_name[[v]]),
+                            aes(x = name, y = value, fill = as.factor(choice)))+
+      geom_boxplot()+
+      labs(fill = "Choice", x = "Covariate") +
+      theme_bw()
+    
+    # Plot Export
+    ggsave(filename = paste0(cov_name[[v]],".png"),
+           plot = boxwhisk_plot,
+           device = "png",
+           path = export_dir,
+           width = 6,
+           height = 6,
+           units = "in")
+    
+    # Iteration Monitor
+    print(paste0(v," out of ", length(cov_name)))
+  }
 }
 
 #      Model                                                                ####
@@ -333,6 +481,85 @@ for (i in 1:length(data_southeast)) {
             paste0("2.Chapter1/3.Output/covariate_analysis/southeast/",str_remove(name,".png"),".csv"))
   
   print(i)
+}
+
+#        UsedAvail Plots                                                    ####
+
+for (i in 1:length(data_southeast)) {
+  
+  # Iteration Monitor 1 
+  print(paste0("Starting Dataset ",i, " out of ",length(data_southeast)))
+  
+  # Dataframe Extraction and Name
+  df <- data[[i]]
+  name <- list.files("1.DataManagement/ch1_data/southeast/model_data",
+                     full.names = F,pattern = ".csv") %>% 
+    .[[i]] %>% 
+    str_remove(".csv") %>% 
+    str_replace("final","_usedavail")
+  
+  # Making a List of Covariates
+  covs <- names(df) %>% 
+    .[(str_which(.,"geometry")+1):length(.)] %>% 
+    str_subset("shrub",negate = T) %>% 
+    str_subset("wetland",negate = T) %>% 
+    str_subset("barren",negate = T) %>% 
+    str_subset("water",negate = T)  %>%
+    str_subset("TRI",negate = T) %>% 
+    str_subset("developed",negate = T) %>% 
+    str_subset("evergreen",negate = T) %>%
+    str_subset("mixed",negate = T) %>%
+    str_subset("grassland",negate = T) %>%
+    str_subset("southeast_patchdist_deciduous_small",negate = T) %>%
+    str_subset("southeast_dem",negate = T) %>%
+    str_subset("southeast_patchdist_deciduous_forest",negate = T) %>%
+    append("choice",after = 0) %>% 
+    c()
+  
+  # Covariate List 
+  covlist <- foreach(v = 1:length(covs),.combine = c) %do% 
+    {str_which(names(df),pattern = covs[v])} %>% 
+    unique()
+  
+  # Subsetting Covariates from dataframe
+  cov_df <- df[covlist]
+  
+  # Preparing the data in box and whisker plot format
+  boxwhisk_data <- pivot_longer(cov_df,
+                                cols = 2:ncol(cov_df))
+  
+  # Replacing NA values with Zero
+  boxwhisk_data$value <- ifelse(is.na(boxwhisk_data$value),
+                                0,
+                                boxwhisk_data$value)
+  
+  # Extracting covariates Names
+  cov_name <- covs[2:length(covs)]
+  
+  # Export folder
+  export_dir <- paste0("2.Chapter1/3.Output/covariate_analysis/southeast/used_avail_plots","/",name)
+  
+  for (v in 1:length(cov_name)) {
+    
+    # Box and Whisker Plot
+    boxwhisk_plot <- ggplot(subset(boxwhisk_data, name == cov_name[[v]]),
+                            aes(x = name, y = value, fill = as.factor(choice)))+
+      geom_boxplot()+
+      labs(fill = "Choice", x = "Covariate") +
+      theme_bw()
+    
+    # Plot Export
+    ggsave(filename = paste0(cov_name[[v]],".png"),
+           plot = boxwhisk_plot,
+           device = "png",
+           path = export_dir,
+           width = 6,
+           height = 6,
+           units = "in")
+    
+    # Iteration Monitor
+    print(paste0(v," out of ", length(cov_name)))
+  }
 }
 
 #      Model                                                                ####
