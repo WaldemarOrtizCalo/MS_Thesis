@@ -211,7 +211,9 @@ foreach(i = 1:length(data_north)) %do% {
   # Building the formula
   formula <- as.formula(paste("choice ~ ", 
                               paste(covs, collapse= "+"),
-                              "+ (1 | individual.local.identifier)"))
+                              "+ (1 + ",
+                              paste(covs, collapse= "+"),
+                              "| individual.local.identifier)"))
   
   # Model
   
@@ -405,7 +407,9 @@ foreach(i = 1:length(data_south)) %do% {
   # Building the formula
   formula <- as.formula(paste("choice ~ ", 
                               paste(covs, collapse= "+"),
-                              "+ (1 | individual.local.identifier)"))
+                              "+ (1 + ",
+                              paste(covs, collapse= "+"),
+                              "| individual.local.identifier)"))
   
   # Model
   
@@ -610,7 +614,9 @@ foreach(i = 1:length(data_southeast)) %do% {
   # Building the formula
   formula <- as.formula(paste("choice ~ ", 
                               paste(covs, collapse= "+"),
-                              "+ (1 | individual.local.identifier)"))
+                              "+ (1 + ",
+                              paste(covs, collapse= "+"),
+                              "| individual.local.identifier)"))
   
   # Model
   
