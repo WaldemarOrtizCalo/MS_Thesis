@@ -33,31 +33,31 @@ library(stringr)
 
 #      Data                                                                 ####
 
-north_models <- list.files("2.Chapter1/3.Output/models_bayesian/north",
+north_models <- list.files("2.Chapter1/3.Output/models_bayesian_randomintercept/north",
                            full.names = T,
                            pattern = ".RDS")
 
-north_names <- list.files("2.Chapter1/3.Output/models_bayesian/north",
+north_names <- list.files("2.Chapter1/3.Output/models_bayesian_randomintercept/north",
                           full.names = F,
                           pattern = ".RDS") %>% 
   str_remove("bayesian_") %>% 
   str_remove(".RDS")
 
-south_models  <- list.files("2.Chapter1/3.Output/models_bayesian/south",
+south_models  <- list.files("2.Chapter1/3.Output/models_bayesian_randomintercept/south",
                             full.names = T,
                             pattern = ".RDS")
 
-south_names <- list.files("2.Chapter1/3.Output/models_bayesian/south",
+south_names <- list.files("2.Chapter1/3.Output/models_bayesian_randomintercept/south",
                           full.names = F,
                           pattern = ".RDS") %>% 
   str_remove("bayesian_") %>% 
   str_remove(".RDS")
 
-southeast_models  <- list.files("2.Chapter1/3.Output/models_bayesian/southeast",
+southeast_models  <- list.files("2.Chapter1/3.Output/models_bayesian_randomintercept/southeast",
                                 full.names = T,
                                 pattern = ".RDS")
 
-southeast_names <- list.files("2.Chapter1/3.Output/models_bayesian/southeast",
+southeast_names <- list.files("2.Chapter1/3.Output/models_bayesian_randomintercept/southeast",
                               full.names = F,
                               pattern = ".RDS") %>% 
   str_remove("bayesian_") %>% 
@@ -78,7 +78,7 @@ for (i in 1:length(north_models)) {
   ggsave(filename = paste0(name,".png"),
          plot = viz,
          device = "png",
-         path = "2.Chapter1/3.Output/visualizations_bayesian/north/beta_estimates",
+         path = "2.Chapter1/3.Output/visualizations_bayesian_randomint/north/beta_estimates",
          width = 10,
          height = 8,
          units = "in")
@@ -100,7 +100,7 @@ for (i in 1:length(south_models)) {
   ggsave(filename = paste0(name,".png"),
          plot = viz,
          device = "png",
-         path = "2.Chapter1/3.Output/visualizations_bayesian/south/beta_estimates",
+         path = "2.Chapter1/3.Output/visualizations_bayesian_randomint/south/beta_estimates",
          width = 10,
          height = 8,
          units = "in")
@@ -124,7 +124,7 @@ for (i in 1:length(southeast_models)) {
   ggsave(filename = paste0(name,".png"),
          plot = viz,
          device = "png",
-         path = "2.Chapter1/3.Output/visualizations_bayesian/southeast/beta_estimates",
+         path = "2.Chapter1/3.Output/visualizations_bayesian_randomint/southeast/beta_estimates",
          width = 10,
          height = 8,
          units = "in")
@@ -133,3 +133,4 @@ for (i in 1:length(southeast_models)) {
 }
 
 ###############################################################################6
+###############################################################################
