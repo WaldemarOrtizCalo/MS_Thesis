@@ -231,7 +231,7 @@ foreach(i = 1:length(data_north)) %do% {
   )
   
   saveRDS(object = model,
-          file = paste0("2.Chapter1/3.Output/models_bayesian_randomintercept/north/bayesian_",name,".RDS"))
+          file = paste0("2.Chapter1/3.Output/models_bayesian_randomintercept_randomslope/north/bayesian_",name,".RDS"))
   
   return(print(paste0("North: ",i," out of ", length(data_north), " is completed")))
 }
@@ -427,7 +427,7 @@ foreach(i = 1:length(data_south)) %do% {
   )
   
   saveRDS(object = model,
-          file = paste0("2.Chapter1/3.Output/models_bayesian_randomintercept/south/bayesian_",name,".RDS"))
+          file = paste0("2.Chapter1/3.Output/models_bayesian_randomintercept_randomslope/south/bayesian_",name,".RDS"))
   
   return(print(paste0("South: ",i," out of ", length(data_south), " is completed")))
 }
@@ -634,7 +634,7 @@ foreach(i = 1:length(data_southeast)) %do% {
   )
   
   saveRDS(object = model,
-          file = paste0("2.Chapter1/3.Output/models_bayesian_randomintercept/southeast/bayesian_",name,".RDS"))
+          file = paste0("2.Chapter1/3.Output/models_bayesian_randomintercept_randomslope/southeast/bayesian_",name,".RDS"))
   
   return(print(paste0("Southeast: ",i," out of ", length(data_southeast), " is completed")))
 }
