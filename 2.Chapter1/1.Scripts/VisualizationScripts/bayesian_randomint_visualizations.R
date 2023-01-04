@@ -141,24 +141,15 @@ model <- readRDS(north_models[[i]])
 data <- model$data
 name <- north_names[[i]]
 
-post <- as_draws(model)
-conditional_effects(model, 'north_patchdist_forest')
+test_data <- sample_n(data, size = round((nrow(data)*.10)))
 
-leave_one_out <- loo(model)
-marginal_effects(model)
+cov<- names(data)[-1][3]
 
-zinb <- read.csv("http://stats.idre.ucla.edu/stat/data/fish.csv")
-zinb$camper <- factor(zinb$camper, labels = c("no", "yes"))
-
-fit_zinb1 <- brm(count ~ persons + child + camper, data = zinb,
-                 family = zero_inflated_poisson("log"))
-
-conditional_effects(fit_zinb1)
-
-
-ggplot(data = data,aes(x = north_patchdist_forest,
-                       y = choice))+
-  geom_smooth()
-
-predict <- predict(model)
-
+# Effect Plot
+p <- effect_plot(model, 
+                 pred = !!cov, 
+                 interval = TRUE, 
+                 plot.points = F,
+                 x.label = cov,
+                 y.label = "Probability of Use")
+p
