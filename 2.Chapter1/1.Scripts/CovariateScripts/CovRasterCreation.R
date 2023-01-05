@@ -43,7 +43,7 @@ deer_all <- lapply(list.files(path = "1.DataManagement/CleanData/Chapter1_UsedAv
 deer_all  <- do.call(rbind,deer_all)
 
 
-#        [Raster Data]                                                      ####
+#        [Spatial Data]                                                     ####
 
 #      [NLCD Data]                                                          
 Missouri_NLCD <- raster("1.DataManagement/CleanData/NLCD_Missouri.tif") %>% ratify()
@@ -70,7 +70,22 @@ South_StudyArea <- Missouri_shp[which(lengths(South_StudyArea)!=0),]
 Southeast_StudyArea <- st_intersects(Missouri_shp,deer_sf_southeast)
 Southeast_StudyArea <- Missouri_shp[which(lengths(Southeast_StudyArea)!=0),]
 
-#        [Study Area Exports]                                               ####
+#        [Study Area Shapefile Exports]                                     ####
+
+st_write(obj = North_StudyArea,
+         dsn = "1.DataManagement/shapefiles/north_studyarea.shp",
+         append = F)
+
+st_write(obj = South_StudyArea,
+         dsn = "1.DataManagement/shapefiles/south_studyarea.shp",
+         append = F)
+
+st_write(obj = Southeast_StudyArea,
+         dsn = "1.DataManagement/shapefiles/southeast_studyarea.shp",
+         append = F)
+
+
+#        [NLCD Study Area Exports]                                          ####
 
 # North
 NLCD_North <- crop(Missouri_NLCD,North_StudyArea) %>% mask(North_StudyArea) %>% 
