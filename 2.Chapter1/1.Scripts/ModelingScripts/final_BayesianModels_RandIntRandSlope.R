@@ -181,7 +181,7 @@ iter <- 4000
 warmup <- iter*.25
 thin <- 1
 cores <- chains
-refresh <- iter * 0.05
+refresh <- 1
 
 #        [Model]                                                            ####
 
@@ -375,7 +375,7 @@ iter <- 4000
 warmup <- iter*.25
 thin <- 1
 cores <- chains
-refresh <- iter * 0.05
+refresh <- 1
 
 #        [Model]                                                            ####
 
@@ -578,7 +578,7 @@ iter <- 4000
 warmup <- iter*.25
 thin <- 1
 cores <- chains
-refresh <- iter * 0.05
+refresh <- 1
 
 #        [Model]                                                            ####
 
