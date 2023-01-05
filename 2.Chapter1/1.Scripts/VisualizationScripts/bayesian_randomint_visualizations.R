@@ -71,7 +71,17 @@ southeast_names <- list.files("2.Chapter1/3.Output/models_bayesian_randominterce
 
 #        Missouri Shapefiles                                                ####
 
+# State
 Missouri_shp <- st_read("1.DataManagement\\CleanData\\shp_Missouri.shp") 
+
+# North
+studyarea_north <- st_read("1.DataManagement\\shapefiles\\north_studyarea.shp")
+
+# South
+studyarea_south <- st_read("1.DataManagement\\shapefiles\\south_studyarea.shp")
+
+# Southeast
+studyarea_southeast <- st_read("1.DataManagement\\shapefiles\\southeast_studyarea.shp")
 
 ###############################################################################
 #   North                                                                   ####
@@ -329,12 +339,7 @@ for (i in 1:length(southeast_models)) {
 
 ###############################################################################
 #      Raster Map                                                           ####
-#        Map Metadata and Cov list                                          ####
-
-i <- 1
-
-#        [SF objects]                                                       ####
-deer_sf_north <- subset(deer_all, site == "North") %>% st_as_sf(coords = c("x", "y"), crs = 5070)
+#        Map Metadata and Cov list                                          #### 
 
 #        [Study Area Subsets shapefiles]                                    ####
 North_StudyArea <- st_intersects(Missouri_shp,deer_sf_north)
