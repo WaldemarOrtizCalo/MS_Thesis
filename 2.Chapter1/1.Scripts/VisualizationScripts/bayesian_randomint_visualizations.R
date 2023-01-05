@@ -339,12 +339,8 @@ for (i in 1:length(southeast_models)) {
 
 ###############################################################################
 #      Raster Map                                                           ####
-#        Map Metadata and Cov list                                          #### 
 
-#        [Study Area Subsets shapefiles]                                    ####
-North_StudyArea <- st_intersects(Missouri_shp,deer_sf_north)
-North_StudyArea <- Missouri_shp[which(lengths(North_StudyArea)!=0),]
-
+i <- 1
 # Subsetting Model
 model <- readRDS(north_models[[i]])
 data <- model$data
@@ -352,16 +348,19 @@ name <- north_names[[i]]
 cov_list <- names(data)[-1] %>% 
   str_subset("individual.local.identifier",negate = T)
 
-# Making a list of covariate rasters
+# Preparing Rasters 
 north_rasters <- list.files("1.DataManagement/CovRasters_Landscape/north",
                                  full.names = T)  %>% 
   str_subset(paste0(cov_list, collapse = '|')) %>% 
-  rast()
-  
-names(north_rasters)
+  rast() %>% 
+  crop(studyarea_north) %>% 
+  mask(studyarea_north) %>% 
+  scale()
 
+# Extracting Model Covariates
 model_coefs <- fixef(model)[,1]
 
+# Making Predictive Raster
 predictive_raster_north <- exp(model_coefs[[1]] + 
                                  model_coefs[[2]]*north_rasters[[1]]+
                                  model_coefs[[3]]*north_rasters[[2]]+
@@ -377,7 +376,7 @@ predictive_raster_north <- exp(model_coefs[[1]] +
                                  model_coefs[[13]]*north_rasters[[12]]+
                                  model_coefs[[14]]*north_rasters[[13]]+
                                  model_coefs[[15]]*north_rasters[[14]]+
-                                 model_coefs[[16]]*north_rasters[[15]]) / 
+                                 model_coefs[[16]]*north_rasters[[15]]) /
   (1 + exp(model_coefs[[1]] + 
              model_coefs[[2]]*north_rasters[[1]]+
              model_coefs[[3]]*north_rasters[[2]]+
@@ -394,12 +393,4 @@ predictive_raster_north <- exp(model_coefs[[1]] +
              model_coefs[[14]]*north_rasters[[13]]+
              model_coefs[[15]]*north_rasters[[14]]+
              model_coefs[[16]]*north_rasters[[15]]))
-
-
-  # lapply(list.files("1.Data/CleanData",
-  #                                       pattern = "North_proportion",
-  #                                       full.names = T), raster) %>% 
-  # stack() %>% 
-  # dropLayer(i = 7)
-
 
