@@ -167,6 +167,79 @@ for (i in 1:length(north_models)) {
   }
 }
 
+#      Predictive Raster                                                    ####
+
+# Subsetting Model and Model Metadata
+model <- readRDS(north_models[[1]])
+data <- model$data
+cov_list <- names(data)[-1] %>% 
+  str_subset("individual.local.identifier",negate = T)
+
+# Preparing Rasters 
+raster_list <- list.files("1.DataManagement/CovRasters_Landscape/north",
+                          full.names = T)  %>% 
+  str_subset(paste0(cov_list, collapse = '|')) %>% 
+  rast() %>% 
+  crop(studyarea_north) %>% 
+  mask(studyarea_north) %>% 
+  scale()
+
+for (i in 1:length(north_models)) {
+  
+  # Subsetting Model and Model Metadata
+  model <- readRDS(north_models[[i]])
+  name <- north_names[[i]]
+  cov_list <- names(data)[-1] %>% 
+    str_subset("individual.local.identifier",negate = T)
+  
+  # Extracting Model Covariates
+  model_coefs <- fixef(model)[,1]
+  
+  # Making Predictive Raster
+  predictive_raster <- exp(model_coefs[[1]] + 
+                             model_coefs[[2]]*raster_list[[1]]+
+                             model_coefs[[3]]*raster_list[[2]]+
+                             model_coefs[[4]]*raster_list[[3]]+
+                             model_coefs[[5]]*raster_list[[4]]+
+                             model_coefs[[6]]*raster_list[[5]]+
+                             model_coefs[[7]]*raster_list[[6]]+
+                             model_coefs[[8]]*raster_list[[7]]+
+                             model_coefs[[9]]*raster_list[[8]]+
+                             model_coefs[[10]]*raster_list[[9]]+
+                             model_coefs[[11]]*raster_list[[10]]+
+                             model_coefs[[12]]*raster_list[[11]]+
+                             model_coefs[[13]]*raster_list[[12]]+
+                             model_coefs[[14]]*raster_list[[13]]+
+                             model_coefs[[15]]*raster_list[[14]]+
+                             model_coefs[[16]]*raster_list[[15]]) /
+    (1 + exp(model_coefs[[1]] + 
+               model_coefs[[2]]*raster_list[[1]]+
+               model_coefs[[3]]*raster_list[[2]]+
+               model_coefs[[4]]*raster_list[[3]]+
+               model_coefs[[5]]*raster_list[[4]]+
+               model_coefs[[6]]*raster_list[[5]]+
+               model_coefs[[7]]*raster_list[[6]]+
+               model_coefs[[8]]*raster_list[[7]]+
+               model_coefs[[9]]*raster_list[[8]]+
+               model_coefs[[10]]*raster_list[[9]]+
+               model_coefs[[11]]*raster_list[[10]]+
+               model_coefs[[12]]*raster_list[[11]]+
+               model_coefs[[13]]*raster_list[[12]]+
+               model_coefs[[14]]*raster_list[[13]]+
+               model_coefs[[15]]*raster_list[[14]]+
+               model_coefs[[16]]*raster_list[[15]]))
+  
+  # Exporting Raster
+  writeRaster(predictive_raster,
+              filename = paste0("2.Chapter1/3.Output/visualizations_bayesian_randomint/north/predictive_maps/",
+                                name,
+                                ".tif"),
+              overwrite = T)
+  
+  # Iteration Tracker
+  print(paste0(i," out of ", length(north_models), " completed"))
+}
+
 ###############################################################################
 #   South                                                                   ####
 #      Beta Estimates                                                       ####
@@ -251,6 +324,79 @@ for (i in 1:length(south_models)) {
   }
 }
 
+
+#      Predictive Raster                                                    ####
+
+# Subsetting Model and Model Metadata
+model <- readRDS(south_models[[1]])
+data <- model$data
+cov_list <- names(data)[-1] %>% 
+  str_subset("individual.local.identifier",negate = T)
+
+# Preparing Rasters 
+raster_list <- list.files("1.DataManagement/CovRasters_Landscape/south",
+                          full.names = T)  %>% 
+  str_subset(paste0(cov_list, collapse = '|')) %>% 
+  rast() %>% 
+  crop(studyarea_south) %>% 
+  mask(studyarea_south) %>% 
+  scale()
+
+for (i in 1:length(south_models)) {
+  
+  # Subsetting Model and Model Metadata
+  model <- readRDS(south_models[[i]])
+  name <- south_names[[i]]
+  cov_list <- names(data)[-1] %>% 
+    str_subset("individual.local.identifier",negate = T)
+  
+  # Extracting Model Covariates
+  model_coefs <- fixef(model)[,1]
+  
+  # Making Predictive Raster
+  predictive_raster <- exp(model_coefs[[1]] + 
+                             model_coefs[[2]]*raster_list[[1]]+
+                             model_coefs[[3]]*raster_list[[2]]+
+                             model_coefs[[4]]*raster_list[[3]]+
+                             model_coefs[[5]]*raster_list[[4]]+
+                             model_coefs[[6]]*raster_list[[5]]+
+                             model_coefs[[7]]*raster_list[[6]]+
+                             model_coefs[[8]]*raster_list[[7]]+
+                             model_coefs[[9]]*raster_list[[8]]+
+                             model_coefs[[10]]*raster_list[[9]]+
+                             model_coefs[[11]]*raster_list[[10]]+
+                             model_coefs[[12]]*raster_list[[11]]+
+                             model_coefs[[13]]*raster_list[[12]]+
+                             model_coefs[[14]]*raster_list[[13]]+
+                             model_coefs[[15]]*raster_list[[14]]+
+                             model_coefs[[16]]*raster_list[[15]]) /
+    (1 + exp(model_coefs[[1]] + 
+               model_coefs[[2]]*raster_list[[1]]+
+               model_coefs[[3]]*raster_list[[2]]+
+               model_coefs[[4]]*raster_list[[3]]+
+               model_coefs[[5]]*raster_list[[4]]+
+               model_coefs[[6]]*raster_list[[5]]+
+               model_coefs[[7]]*raster_list[[6]]+
+               model_coefs[[8]]*raster_list[[7]]+
+               model_coefs[[9]]*raster_list[[8]]+
+               model_coefs[[10]]*raster_list[[9]]+
+               model_coefs[[11]]*raster_list[[10]]+
+               model_coefs[[12]]*raster_list[[11]]+
+               model_coefs[[13]]*raster_list[[12]]+
+               model_coefs[[14]]*raster_list[[13]]+
+               model_coefs[[15]]*raster_list[[14]]+
+               model_coefs[[16]]*raster_list[[15]]))
+  
+  # Exporting Raster
+  writeRaster(predictive_raster,
+              filename = paste0("2.Chapter1/3.Output/visualizations_bayesian_randomint/south/predictive_maps/",
+                                name,
+                                ".tif"),
+              overwrite = T)
+  
+  # Iteration Tracker
+  print(paste0(i," out of ", length(south_models), " completed"))
+}
 
 ###############################################################################
 #   Southeast                                                               ####
@@ -337,60 +483,63 @@ for (i in 1:length(southeast_models)) {
   }
 }
 
-###############################################################################
-#      Raster Map                                                           ####
+#      Predictive Raster                                                    ####
 
-i <- 1
-# Subsetting Model
-model <- readRDS(north_models[[i]])
+# Subsetting Model and Model Metadata
+model <- readRDS(southeast_models[[1]])
 data <- model$data
-name <- north_names[[i]]
 cov_list <- names(data)[-1] %>% 
   str_subset("individual.local.identifier",negate = T)
 
 # Preparing Rasters 
-north_rasters <- list.files("1.DataManagement/CovRasters_Landscape/north",
-                                 full.names = T)  %>% 
+raster_list <- list.files("1.DataManagement/CovRasters_Landscape/southeast",
+                          full.names = T)  %>% 
   str_subset(paste0(cov_list, collapse = '|')) %>% 
   rast() %>% 
-  crop(studyarea_north) %>% 
-  mask(studyarea_north) %>% 
+  crop(studyarea_southeast) %>% 
+  mask(studyarea_southeast) %>% 
   scale()
 
-# Extracting Model Covariates
-model_coefs <- fixef(model)[,1]
+for (i in 1:length(southeast_models)) {
+  
+  # Subsetting Model and Model Metadata
+  model <- readRDS(southeast_models[[i]])
+  name <- southeast_names[[i]]
+  cov_list <- names(data)[-1] %>% 
+    str_subset("individual.local.identifier",negate = T)
+  
+  # Extracting Model Covariates
+  model_coefs <- fixef(model)[,1]
+  
+  # Making Predictive Raster
+  predictive_raster <- exp(model_coefs[[1]] + 
+                             model_coefs[[2]]*raster_list[[1]]+
+                             model_coefs[[3]]*raster_list[[2]]+
+                             model_coefs[[4]]*raster_list[[3]]+
+                             model_coefs[[5]]*raster_list[[4]]+
+                             model_coefs[[6]]*raster_list[[5]]+
+                             model_coefs[[7]]*raster_list[[6]]+
+                             model_coefs[[8]]*raster_list[[7]]+
+                             model_coefs[[9]]*raster_list[[8]]) /
+    (1 + exp(model_coefs[[1]] + 
+               model_coefs[[2]]*raster_list[[1]]+
+               model_coefs[[3]]*raster_list[[2]]+
+               model_coefs[[4]]*raster_list[[3]]+
+               model_coefs[[5]]*raster_list[[4]]+
+               model_coefs[[6]]*raster_list[[5]]+
+               model_coefs[[7]]*raster_list[[6]]+
+               model_coefs[[8]]*raster_list[[7]]+
+               model_coefs[[9]]*raster_list[[8]]))
+  
+  # Exporting Raster
+  writeRaster(predictive_raster,
+              filename = paste0("2.Chapter1/3.Output/visualizations_bayesian_randomint/southeast/predictive_maps/",
+                                name,
+                                ".tif"),
+              overwrite = T)
+  
+  # Iteration Tracker
+  print(paste0(i," out of ", length(southeast_models), " completed"))
+}
 
-# Making Predictive Raster
-predictive_raster_north <- exp(model_coefs[[1]] + 
-                                 model_coefs[[2]]*north_rasters[[1]]+
-                                 model_coefs[[3]]*north_rasters[[2]]+
-                                 model_coefs[[4]]*north_rasters[[3]]+
-                                 model_coefs[[5]]*north_rasters[[4]]+
-                                 model_coefs[[6]]*north_rasters[[5]]+
-                                 model_coefs[[7]]*north_rasters[[6]]+
-                                 model_coefs[[8]]*north_rasters[[7]]+
-                                 model_coefs[[9]]*north_rasters[[8]]+
-                                 model_coefs[[10]]*north_rasters[[9]]+
-                                 model_coefs[[11]]*north_rasters[[10]]+
-                                 model_coefs[[12]]*north_rasters[[11]]+
-                                 model_coefs[[13]]*north_rasters[[12]]+
-                                 model_coefs[[14]]*north_rasters[[13]]+
-                                 model_coefs[[15]]*north_rasters[[14]]+
-                                 model_coefs[[16]]*north_rasters[[15]]) /
-  (1 + exp(model_coefs[[1]] + 
-             model_coefs[[2]]*north_rasters[[1]]+
-             model_coefs[[3]]*north_rasters[[2]]+
-             model_coefs[[4]]*north_rasters[[3]]+
-             model_coefs[[5]]*north_rasters[[4]]+
-             model_coefs[[6]]*north_rasters[[5]]+
-             model_coefs[[7]]*north_rasters[[6]]+
-             model_coefs[[8]]*north_rasters[[7]]+
-             model_coefs[[9]]*north_rasters[[8]]+
-             model_coefs[[10]]*north_rasters[[9]]+
-             model_coefs[[11]]*north_rasters[[10]]+
-             model_coefs[[12]]*north_rasters[[11]]+
-             model_coefs[[13]]*north_rasters[[12]]+
-             model_coefs[[14]]*north_rasters[[13]]+
-             model_coefs[[15]]*north_rasters[[14]]+
-             model_coefs[[16]]*north_rasters[[15]]))
-
+###############################################################################
