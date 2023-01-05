@@ -28,11 +28,15 @@ library(gganimate)
 library(posterior)
 library(jtools)
 library(stringr)
+library(sf)
+library(terra)
 
 #      Functions                                                            ####
 
 #      Data                                                                 ####
+#        Models                                                             ####
 
+# North
 north_models <- list.files("2.Chapter1/3.Output/models_bayesian_randomintercept/north",
                            full.names = T,
                            pattern = ".RDS")
@@ -43,6 +47,7 @@ north_names <- list.files("2.Chapter1/3.Output/models_bayesian_randomintercept/n
   str_remove("bayesian_") %>% 
   str_remove(".RDS")
 
+# South
 south_models  <- list.files("2.Chapter1/3.Output/models_bayesian_randomintercept/south",
                             full.names = T,
                             pattern = ".RDS")
@@ -53,6 +58,7 @@ south_names <- list.files("2.Chapter1/3.Output/models_bayesian_randomintercept/s
   str_remove("bayesian_") %>% 
   str_remove(".RDS")
 
+# Southeast
 southeast_models  <- list.files("2.Chapter1/3.Output/models_bayesian_randomintercept/southeast",
                                 full.names = T,
                                 pattern = ".RDS")
@@ -62,6 +68,10 @@ southeast_names <- list.files("2.Chapter1/3.Output/models_bayesian_randominterce
                               pattern = ".RDS") %>% 
   str_remove("bayesian_") %>% 
   str_remove(".RDS")
+
+#        Missouri Shapefiles                                                ####
+
+Missouri_shp <- st_read("1.DataManagement\\CleanData\\shp_Missouri.shp") 
 
 ###############################################################################
 #   North                                                                   ####
@@ -86,6 +96,67 @@ for (i in 1:length(north_models)) {
   print(i)
 }
 
+#      Effect Plots Scaled                                                  ####
+
+# Plot Export directory
+export_dir <- "2.Chapter1//3.Output//visualizations_bayesian_randomint//north//effect_plots_scaled"
+
+for (i in 1:length(north_models)) {
+  
+  # Subsetting Model
+  model <- readRDS(north_models[[i]])
+  data <- model$data
+  name <- north_names[[i]]
+  cov_list <- names(data)[-1] %>% 
+    str_subset("individual.local.identifier",negate = T)
+  
+  # Covariate Loop
+  for (v in 1:length(cov_list)) {
+    
+    # Seperating Covariate for Viz
+    cov <- cov_list %>% 
+      .[v]
+    
+    cov_name <- cov_list %>% 
+      .[v] %>% str_remove("north_")
+    
+    # Effect Plot Data
+    plot_data <- effect_plot(model, 
+                             pred = !!cov, 
+                             interval = TRUE, 
+                             plot.points = F,
+                             x.label = cov,
+                             y.label = "Probability of Use") %>% 
+      .$data
+    
+    # Effect Plot
+    plot <- ggplot(plot_data, aes_string(x= cov, y = "choice"))+
+      geom_smooth(color = "black")+
+      geom_ribbon(aes(ymin=ymin, ymax=ymax), alpha=0.2)+
+      theme_nice()+
+      ylab("Probability of Use")+
+      ylim(0, 1)+
+      ggtitle(name)+
+      theme(plot.title = element_text(hjust = 0.5))
+    
+    # Plot Export
+    ggsave(filename = paste0(export_dir,
+                             "/",
+                             name,
+                             "_",
+                             cov,
+                             ".png"),
+           plot = plot,
+           device = "png",
+           width = 6,
+           height = 4,
+           units = "in")
+    
+    # Iteration Tracker
+    print(paste0("Model ", i, ": Covariate ", v, " Completed"))
+  }
+}
+
 ###############################################################################
 #   South                                                                   ####
 #      Beta Estimates                                                       ####
@@ -106,6 +177,68 @@ for (i in 1:length(south_models)) {
          units = "in")
   
   print(i)
+}
+
+
+#      Effect Plots Scaled                                                  ####
+
+# Plot Export directory
+export_dir <- "2.Chapter1//3.Output//visualizations_bayesian_randomint//south//effect_plots_scaled"
+
+for (i in 1:length(south_models)) {
+  
+  # Subsetting Model
+  model <- readRDS(south_models[[i]])
+  data <- model$data
+  name <- south_names[[i]]
+  cov_list <- names(data)[-1] %>% 
+    str_subset("individual.local.identifier",negate = T)
+  
+  # Covariate Loop
+  for (v in 1:length(cov_list)) {
+    
+    # Seperating Covariate for Viz
+    cov <- cov_list %>% 
+      .[v]
+    
+    cov_name <- cov_list %>% 
+      .[v] %>% str_remove("south_")
+    
+    # Effect Plot Data
+    plot_data <- effect_plot(model, 
+                             pred = !!cov, 
+                             interval = TRUE, 
+                             plot.points = F,
+                             x.label = cov,
+                             y.label = "Probability of Use") %>% 
+      .$data
+    
+    # Effect Plot
+    plot <- ggplot(plot_data, aes_string(x= cov, y = "choice"))+
+      geom_smooth(color = "black")+
+      geom_ribbon(aes(ymin=ymin, ymax=ymax), alpha=0.2)+
+      theme_nice()+
+      ylab("Probability of Use")+
+      ylim(0, 1)+
+      ggtitle(name)+
+      theme(plot.title = element_text(hjust = 0.5))
+    
+    # Plot Export
+    ggsave(filename = paste0(export_dir,
+                             "/",
+                             name,
+                             "_",
+                             cov,
+                             ".png"),
+           plot = plot,
+           device = "png",
+           width = 6,
+           height = 4,
+           units = "in")
+    
+    # Iteration Tracker
+    print(paste0("Model ", i, ": Covariate ", v, " Completed"))
+  }
 }
 
 
@@ -133,23 +266,135 @@ for (i in 1:length(southeast_models)) {
 }
 
 ###############################################################################6
-###############################################################################
+#      Effect Plots Scaled                                                  ####
 
+# Plot Export directory
+export_dir <- "2.Chapter1//3.Output//visualizations_bayesian_randomint//southeast//effect_plots_scaled"
+
+for (i in 1:length(southeast_models)) {
+  
+  # Subsetting Model
+  model <- readRDS(southeast_models[[i]])
+  data <- model$data
+  name <- southeast_names[[i]]
+  cov_list <- names(data)[-1] %>% 
+    str_subset("individual.local.identifier",negate = T)
+  
+  # Covariate Loop
+  for (v in 1:length(cov_list)) {
+    
+    # Seperating Covariate for Viz
+    cov <- cov_list %>% 
+      .[v]
+    
+    cov_name <- cov_list %>% 
+      .[v] %>% str_remove("southeast_")
+    
+    # Effect Plot Data
+    plot_data <- effect_plot(model, 
+                             pred = !!cov, 
+                             interval = TRUE, 
+                             plot.points = F,
+                             x.label = cov,
+                             y.label = "Probability of Use") %>% 
+      .$data
+    
+    # Effect Plot
+    plot <- ggplot(plot_data, aes_string(x= cov, y = "choice"))+
+      geom_smooth(color = "black")+
+      geom_ribbon(aes(ymin=ymin, ymax=ymax), alpha=0.2)+
+      theme_nice()+
+      ylab("Probability of Use")+
+      ylim(0, 1)+
+      ggtitle(name)+
+      theme(plot.title = element_text(hjust = 0.5))
+    
+    # Plot Export
+    ggsave(filename = paste0(export_dir,
+                             "/",
+                             name,
+                             "_",
+                             cov,
+                             ".png"),
+           plot = plot,
+           device = "png",
+           width = 6,
+           height = 4,
+           units = "in")
+    
+    # Iteration Tracker
+    print(paste0("Model ", i, ": Covariate ", v, " Completed"))
+  }
+}
+
+###############################################################################
+#      Raster Map                                                           ####
+#        Map Metadata and Cov list                                          ####
 
 i <- 1
+
+#        [SF objects]                                                       ####
+deer_sf_north <- subset(deer_all, site == "North") %>% st_as_sf(coords = c("x", "y"), crs = 5070)
+
+#        [Study Area Subsets shapefiles]                                    ####
+North_StudyArea <- st_intersects(Missouri_shp,deer_sf_north)
+North_StudyArea <- Missouri_shp[which(lengths(North_StudyArea)!=0),]
+
+# Subsetting Model
 model <- readRDS(north_models[[i]])
 data <- model$data
 name <- north_names[[i]]
+cov_list <- names(data)[-1] %>% 
+  str_subset("individual.local.identifier",negate = T)
 
-test_data <- sample_n(data, size = round((nrow(data)*.10)))
+# Making a list of covariate rasters
+north_rasters <- list.files("1.DataManagement/CovRasters_Landscape/north",
+                                 full.names = T)  %>% 
+  str_subset(paste0(cov_list, collapse = '|')) %>% 
+  rast()
+  
+names(north_rasters)
 
-cov<- names(data)[-1][3]
+model_coefs <- fixef(model)[,1]
 
-# Effect Plot
-p <- effect_plot(model, 
-                 pred = !!cov, 
-                 interval = TRUE, 
-                 plot.points = F,
-                 x.label = cov,
-                 y.label = "Probability of Use")
-p
+predictive_raster_north <- exp(model_coefs[[1]] + 
+                                 model_coefs[[2]]*north_rasters[[1]]+
+                                 model_coefs[[3]]*north_rasters[[2]]+
+                                 model_coefs[[4]]*north_rasters[[3]]+
+                                 model_coefs[[5]]*north_rasters[[4]]+
+                                 model_coefs[[6]]*north_rasters[[5]]+
+                                 model_coefs[[7]]*north_rasters[[6]]+
+                                 model_coefs[[8]]*north_rasters[[7]]+
+                                 model_coefs[[9]]*north_rasters[[8]]+
+                                 model_coefs[[10]]*north_rasters[[9]]+
+                                 model_coefs[[11]]*north_rasters[[10]]+
+                                 model_coefs[[12]]*north_rasters[[11]]+
+                                 model_coefs[[13]]*north_rasters[[12]]+
+                                 model_coefs[[14]]*north_rasters[[13]]+
+                                 model_coefs[[15]]*north_rasters[[14]]+
+                                 model_coefs[[16]]*north_rasters[[15]]) / 
+  (1 + exp(model_coefs[[1]] + 
+             model_coefs[[2]]*north_rasters[[1]]+
+             model_coefs[[3]]*north_rasters[[2]]+
+             model_coefs[[4]]*north_rasters[[3]]+
+             model_coefs[[5]]*north_rasters[[4]]+
+             model_coefs[[6]]*north_rasters[[5]]+
+             model_coefs[[7]]*north_rasters[[6]]+
+             model_coefs[[8]]*north_rasters[[7]]+
+             model_coefs[[9]]*north_rasters[[8]]+
+             model_coefs[[10]]*north_rasters[[9]]+
+             model_coefs[[11]]*north_rasters[[10]]+
+             model_coefs[[12]]*north_rasters[[11]]+
+             model_coefs[[13]]*north_rasters[[12]]+
+             model_coefs[[14]]*north_rasters[[13]]+
+             model_coefs[[15]]*north_rasters[[14]]+
+             model_coefs[[16]]*north_rasters[[15]]))
+
+
+  # lapply(list.files("1.Data/CleanData",
+  #                                       pattern = "North_proportion",
+  #                                       full.names = T), raster) %>% 
+  # stack() %>% 
+  # dropLayer(i = 7)
+
+
