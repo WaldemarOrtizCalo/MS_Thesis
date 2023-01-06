@@ -30,6 +30,8 @@ library(jtools)
 library(stringr)
 library(sf)
 library(terra)
+library(ggcorrplot)
+library(foreach)
 
 #      Functions                                                            ####
 
@@ -105,6 +107,65 @@ for (i in 1:length(north_models)) {
   
   print(i)
 }
+
+#      Grouped Beta Estimates                                               ####
+
+# Creating Beta Estimate Table
+model_betas <- foreach(i = 1:length(north_models), .combine = "bind_rows") %do% {
+  
+  # Subsetting Model and Model Metadata
+  model <- readRDS(north_models[[i]])
+  name <- north_names[[i]]
+  sex_val <- str_extract(name, "_([^_]+)_") %>% str_remove_all("_")
+  cov_list <- names(data)[-1] %>% 
+    str_subset("individual.local.identifier",negate = T)
+  
+  # Extracting Model Covariates
+  model_coefs <- fixef(model) %>% as.data.frame() %>% 
+    rownames_to_column("Covariate") %>% 
+    mutate(model = name,.before = 1) %>% 
+    mutate(sex = sex_val,.after = model) %>% 
+    mutate(season = str_remove(.$model,pattern = paste0("northmodel_",sex_val,"_")),.after = sex) %>% 
+    mutate(season = factor(season,levels = c("fall","winter","spring","summer"))) %>% 
+    rename(min = Q2.5) %>% 
+    rename(max = Q97.5) %>% 
+    filter(Covariate != "Intercept")
+  
+  model_coefs$Covariate <- str_remove(model_coefs$Covariate,pattern = "north_")
+  
+  return(model_coefs)
+}
+
+# Plotting
+male_plot <- ggplot(data = subset(model_betas,sex == "M"),
+                    aes(x = Covariate, y = Estimate, ymin = min, ymax = max, color = season))+ 
+  geom_pointrange(position=position_dodge(width = 0.9),size = 0.75)+
+  coord_flip()+
+  theme_nice()+
+  ggtitle("North Male")+
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/north/beta_estimates_grouped/NorthMale.png",
+       plot = male_plot,
+       device = "png",
+       width = 10,
+       height = 12,
+       units = "in")
+
+female_plot <- ggplot(data = subset(model_betas,sex == "F"),
+                      aes(x = Covariate, y = Estimate, ymin = min, ymax = max, color = season))+ 
+  geom_pointrange(position=position_dodge(width = 0.9),size = 0.75)+
+  coord_flip()+
+  theme_nice()+
+  ggtitle("North Female")+
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/north/beta_estimates_grouped/NorthFemale.png",
+       plot = female_plot,
+       device = "png",
+       width = 10,
+       height = 12,
+       units = "in")
 
 #      Effect Plots Scaled                                                  ####
 
@@ -229,6 +290,8 @@ for (i in 1:length(north_models)) {
                model_coefs[[15]]*raster_list[[14]]+
                model_coefs[[16]]*raster_list[[15]]))
   
+  names(predictive_raster) <- paste0(name,"_predictive_raster")
+  
   # Exporting Raster
   writeRaster(predictive_raster,
               filename = paste0("2.Chapter1/3.Output/visualizations_bayesian_randomint/north/predictive_maps/",
@@ -240,6 +303,42 @@ for (i in 1:length(north_models)) {
   print(paste0(i," out of ", length(north_models), " completed"))
 }
 
+#      Predictive Raster Correlation Plot                                   ####
+
+# List of Sexes
+sexes <- c("M","F")
+
+for (i in 1:length(sexes)) {
+  
+  # Loading Rasters
+  pred_rasters <- list.files("2.Chapter1/3.Output/visualizations_bayesian_randomint/north/predictive_maps",
+                             full.names = T) %>% str_subset(sexes[i]) %>% rast()
+  
+  # Raster Names
+  rast_names <- list.files("2.Chapter1/3.Output/visualizations_bayesian_randomint/north/predictive_maps",
+                           full.names = F) %>% str_subset(sexes[i]) %>% str_remove(".tif")
+  
+  names(pred_rasters) <- rast_names #This is temporary. Fixed it in prior steps
+  
+  # Pearson Correlation
+  pearson_cor <- layerCor(x = pred_rasters, 
+                          fun = "pearson",
+                          na.rm = T)
+  
+  # Correlation Plot
+  corplot <- ggcorrplot(pearson_cor$pearson, 
+                        hc.order = TRUE,
+                        lab = TRUE)
+  
+  # Exporting Plot
+  ggsave(filename = paste0("2.Chapter1/3.Output/visualizations_bayesian_randomint/north/predictive_maps_corplots/north_",sexes[i],".png"),
+         plot = corplot,
+         device = "png",
+         width = 8,
+         height = 6,
+         units = "in")
+  
+}
 ###############################################################################
 #   South                                                                   ####
 #      Beta Estimates                                                       ####
@@ -262,6 +361,65 @@ for (i in 1:length(south_models)) {
   print(i)
 }
 
+
+#      Grouped Beta Estimates                                               ####
+
+# Creating Beta Estimate Table
+model_betas <- foreach(i = 1:length(south_models), .combine = "bind_rows") %do% {
+  
+  # Subsetting Model and Model Metadata
+  model <- readRDS(south_models[[i]])
+  name <- south_names[[i]]
+  sex_val <- str_extract(name, "_([^_]+)_") %>% str_remove_all("_")
+  cov_list <- names(data)[-1] %>% 
+    str_subset("individual.local.identifier",negate = T)
+  
+  # Extracting Model Covariates
+  model_coefs <- fixef(model) %>% as.data.frame() %>% 
+    rownames_to_column("Covariate") %>% 
+    mutate(model = name,.before = 1) %>% 
+    mutate(sex = sex_val,.after = model) %>% 
+    mutate(season = str_remove(.$model,pattern = paste0("southmodel_",sex_val,"_")),.after = sex) %>% 
+    mutate(season = factor(season,levels = c("fall","winter","spring","summer"))) %>% 
+    rename(min = Q2.5) %>% 
+    rename(max = Q97.5) %>% 
+    filter(Covariate != "Intercept")
+  
+  model_coefs$Covariate <- str_remove(model_coefs$Covariate,pattern = "south_")
+  
+  return(model_coefs)
+}
+
+# Plotting
+male_plot <- ggplot(data = subset(model_betas,sex == "M"),
+                    aes(x = Covariate, y = Estimate, ymin = min, ymax = max, color = season))+ 
+  geom_pointrange(position=position_dodge(width = 0.9),size = 0.75)+
+  coord_flip()+
+  theme_nice()+
+  ggtitle("South Male")+
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/south/beta_estimates_grouped/SouthMale.png",
+       plot = male_plot,
+       device = "png",
+       width = 10,
+       height = 12,
+       units = "in")
+
+female_plot <- ggplot(data = subset(model_betas,sex == "F"),
+                      aes(x = Covariate, y = Estimate, ymin = min, ymax = max, color = season))+ 
+  geom_pointrange(position=position_dodge(width = 0.9),size = 0.75)+
+  coord_flip()+
+  theme_nice()+
+  ggtitle("South Female")+
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/south/beta_estimates_grouped/SouthFemale.png",
+       plot = female_plot,
+       device = "png",
+       width = 10,
+       height = 12,
+       units = "in")
 
 #      Effect Plots Scaled                                                  ####
 
@@ -387,6 +545,8 @@ for (i in 1:length(south_models)) {
                model_coefs[[15]]*raster_list[[14]]+
                model_coefs[[16]]*raster_list[[15]]))
   
+  names(predictive_raster) <- paste0(name,"_predictive_raster")
+  
   # Exporting Raster
   writeRaster(predictive_raster,
               filename = paste0("2.Chapter1/3.Output/visualizations_bayesian_randomint/south/predictive_maps/",
@@ -396,6 +556,43 @@ for (i in 1:length(south_models)) {
   
   # Iteration Tracker
   print(paste0(i," out of ", length(south_models), " completed"))
+}
+
+#      Predictive Raster Correlation Plot                                   ####
+
+# List of Sexes
+sexes <- c("M","F")
+
+for (i in 1:length(sexes)) {
+  
+  # Loading Rasters
+  pred_rasters <- list.files("2.Chapter1/3.Output/visualizations_bayesian_randomint/south/predictive_maps",
+                             full.names = T) %>% str_subset(sexes[i]) %>% rast()
+  
+  # Raster Names
+  rast_names <- list.files("2.Chapter1/3.Output/visualizations_bayesian_randomint/south/predictive_maps",
+                           full.names = F) %>% str_subset(sexes[i]) %>% str_remove(".tif")
+  
+  names(pred_rasters) <- rast_names #This is temporary. Fixed it in prior steps
+  
+  # Pearson Correlation
+  pearson_cor <- layerCor(x = pred_rasters, 
+                          fun = "pearson",
+                          na.rm = T)
+  
+  # Correlation Plot
+  corplot <- ggcorrplot(pearson_cor$pearson, 
+                        hc.order = TRUE,
+                        lab = TRUE)
+  
+  # Exporting Plot
+  ggsave(filename = paste0("2.Chapter1/3.Output/visualizations_bayesian_randomint/south/predictive_maps_corplots/south_",sexes[i],".png"),
+         plot = corplot,
+         device = "png",
+         width = 8,
+         height = 6,
+         units = "in")
+  
 }
 
 ###############################################################################
@@ -422,6 +619,50 @@ for (i in 1:length(southeast_models)) {
 }
 
 ###############################################################################6
+#      Grouped Beta Estimates                                               ####
+
+# Creating Beta Estimate Table
+model_betas <- foreach(i = 1:length(southeast_models), .combine = "bind_rows") %do% {
+  
+  # Subsetting Model and Model Metadata
+  model <- readRDS(southeast_models[[i]])
+  name <- southeast_names[[i]]
+  sex_val <- str_extract(name, "_([^_]+)_") %>% str_remove_all("_")
+  cov_list <- names(data)[-1] %>% 
+    str_subset("individual.local.identifier",negate = T)
+  
+  # Extracting Model Covariates
+  model_coefs <- fixef(model) %>% as.data.frame() %>% 
+    rownames_to_column("Covariate") %>% 
+    mutate(model = name,.before = 1) %>% 
+    mutate(sex = sex_val,.after = model) %>% 
+    mutate(season = str_remove(.$model,pattern = paste0("southeastmodel_",sex_val,"_")),.after = sex) %>% 
+    mutate(season = factor(season,levels = c("fall","winter","spring","summer"))) %>% 
+    rename(min = Q2.5) %>% 
+    rename(max = Q97.5) %>% 
+    filter(Covariate != "Intercept")
+  
+  model_coefs$Covariate <- str_remove(model_coefs$Covariate,pattern = "southeast_")
+  
+  return(model_coefs)
+}
+
+# Plotting
+female_plot <- ggplot(data = subset(model_betas,sex == "F"),
+                      aes(x = Covariate, y = Estimate, ymin = min, ymax = max, color = season))+ 
+  geom_pointrange(position=position_dodge(width = 0.9),size = 0.75)+
+  coord_flip()+
+  theme_nice()+
+  ggtitle("Southeast Female")+
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/southeast/beta_estimates_grouped/SoutheastFemale.png",
+       plot = female_plot,
+       device = "png",
+       width = 10,
+       height = 12,
+       units = "in")
+
 #      Effect Plots Scaled                                                  ####
 
 # Plot Export directory
@@ -531,6 +772,8 @@ for (i in 1:length(southeast_models)) {
                model_coefs[[8]]*raster_list[[7]]+
                model_coefs[[9]]*raster_list[[8]]))
   
+  names(predictive_raster) <- paste0(name,"_predictive_raster")
+  
   # Exporting Raster
   writeRaster(predictive_raster,
               filename = paste0("2.Chapter1/3.Output/visualizations_bayesian_randomint/southeast/predictive_maps/",
@@ -542,5 +785,41 @@ for (i in 1:length(southeast_models)) {
   print(paste0(i," out of ", length(southeast_models), " completed"))
 }
 
+#      Predictive Raster Correlation Plot                                   ####
+
+# List of Sexes
+sexes <- c("F")
+
+for (i in 1:length(sexes)) {
+  
+  # Loading Rasters
+  pred_rasters <- list.files("2.Chapter1/3.Output/visualizations_bayesian_randomint/southeast/predictive_maps",
+                             full.names = T) %>% str_subset(sexes[i]) %>% rast()
+  
+  # Raster Names
+  rast_names <- list.files("2.Chapter1/3.Output/visualizations_bayesian_randomint/southeast/predictive_maps",
+                           full.names = F) %>% str_subset(sexes[i]) %>% str_remove(".tif")
+  
+  names(pred_rasters) <- rast_names #This is temporary. Fixed it in prior steps
+  
+  # Pearson Correlation
+  pearson_cor <- layerCor(x = pred_rasters, 
+                          fun = "pearson",
+                          na.rm = T)
+  
+  # Correlation Plot
+  corplot <- ggcorrplot(pearson_cor$pearson, 
+                        hc.order = TRUE,
+                        lab = TRUE)
+  
+  # Exporting Plot
+  ggsave(filename = paste0("2.Chapter1/3.Output/visualizations_bayesian_randomint/southeast/predictive_maps_corplots/southeast_",sexes[i],".png"),
+         plot = corplot,
+         device = "png",
+         width = 8,
+         height = 6,
+         units = "in")
+  
+}
 
 ###############################################################################
