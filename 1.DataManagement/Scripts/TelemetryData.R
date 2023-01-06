@@ -78,6 +78,10 @@ data_summary <- df %>%
   summarise("n_indiv"=n_distinct(id),"n_loc"= n()) %>% 
   mutate("avg_loc"= n_loc / n_indiv)
 
+df %>% 
+  group_by(site,sex) %>% 
+  summarise("n_indiv"=n_distinct(id),"n_loc"= n()) %>% 
+  mutate("avg_loc"= n_loc / n_indiv)
 
 ###############################################################################
 #   [Livetime Plots]                                                        ####
