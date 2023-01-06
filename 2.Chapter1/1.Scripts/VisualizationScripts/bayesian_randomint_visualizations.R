@@ -32,6 +32,7 @@ library(sf)
 library(terra)
 library(ggcorrplot)
 library(foreach)
+library(tidyverse)
 
 #      Functions                                                            ####
 
@@ -139,8 +140,9 @@ model_betas <- foreach(i = 1:length(north_models), .combine = "bind_rows") %do% 
 # Plotting
 male_plot <- ggplot(data = subset(model_betas,sex == "M"),
                     aes(x = Covariate, y = Estimate, ymin = min, ymax = max, color = season))+ 
+  geom_hline(yintercept = 0,linewidth = 1) + 
   geom_pointrange(position=position_dodge(width = 0.9),size = 0.75)+
-  coord_flip()+
+  coord_flip() + 
   theme_nice()+
   ggtitle("North Male")+
   theme(plot.title = element_text(hjust = 0.5)) 
@@ -154,8 +156,9 @@ ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/north/b
 
 female_plot <- ggplot(data = subset(model_betas,sex == "F"),
                       aes(x = Covariate, y = Estimate, ymin = min, ymax = max, color = season))+ 
+  geom_hline(yintercept = 0,linewidth = 1) + 
   geom_pointrange(position=position_dodge(width = 0.9),size = 0.75)+
-  coord_flip()+
+  coord_flip() +
   theme_nice()+
   ggtitle("North Female")+
   theme(plot.title = element_text(hjust = 0.5))
@@ -339,6 +342,128 @@ for (i in 1:length(sexes)) {
          units = "in")
   
 }
+#      Heatmaps                                                             ####
+
+# Creating Beta Estimate Table
+model_betas <- foreach(i = 1:length(north_models), .combine = "bind_rows") %do% {
+  
+  # Subsetting Model and Model Metadata
+  model <- readRDS(north_models[[i]])
+  name <- north_names[[i]]
+  sex_val <- str_extract(name, "_([^_]+)_") %>% str_remove_all("_")
+  cov_list <- names(data)[-1] %>% 
+    str_subset("individual.local.identifier",negate = T)
+  
+  # Extracting Model Covariates
+  model_coefs <- fixef(model) %>% as.data.frame() %>% 
+    rownames_to_column("Covariate") %>% 
+    mutate(model = name,.before = 1) %>% 
+    mutate(sex = sex_val,.after = model) %>% 
+    mutate(season = str_remove(.$model,pattern = paste0("northmodel_",sex_val,"_")),.after = sex) %>% 
+    mutate(season = factor(season,levels = c("fall","winter","spring","summer"))) %>% 
+    rename(min = Q2.5) %>% 
+    rename(max = Q97.5) %>% 
+    filter(Covariate != "Intercept")
+  
+  model_coefs$Covariate <- str_remove(model_coefs$Covariate,pattern = "north_")
+  
+  return(model_coefs)
+}
+
+# Beta Estimate Heatmap
+df <- filter(model_betas, sex == 'M') %>% 
+  select(Covariate,season,Estimate)
+
+hm <- ggplot(df, aes(season,Covariate)) +                           # Create heatmap with ggplot2
+  geom_tile(aes(fill = Estimate))+
+  theme_nice()+
+  geom_text(aes(label = round(Estimate, 2)), size=3)
+
+ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/north/heatmaps/NorthMale_BetaEstimates.png",
+       plot = hm,
+       device = "png",
+       width = 10,
+       height = 12,
+       units = "in")
+
+df <- filter(model_betas, sex == 'F') %>% 
+  select(Covariate,season,Estimate)
+
+hm <- ggplot(df, aes(season,Covariate)) +                           # Create heatmap with ggplot2
+  geom_tile(aes(fill = Estimate))+
+  theme_nice()+
+  geom_text(aes(label = round(Estimate, 2)), size=3)
+
+ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/north/heatmaps/NorthFemale_BetaEstimates.png",
+       plot = hm,
+       device = "png",
+       width = 10,
+       height = 12,
+       units = "in")
+
+
+
+# Beta Directionality
+df <- filter(model_betas, sex == 'M') %>% 
+  select(Covariate,season,Estimate) %>% 
+  mutate(Estimate = ifelse(.$Estimate > 0, 1, -1))
+
+hm <- ggplot(df, aes(season,Covariate)) +                           
+  geom_tile(aes(fill = Estimate))+
+  theme_nice()
+
+ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/north/heatmaps/NorthMale_BetaDirectionality.png",
+       plot = hm,
+       device = "png",
+       width = 10,
+       height = 12,
+       units = "in")
+
+df <- filter(model_betas, sex == 'F') %>% 
+  select(Covariate,season,Estimate) %>% 
+  mutate(Estimate = ifelse(.$Estimate > 0, 1, -1))
+
+hm <- ggplot(df, aes(season,Covariate)) +                           
+  geom_tile(aes(fill = Estimate))+
+  theme_nice()
+
+ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/north/heatmaps/NorthFemale_BetaDirectionality.png",
+       plot = hm,
+       device = "png",
+       width = 10,
+       height = 12,
+       units = "in")
+
+# Overlapping Zero 
+df <- filter(model_betas, sex == 'M') %>% 
+  select(Covariate,season,min,max) %>% 
+  mutate(value = ifelse(0 >= min & 0 <= max, 1, -1))
+
+hm <- ggplot(df, aes(season,Covariate)) +                           
+  geom_tile(aes(fill = value))+
+  theme_nice()
+
+ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/north/heatmaps/NorthMale_BetaOverlapZero.png",
+       plot = hm,
+       device = "png",
+       width = 10,
+       height = 12,
+       units = "in")
+
+df <- filter(model_betas, sex == 'F') %>% 
+  select(Covariate,season,min,max) %>% 
+  mutate(value = ifelse(0 >= min & 0 <= max, 1, -1))
+
+hm <- ggplot(df, aes(season,Covariate)) +                           # Create heatmap with ggplot2
+  geom_tile(aes(fill = value))+
+  theme_nice()
+
+ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/north/heatmaps/NorthFemale_BetaOverlapZero.png",
+       plot = hm,
+       device = "png",
+       width = 10,
+       height = 12,
+       units = "in")
 ###############################################################################
 #   South                                                                   ####
 #      Beta Estimates                                                       ####
@@ -393,11 +518,12 @@ model_betas <- foreach(i = 1:length(south_models), .combine = "bind_rows") %do% 
 # Plotting
 male_plot <- ggplot(data = subset(model_betas,sex == "M"),
                     aes(x = Covariate, y = Estimate, ymin = min, ymax = max, color = season))+ 
+  geom_hline(yintercept = 0,linewidth = 1) + 
   geom_pointrange(position=position_dodge(width = 0.9),size = 0.75)+
-  coord_flip()+
+  coord_flip() + 
   theme_nice()+
   ggtitle("South Male")+
-  theme(plot.title = element_text(hjust = 0.5)) 
+  theme(plot.title = element_text(hjust = 0.5))
 
 ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/south/beta_estimates_grouped/SouthMale.png",
        plot = male_plot,
@@ -408,8 +534,9 @@ ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/south/b
 
 female_plot <- ggplot(data = subset(model_betas,sex == "F"),
                       aes(x = Covariate, y = Estimate, ymin = min, ymax = max, color = season))+ 
+  geom_hline(yintercept = 0,linewidth = 1) + 
   geom_pointrange(position=position_dodge(width = 0.9),size = 0.75)+
-  coord_flip()+
+  coord_flip() + 
   theme_nice()+
   ggtitle("South Female")+
   theme(plot.title = element_text(hjust = 0.5))
@@ -595,6 +722,129 @@ for (i in 1:length(sexes)) {
   
 }
 
+#      Heatmaps                                                             ####
+
+# Creating Beta Estimate Table
+model_betas <- foreach(i = 1:length(south_models), .combine = "bind_rows") %do% {
+  
+  # Subsetting Model and Model Metadata
+  model <- readRDS(south_models[[i]])
+  name <- south_names[[i]]
+  sex_val <- str_extract(name, "_([^_]+)_") %>% str_remove_all("_")
+  cov_list <- names(data)[-1] %>% 
+    str_subset("individual.local.identifier",negate = T)
+  
+  # Extracting Model Covariates
+  model_coefs <- fixef(model) %>% as.data.frame() %>% 
+    rownames_to_column("Covariate") %>% 
+    mutate(model = name,.before = 1) %>% 
+    mutate(sex = sex_val,.after = model) %>% 
+    mutate(season = str_remove(.$model,pattern = paste0("southmodel_",sex_val,"_")),.after = sex) %>% 
+    mutate(season = factor(season,levels = c("fall","winter","spring","summer"))) %>% 
+    rename(min = Q2.5) %>% 
+    rename(max = Q97.5) %>% 
+    filter(Covariate != "Intercept")
+  
+  model_coefs$Covariate <- str_remove(model_coefs$Covariate,pattern = "south_")
+  
+  return(model_coefs)
+}
+
+# Beta Estimate Heatmap
+df <- filter(model_betas, sex == 'M') %>% 
+  select(Covariate,season,Estimate)
+
+hm <- ggplot(df, aes(season,Covariate)) +                           # Create heatmap with ggplot2
+  geom_tile(aes(fill = Estimate))+
+  theme_nice()+
+  geom_text(aes(label = round(Estimate, 2)), size=3)
+
+ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/south/heatmaps/SouthMale_BetaEstimates.png",
+       plot = hm,
+       device = "png",
+       width = 10,
+       height = 12,
+       units = "in")
+
+df <- filter(model_betas, sex == 'F') %>% 
+  select(Covariate,season,Estimate)
+
+hm <- ggplot(df, aes(season,Covariate)) +                           # Create heatmap with ggplot2
+  geom_tile(aes(fill = Estimate))+
+  theme_nice()+
+  geom_text(aes(label = round(Estimate, 2)), size=3)
+
+ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/south/heatmaps/SouthFemale_BetaEstimates.png",
+       plot = hm,
+       device = "png",
+       width = 10,
+       height = 12,
+       units = "in")
+
+
+
+# Beta Directionality
+df <- filter(model_betas, sex == 'M') %>% 
+  select(Covariate,season,Estimate) %>% 
+  mutate(Estimate = ifelse(.$Estimate > 0, 1, -1))
+
+hm <- ggplot(df, aes(season,Covariate)) +                           
+  geom_tile(aes(fill = Estimate))+
+  theme_nice()
+
+ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/south/heatmaps/SouthMale_BetaDirectionality.png",
+       plot = hm,
+       device = "png",
+       width = 10,
+       height = 12,
+       units = "in")
+
+df <- filter(model_betas, sex == 'F') %>% 
+  select(Covariate,season,Estimate) %>% 
+  mutate(Estimate = ifelse(.$Estimate > 0, 1, -1))
+
+hm <- ggplot(df, aes(season,Covariate)) +                           
+  geom_tile(aes(fill = Estimate))+
+  theme_nice()
+
+ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/south/heatmaps/SouthFemale_BetaDirectionality.png",
+       plot = hm,
+       device = "png",
+       width = 10,
+       height = 12,
+       units = "in")
+
+# Overlapping Zero 
+df <- filter(model_betas, sex == 'M') %>% 
+  select(Covariate,season,min,max) %>% 
+  mutate(value = ifelse(0 >= min & 0 <= max, 1, -1))
+
+hm <- ggplot(df, aes(season,Covariate)) +                           
+  geom_tile(aes(fill = value))+
+  theme_nice()
+
+ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/south/heatmaps/SouthMale_BetaOverlapZero.png",
+       plot = hm,
+       device = "png",
+       width = 10,
+       height = 12,
+       units = "in")
+
+df <- filter(model_betas, sex == 'F') %>% 
+  select(Covariate,season,min,max) %>% 
+  mutate(value = ifelse(0 >= min & 0 <= max, 1, -1))
+
+hm <- ggplot(df, aes(season,Covariate)) +                           # Create heatmap with ggplot2
+  geom_tile(aes(fill = value))+
+  theme_nice()
+
+ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/south/heatmaps/SouthFemale_BetaOverlapZero.png",
+       plot = hm,
+       device = "png",
+       width = 10,
+       height = 12,
+       units = "in")
+
 ###############################################################################
 #   Southeast                                                               ####
 #      Beta Estimates                                                       ####
@@ -650,8 +900,9 @@ model_betas <- foreach(i = 1:length(southeast_models), .combine = "bind_rows") %
 # Plotting
 female_plot <- ggplot(data = subset(model_betas,sex == "F"),
                       aes(x = Covariate, y = Estimate, ymin = min, ymax = max, color = season))+ 
+  geom_hline(yintercept = 0,linewidth = 1) + 
   geom_pointrange(position=position_dodge(width = 0.9),size = 0.75)+
-  coord_flip()+
+  coord_flip() + 
   theme_nice()+
   ggtitle("Southeast Female")+
   theme(plot.title = element_text(hjust = 0.5))
@@ -821,5 +1072,84 @@ for (i in 1:length(sexes)) {
          units = "in")
   
 }
+
+#      Heatmaps                                                             ####
+
+# Creating Beta Estimate Table
+model_betas <- foreach(i = 1:length(southeast_models), .combine = "bind_rows") %do% {
+  
+  # Subsetting Model and Model Metadata
+  model <- readRDS(southeast_models[[i]])
+  name <- southeast_names[[i]]
+  sex_val <- str_extract(name, "_([^_]+)_") %>% str_remove_all("_")
+  cov_list <- names(data)[-1] %>% 
+    str_subset("individual.local.identifier",negate = T)
+  
+  # Extracting Model Covariates
+  model_coefs <- fixef(model) %>% as.data.frame() %>% 
+    rownames_to_column("Covariate") %>% 
+    mutate(model = name,.before = 1) %>% 
+    mutate(sex = sex_val,.after = model) %>% 
+    mutate(season = str_remove(.$model,pattern = paste0("southeastmodel_",sex_val,"_")),.after = sex) %>% 
+    mutate(season = factor(season,levels = c("fall","winter","spring","summer"))) %>% 
+    rename(min = Q2.5) %>% 
+    rename(max = Q97.5) %>% 
+    filter(Covariate != "Intercept")
+  
+  model_coefs$Covariate <- str_remove(model_coefs$Covariate,pattern = "southeast_")
+  
+  return(model_coefs)
+}
+
+# Beta Estimate Heatmap
+df <- filter(model_betas, sex == 'F') %>% 
+  select(Covariate,season,Estimate)
+
+hm <- ggplot(df, aes(season,Covariate)) +                           # Create heatmap with ggplot2
+  geom_tile(aes(fill = Estimate))+
+  theme_nice()+
+  geom_text(aes(label = round(Estimate, 2)), size=3)
+
+ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/southeast/heatmaps/SoutheastFemale_BetaEstimates.png",
+       plot = hm,
+       device = "png",
+       width = 10,
+       height = 12,
+       units = "in")
+
+
+
+# Beta Directionality
+df <- filter(model_betas, sex == 'F') %>% 
+  select(Covariate,season,Estimate) %>% 
+  mutate(Estimate = ifelse(.$Estimate > 0, 1, -1))
+
+hm <- ggplot(df, aes(season,Covariate)) +                           
+  geom_tile(aes(fill = Estimate))+
+  theme_nice()
+
+ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/southeast/heatmaps/SoutheastFemale_BetaDirectionality.png",
+       plot = hm,
+       device = "png",
+       width = 10,
+       height = 12,
+       units = "in")
+
+# Overlapping Zero 
+df <- filter(model_betas, sex == 'F') %>% 
+  select(Covariate,season,min,max) %>% 
+  mutate(value = ifelse(0 >= min & 0 <= max, 1, -1))
+
+hm <- ggplot(df, aes(season,Covariate)) +                           # Create heatmap with ggplot2
+  geom_tile(aes(fill = value))+
+  theme_nice()
+
+ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/southeast/heatmaps/SoutheastFemale_BetaOverlapZero.png",
+       plot = hm,
+       device = "png",
+       width = 10,
+       height = 12,
+       units = "in")
+
 
 ###############################################################################
