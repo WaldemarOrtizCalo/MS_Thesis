@@ -484,7 +484,7 @@ for (i in 1:length(southeast_models)) {
 }
 
 #      Predictive Raster                                                    ####
-
+ 
 # Subsetting Model and Model Metadata
 model <- readRDS(southeast_models[[1]])
 data <- model$data
@@ -541,5 +541,6 @@ for (i in 1:length(southeast_models)) {
   # Iteration Tracker
   print(paste0(i," out of ", length(southeast_models), " completed"))
 }
+
 
 ###############################################################################
