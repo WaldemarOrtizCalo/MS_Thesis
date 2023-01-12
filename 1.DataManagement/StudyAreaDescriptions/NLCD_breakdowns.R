@@ -69,5 +69,8 @@ southeast <- rast(nlcd_list[[3]]) %>%
   mutate(prop = round(count/sum(.$count),digits = 3)) %>% 
   mutate(layer = southeast_classes)
 
+north
+south
+southeast
 ###############################################################################
 
