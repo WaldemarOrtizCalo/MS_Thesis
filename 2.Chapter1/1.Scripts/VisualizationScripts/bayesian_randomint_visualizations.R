@@ -145,7 +145,8 @@ male_plot <- ggplot(data = subset(model_betas,sex == "M"),
   coord_flip() + 
   theme_nice()+
   ggtitle("North Male")+
-  theme(plot.title = element_text(hjust = 0.5)) 
+  theme(plot.title = element_text(hjust = 0.5)) +
+  ylim(-1.5,1.5)
 
 ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/north/beta_estimates_grouped/NorthMale.png",
        plot = male_plot,
@@ -161,7 +162,8 @@ female_plot <- ggplot(data = subset(model_betas,sex == "F"),
   coord_flip() +
   theme_nice()+
   ggtitle("North Female")+
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(plot.title = element_text(hjust = 0.5)) +
+  ylim(-1.5,1.5)
 
 ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/north/beta_estimates_grouped/NorthFemale.png",
        plot = female_plot,
@@ -523,7 +525,8 @@ male_plot <- ggplot(data = subset(model_betas,sex == "M"),
   coord_flip() + 
   theme_nice()+
   ggtitle("South Male")+
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(plot.title = element_text(hjust = 0.5))+
+  ylim(-1.5,1.5)
 
 ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/south/beta_estimates_grouped/SouthMale.png",
        plot = male_plot,
@@ -539,7 +542,8 @@ female_plot <- ggplot(data = subset(model_betas,sex == "F"),
   coord_flip() + 
   theme_nice()+
   ggtitle("South Female")+
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(plot.title = element_text(hjust = 0.5))+
+  ylim(-1.5,1.5)
 
 ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/south/beta_estimates_grouped/SouthFemale.png",
        plot = female_plot,
@@ -905,7 +909,8 @@ female_plot <- ggplot(data = subset(model_betas,sex == "F"),
   coord_flip() + 
   theme_nice()+
   ggtitle("Southeast Female")+
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(plot.title = element_text(hjust = 0.5))+
+  ylim(-1.5,1.5)
 
 ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/southeast/beta_estimates_grouped/SoutheastFemale.png",
        plot = female_plot,
