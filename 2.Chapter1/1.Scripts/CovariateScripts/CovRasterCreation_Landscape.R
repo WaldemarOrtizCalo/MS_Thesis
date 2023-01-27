@@ -967,15 +967,3 @@ for (i in 1:length(rast_list)) {
 }
 
 ###############################################################################
-#   Dev                                                                     ####
-
-nlcd <- rast("1.DataManagement/CovRasters/base_layers/southeast_nlcd.tif")
-
-roads <- st_read("1.DataManagement/CleanData/roads_southeast.shp")
-
-spatvect <- vect(roads)
-
-polyrast <- as.polygons(nlcd, trunc= FALSE, dissolve= FALSE, values=FALSE,
-                        na.rm=FALSE, na.all=TRUE, extent=FALSE)
-
-mapview::mapview(road_rast)
