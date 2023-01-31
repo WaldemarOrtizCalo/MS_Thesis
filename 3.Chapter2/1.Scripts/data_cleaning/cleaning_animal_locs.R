@@ -32,7 +32,9 @@ locs_deer <- read_csv("1.DataManagement\\CleanData\\deer_all_revised.csv") %>%
   filter(age %in% c("F","Y","A")) %>% 
   mutate(site = factor(site, levels = c("North","South"))) %>%
   mutate(sex = factor(sex, levels = c("M","F"))) %>% 
-  mutate(age = factor(age, levels = c("F","Y","A"))) 
+  mutate(age = factor(age, levels = c("F","Y","A"))) %>% 
+  mutate(date = floor_date(timestamp,unit = "day"),.after= timestamp) %>% 
+  mutate(interval_id = NA)
 
 ###############################################################################
 #   Summary of Data                                                         ####
@@ -131,10 +133,68 @@ locs_summary <- final_loc_data %>%
   summarize(n())
   
 ###############################################################################
-#   [DEV]                                                                 ####
+#   [DEV]                                                                   ####
 
-# Filtering deer
-loc_subset <- locs_deer %>% 
-  filter(individual.local.identifier == "N15013")
+# Creating an empty data fame
+final_loc_df <- locs_deer
+final_loc_df <- final_loc_df[FALSE,]
+
+# Deer ID list
+list_deerIDs <- unique(locs_deer$individual.local.identifier)
+#length(list_deerIDs)
+
+for (i in 1:4) {
+  
+  # Filtering deer
+  loc_subset <- locs_deer %>% 
+    filter(individual.local.identifier == list_deerIDs[[i]])
+  
+  # Extracting last date 
+  max_date  <- max(loc_subset$timestamp) %>% floor_date(unit = "day")
+  min_date <- min(loc_subset$timestamp) %>% floor_date(unit = "day")
+  
+  # Establishing Initial Settings
+  init_date <- max_date
+  init_id <- 1
+  
+  while (init_date >= min_date) {
+    tmp_max_date <- init_date
+    tmp_min_date <- tmp_max_date - ddays(6)
+     
+    date_seq <- seq(tmp_min_date,tmp_max_date, by = 'day')
+    
+    tmp_locs <- loc_subset %>% 
+      filter(date %in% date_seq) %>% 
+      mutate(interval_id = init_id)
+    
+    final_loc_df <- rbind(final_loc_df,tmp_locs)
+    
+    # Updating settings for next iteration
+    init_date <- tmp_min_date - ddays(1)
+    init_id <- init_id + 1
+  }
+  print(paste0(i," out of ",length(list_deerIDs)," completed"))
+}
+
+
+while (init_date <= min_date) {
+
+}
+
+
+tmp_max_date <- init_date
+tmp_min_date <- tmp_max_date - ddays(6)
+
+date_seq <- seq(tmp_min_date,tmp_max_date, by = 'day')
+
+tmp_locs <- loc_subset %>% 
+  filter(date %in% date_seq) %>% 
+  mutate(interval_id = init_id)
+
+final_loc_df <- rbind(final_loc_df,tmp_locs)
+
+
+
+
 
 ###############################################################################
