@@ -15,21 +15,25 @@ library(lubridate)
 library(foreach)
 
 #      Functions                                                            ####
-
-# Time Calculation Function
+#        Time Calculation Function                                          ####
 
 # Function
-studyweek_calc <- function(date,anchor_date){
+studyday_calc <- function(date,anchor_date) {
   
-  study_week <- difftime(date, anchor_date, units = "weeks") %>% 
+  # Input day
+  input_date <- floor_date(date, unit = "day")
+  
+  # Day calculation
+  study_day <- difftime(input_date, anchor_date, units = "day") %>% 
     as.numeric() %>% 
     floor() + 1
   
-  return(study_week)
+  # Returning object
+  return(study_day)
 }
 
 # Test
-studyweek_calc(first_date,
+studyday_calc(first_date,
                anchor_date = anchor_date)
 
 #      Data                                                                 ####
@@ -153,12 +157,16 @@ ordered_locs <- foreach(i = 1:length(list_deerIDs),
                             filter(individual.local.identifier == list_deerIDs[[i]])
                           
                           classification_table <- data.frame(interval_id = unique(loc_subset$interval_id),
-                                                             ordered_id  = sort(unique(loc_subset$interval_id),decreasing = T))
+                                                             ordered_int_id  = sort(unique(loc_subset$interval_id),decreasing = T))
                           
                           ordered <- merge(x=loc_subset,y=classification_table,by="interval_id",all.x=TRUE)
                           print(i/length(list_deerIDs))
                           return(ordered)
                         }
+
+###############################################################################
+#   Data Cleaning: Timetable                                                ####
+
 
 ###############################################################################
 #   Data Prep                                                               ####
@@ -172,17 +180,6 @@ mortality_table <- table_mortality_original %>%
   mutate(studyweek = studyweek_calc(MortDate,anchor_date = anchor_date)) %>% 
   mutate(t_start =  studyweek,t_end = studyweek+1) %>% 
   drop_na(MortDate)
-
-# Location Data
-final_loc_data <- locs_deer %>% 
-  filter(individual.local.identifier %in% unique(mortality_table$individual.local.identifier)) %>% 
-  mutate(studyweek = studyweek_calc(timestamp,anchor_date = anchor_date)) %>% 
-  mutate(t_start =  studyweek,t_end = studyweek+1) %>%
-  left_join(mortality_table, by=c("individual.local.identifier","studyweek","t_start","t_end"))
-
-locs_summary <- final_loc_data %>% 
-  group_by(individual.local.identifier,studyweek) %>% 
-  summarize(n())
   
 ###############################################################################
 #   [DEV]                                                                   ####
