@@ -12,8 +12,25 @@
 library(tidyverse)
 library(readxl)
 library(lubridate)
+library(foreach)
 
 #      Functions                                                            ####
+
+# Time Calculation Function
+
+# Function
+studyweek_calc <- function(date,anchor_date){
+  
+  study_week <- difftime(date, anchor_date, units = "weeks") %>% 
+    as.numeric() %>% 
+    floor() + 1
+  
+  return(study_week)
+}
+
+# Test
+studyweek_calc(first_date,
+               anchor_date = anchor_date)
 
 #      Data                                                                 ####
 
@@ -80,33 +97,68 @@ inclusion_table_final <- merge(x=inclusion_table_locs,
                              T,F))
 
 ###############################################################################
-#   Developing Timetable                                                    ####
-#      Proofing Time Calculation                                            ####
-# Extracting the first date of the data and creating an anchor day to the Sunday
-# of that week. 
-first_date <-  min(locs_deer$timestamp)- days(wday(min(locs_deer$timestamp))-1) 
-anchor_date <- floor_date(first_date, unit = "day")
+#   Data Cleaning: Collar Data                                              ####
+#      Adding Intervals to Data                                             ####
 
-# Proofing difftime function
-difftime(first_date, anchor_date, units = "weeks") %>% 
-  as.numeric() %>% 
-  floor() + 1
+# Creating an empty data fame
+locs_interval_df <- locs_deer
+locs_interval_df <- locs_interval_df[FALSE,]
 
-#      Creating a function for studyweek calculation                        ####
+# Deer ID list
+list_deerIDs <- unique(locs_deer$individual.local.identifier)
 
-# Function
-studyweek_calc <- function(date,anchor_date){
+for (i in 1:length(list_deerIDs)) {
   
-  study_week <- difftime(date, anchor_date, units = "weeks") %>% 
-    as.numeric() %>% 
-    floor() + 1
+  # Filtering deer
+  loc_subset <- locs_deer %>% 
+    filter(individual.local.identifier == list_deerIDs[[i]])
   
-  return(study_week)
+  # Extracting last date 
+  max_date  <- max(loc_subset$timestamp) %>% floor_date(unit = "day")
+  min_date <- min(loc_subset$timestamp) %>% floor_date(unit = "day")
+  
+  # Establishing Initial Settings
+  init_date <- max_date
+  init_id <- 1
+  
+  while (init_date >= min_date) {
+    tmp_max_date <- init_date
+    tmp_min_date <- tmp_max_date - ddays(6)
+    
+    date_seq <- seq(tmp_min_date,tmp_max_date, by = 'day')
+    
+    tmp_locs <- loc_subset %>% 
+      filter(date %in% date_seq) %>% 
+      mutate(interval_id = init_id)
+    
+    locs_interval_df <- rbind(locs_interval_df,tmp_locs)
+    
+    # Updating settings for next iteration
+    init_date <- tmp_min_date - ddays(1)
+    init_id <- init_id + 1
+  }
+  print(paste0(i," out of ",length(list_deerIDs)," completed"))
 }
 
-# Test
-studyweek_calc(first_date,
-               anchor_date = anchor_date)
+#      Adding Ordered Intervals                                             ####
+
+# List of individuals
+list_deerIDs <- unique(locs_interval_df$individual.local.identifier)
+
+# Foreach loop to order intervals
+ordered_locs <- foreach(i = 1:length(list_deerIDs),
+                        .combine = bind_rows) %do% {
+                          
+                          loc_subset <- locs_interval_df %>% 
+                            filter(individual.local.identifier == list_deerIDs[[i]])
+                          
+                          classification_table <- data.frame(interval_id = unique(loc_subset$interval_id),
+                                                             ordered_id  = sort(unique(loc_subset$interval_id),decreasing = T))
+                          
+                          ordered <- merge(x=loc_subset,y=classification_table,by="interval_id",all.x=TRUE)
+                          print(i/length(list_deerIDs))
+                          return(ordered)
+                        }
 
 ###############################################################################
 #   Data Prep                                                               ####
@@ -134,67 +186,4 @@ locs_summary <- final_loc_data %>%
   
 ###############################################################################
 #   [DEV]                                                                   ####
-
-# Creating an empty data fame
-final_loc_df <- locs_deer
-final_loc_df <- final_loc_df[FALSE,]
-
-# Deer ID list
-list_deerIDs <- unique(locs_deer$individual.local.identifier)
-#length(list_deerIDs)
-
-for (i in 1:4) {
-  
-  # Filtering deer
-  loc_subset <- locs_deer %>% 
-    filter(individual.local.identifier == list_deerIDs[[i]])
-  
-  # Extracting last date 
-  max_date  <- max(loc_subset$timestamp) %>% floor_date(unit = "day")
-  min_date <- min(loc_subset$timestamp) %>% floor_date(unit = "day")
-  
-  # Establishing Initial Settings
-  init_date <- max_date
-  init_id <- 1
-  
-  while (init_date >= min_date) {
-    tmp_max_date <- init_date
-    tmp_min_date <- tmp_max_date - ddays(6)
-     
-    date_seq <- seq(tmp_min_date,tmp_max_date, by = 'day')
-    
-    tmp_locs <- loc_subset %>% 
-      filter(date %in% date_seq) %>% 
-      mutate(interval_id = init_id)
-    
-    final_loc_df <- rbind(final_loc_df,tmp_locs)
-    
-    # Updating settings for next iteration
-    init_date <- tmp_min_date - ddays(1)
-    init_id <- init_id + 1
-  }
-  print(paste0(i," out of ",length(list_deerIDs)," completed"))
-}
-
-
-while (init_date <= min_date) {
-
-}
-
-
-tmp_max_date <- init_date
-tmp_min_date <- tmp_max_date - ddays(6)
-
-date_seq <- seq(tmp_min_date,tmp_max_date, by = 'day')
-
-tmp_locs <- loc_subset %>% 
-  filter(date %in% date_seq) %>% 
-  mutate(interval_id = init_id)
-
-final_loc_df <- rbind(final_loc_df,tmp_locs)
-
-
-
-
-
 ###############################################################################
