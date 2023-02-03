@@ -261,6 +261,7 @@ locs_final <- locs_t_periods %>%
             by = NULL) %>% mutate(event = ifelse(is.na(event),0,event))
 
 #      Export Locs                                                          ####
+
 write_csv(locs_final,
           "1.DataManagement/ch2_data/clean/deer_mortalitylocs.csv")
 
