@@ -263,6 +263,6 @@ locs_final <- locs_t_periods %>%
 #      Export Locs                                                          ####
 
 write_csv(locs_final,
-          "1.DataManagement/ch2_data/clean/deer_mortalitylocs.csv")
+          "1.DataManagement/ch2_data/clean/locs/deer_mortalitylocs.csv")
 
 ###############################################################################
