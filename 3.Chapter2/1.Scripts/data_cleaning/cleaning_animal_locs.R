@@ -32,10 +32,6 @@ studyday_calc <- function(date,anchor_date) {
   return(study_day)
 }
 
-# Test
-studyday_calc(first_date,
-               anchor_date = anchor_date)
-
 #      Data                                                                 ####
 
 # Importing Mortality table
@@ -100,6 +96,18 @@ inclusion_table_final <- merge(x=inclusion_table_locs,
   mutate(valid_data = ifelse(inclusion_locs == 1 & inclusion_mort == 1,
                              T,F))
 
+#      TimeOverlap                                                          ####
+
+temporal_overlap <- locs_deer %>% 
+  group_by(individual.local.identifier) %>% 
+  summarize(min_date = min(timestamp),
+            max_date = max(timestamp)) %>% 
+  left_join(table_mortality_original, by='individual.local.identifier') %>% 
+  select(c(individual.local.identifier,min_date,max_date,MortDate)) %>%
+  mutate(temp_overlap = ifelse(MortDate >= min_date & 
+                                 MortDate <= max_date,T,F))
+  
+
 ###############################################################################
 #   Data Cleaning: Collar Data                                              ####
 #      Adding Intervals to Data                                             ####
@@ -162,25 +170,98 @@ ordered_locs <- foreach(i = 1:length(list_deerIDs),
                           ordered <- merge(x=loc_subset,y=classification_table,by="interval_id",all.x=TRUE)
                           print(i/length(list_deerIDs))
                           return(ordered)
-                        }
+                        } %>% 
+  select(-c(interval_id)) %>% 
+  arrange(timestamp)
+
+#      Adding time periods for cox-models                                   ####
+
+# List of individuals
+list_deerIDs <- unique(ordered_locs$individual.local.identifier)
+
+# Establishing anchor date
+anchor_date <- min(ordered_locs$timestamp) %>% floor_date(unit = "day")
+
+# Protocol to establish t_start and t_end
+locs_t_periods <- foreach(i = 1:length(list_deerIDs),
+                          .combine = bind_rows) %do% {
+                            
+                            # Subsetting an individual 
+                            sub <- ordered_locs %>% 
+                              filter(individual.local.identifier == list_deerIDs[[i]])
+                            
+                            # Extracting unique intervals for the individual
+                            n_intervals <- unique(sub$ordered_int_id)
+                            
+                            # Assigning t_start and t_end for each
+                            locs_t_intervals <- foreach(j = 1:length(n_intervals),
+                                                        .combine = bind_rows) %do% {
+                                                          sub_2 <- sub %>% filter(ordered_int_id == n_intervals[[j]])
+                                                          
+                                                          t_ints <- sub_2 %>% 
+                                                            mutate(t_start = studyday_calc(min(timestamp),anchor_date = anchor_date),
+                                                                   t_end = studyday_calc(max(timestamp),anchor_date = anchor_date))
+                                                          
+                                                          return(t_ints)
+                                                        }
+                            
+                            # Iteration Tracker
+                            print(i/length(list_deerIDs))
+                            
+                            # Output
+                            return(locs_t_intervals)
+                          }
 
 ###############################################################################
-#   Data Cleaning: Timetable                                                ####
-
-
-###############################################################################
-#   Data Prep                                                               ####
-#      Mortality table                                                      ####
+#   Data Cleaning: Mortality Table                                          ####
 
 # Mortality table
 mortality_table <- table_mortality_original %>% 
   mutate(status = ifelse(!(is.na(MortDate)),1,0)) %>% 
   select(individual.local.identifier,MortDate,Harvest,status) %>% 
   mutate(Harvest = ifelse(Harvest == "Y",1,0)) %>% 
-  mutate(studyweek = studyweek_calc(MortDate,anchor_date = anchor_date)) %>% 
-  mutate(t_start =  studyweek,t_end = studyweek+1) %>% 
-  drop_na(MortDate)
+  mutate(studyday = studyday_calc(MortDate,anchor_date = anchor_date)) %>% 
+  filter(status == 1)
   
 ###############################################################################
-#   [DEV]                                                                   ####
+#   Data Cleaning: Final Location Data                                      ####
+#      Adding Mortality information to relevant locs                        ####
+
+# List of individuals
+list_deerIDs <- unique(locs_t_periods$individual.local.identifier)
+list_deerIDs_mort <-  unique(mortality_table$individual.local.identifier)
+list_deerIDs_inclusion <- intersect(list_deerIDs,list_deerIDs_mort)
+
+# Adding information to mortalities
+locs_mortalities <- foreach(i = 1:length(list_deerIDs_inclusion),
+                            .combine = bind_rows) %do% {
+                              
+                              indiv <- list_deerIDs_inclusion[[i]]
+                              
+                              mort <- filter(mortality_table,
+                                             individual.local.identifier == indiv)
+                              
+                              locs <- filter(locs_t_periods,
+                                             individual.local.identifier == indiv)
+                              
+                              mort_t_periods <- locs %>% 
+                                mutate(event = ifelse(mort$studyday >= t_start &
+                                                        mort$studyday <= t_end,1,0))
+                              # Iteration Tracker
+                              print(i/length(list_deerIDs_inclusion))
+                              
+                              return(mort_t_periods)
+                            } %>% 
+  select(individual.local.identifier,ordered_int_id,t_start,t_end,event)
+
+#      Adding mortalities to loc df                                         ####
+
+locs_final <- locs_t_periods %>% 
+  left_join(y = locs_mortalities, 
+            by = NULL) %>% mutate(event = ifelse(is.na(event),0,event))
+
+#      Export Locs                                                          ####
+write_csv(locs_final,
+          "1.DataManagement/ch2_data/clean/deer_mortalitylocs.csv")
+
 ###############################################################################
