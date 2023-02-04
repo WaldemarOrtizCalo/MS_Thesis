@@ -17,7 +17,6 @@ library(terra)
 library(move)
 
 #      Functions                                                            ####
-
 #      Data                                                                 ####
 
 # Deer Locations
@@ -115,7 +114,7 @@ hr_log <- foreach(i = 1:nrow(valid_homeranges),
         }
 
 #      Covariate Extraction [DEV]                                           ####
-
+#        Polygon Import                                                     ####
 ###############################################################################
 #   South                                                                   ####
 ###############################################################################
