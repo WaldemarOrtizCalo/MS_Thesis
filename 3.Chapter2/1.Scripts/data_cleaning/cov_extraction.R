@@ -15,6 +15,7 @@ library(tidyverse)
 library(sf)
 library(terra)
 library(move)
+library(landscapemetrics)
 
 #      Functions                                                            ####
 #      Data                                                                 ####
@@ -26,6 +27,7 @@ locs_deer <- read_csv("1.DataManagement/ch2_data/clean/locs/deer_mortalitylocs.c
 covlayers_north <- list.files("1.DataManagement/CovRasters/base_layers", 
                               pattern = "north",
                               full.names = T) %>% str_subset(".xml", negate = T)
+
 
 covlayers_south <- list.files("1.DataManagement/CovRasters/base_layers", 
                               pattern = "south",
@@ -115,6 +117,37 @@ hr_log <- foreach(i = 1:nrow(valid_homeranges),
 
 #      Covariate Extraction [DEV]                                           ####
 #        Polygon Import                                                     ####
+
+polygon_filepaths <- list.files("1.DataManagement/ch2_data/clean/homerange_polygons/north",
+                                pattern = ".shp",
+                                full.names = T)
+
+# Start of the for loop 
+
+HR_estimates <- st_read(polygon_filepaths[[1]])
+
+# Start of second loop [ each HR estimate ]
+
+HR_estimate <- HR_estimates %>% slice(1)
+
+# Landscape Metrics  
+
+cropped_landscape <- crop(cov_layers,vect(HR_estimate)) %>% mask(vect(HR_estimate))
+
+# Start of next for loop
+
+mean_vals <- global(cropped_landscape[[c("north_dem",
+                                         "slope",
+                                         "aspect",
+                                         "TRI")]],"mean", na.rm = T) %>% 
+  rownames_to_column(var = "cov_name") %>% as_tibble %>% 
+  pivot_wider(names_from = cov_name, 
+              values_from = mean)
+
+
+lsm_c_area_mn(cropped_landscape[["north_nlcd"]])
+
+
 ###############################################################################
 #   South                                                                   ####
 ###############################################################################
