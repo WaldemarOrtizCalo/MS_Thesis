@@ -17,6 +17,7 @@ library(terra)
 library(move)
 library(landscapemetrics)
 library(foreach)
+library(doParallel)
 
 #      Functions                                                            ####
 #      Data                                                                 ####
@@ -129,13 +130,42 @@ hr_log <- foreach(i = 1:nrow(valid_homeranges),
         }
 
 #      Covariate Extraction [DEV]                                           ####
+#        Data                                                               ####
 
-foreach(i = 1:length(polygon_filepaths),
+polygon_filepaths <- list.files("1.DataManagement/ch2_data/clean/homerange_polygons/north",
+                                full.names = T,
+                                pattern = ".shp")
+
+#        Core Settings                                                      ####
+
+# Cluster Number
+cl <- makeCluster(4)
+registerDoParallel(cl)
+
+# Exporting Packages
+clusterEvalQ(cl,
+             {
+               library(terra)
+               library(foreach)
+               library(sf)
+               library(landscapemetrics)
+               library(tidyverse)
+             })
+
+# Exporting data to clusters
+clusterExport(cl=cl, varlist=c("polygon_filepaths","covlayers_north","class_legend"), envir=environment())
+
+#        Protocol                                                           ####
+
+log_north <- foreach(i = 1:length(polygon_filepaths),
         .combine = rbind,
-        .errorhandling = "pass") %do% {
+        .errorhandling = "pass") %dopar% {
           
           # Extracting Home Range Polygons for a given individual/interval
           HR_estimates <- st_read(polygon_filepaths[[i]],quiet = T)
+          
+          # Covariate Layers/Stack 
+          cov_layers <- rast(covlayers_north)
           
           # Covariate Extraction 
           final_data <- foreach(j = 1:nrow(HR_estimates),
