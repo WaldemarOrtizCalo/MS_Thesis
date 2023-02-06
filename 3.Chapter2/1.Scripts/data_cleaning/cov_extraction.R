@@ -16,6 +16,7 @@ library(sf)
 library(terra)
 library(move)
 library(landscapemetrics)
+library(foreach)
 
 #      Functions                                                            ####
 #      Data                                                                 ####
@@ -42,6 +43,17 @@ locs <- locs_deer %>% filter(site == "North")
 
 # Covariate Layers/Stack 
 cov_layers <- rast(covlayers_north)
+
+# Class Legends
+class_legend <- data.frame(class = unique(cov_layers$north_nlcd),
+                           landcover_type = c("water",
+                                              "developed",
+                                              "barren",
+                                              "forest",
+                                              "shrub",
+                                              "grassland",
+                                              "cropland",
+                                              "wetland")) %>% rename(class = north_nlcd)
 
 #      Home Range Calculation                                               ####
 #        Filtering ids and periods with greater than 20 locs                ####
@@ -136,16 +148,91 @@ cropped_landscape <- crop(cov_layers,vect(HR_estimate)) %>% mask(vect(HR_estimat
 
 # Start of next for loop
 
+# Home Range Area
+hr_area <- as.numeric(st_area(HR_estimate))/10000 %>% 
+  data.frame(hr_area = .)
+
+# Mean of all topographic covariates
 mean_vals <- global(cropped_landscape[[c("north_dem",
                                          "slope",
                                          "aspect",
                                          "TRI")]],"mean", na.rm = T) %>% 
   rownames_to_column(var = "cov_name") %>% as_tibble %>% 
   pivot_wider(names_from = cov_name, 
-              values_from = mean)
+              values_from = mean) 
 
+# Landscape config metrics
 
-lsm_c_area_mn(cropped_landscape[["north_nlcd"]])
+landcover_lsi <- lsm_l_lsi(cropped_landscape[["north_nlcd"]]) %>% 
+  .[c("metric","value")] %>% 
+  pivot_wider(names_from = metric, 
+              values_from = value) 
+
+landcover_shdi <- lsm_l_shdi(cropped_landscape[["north_nlcd"]]) %>% 
+  .[c("metric","value")] %>% 
+  pivot_wider(names_from = metric, 
+              values_from = value) 
+
+landcover_contag <- lsm_l_contag(cropped_landscape[["north_nlcd"]]) %>% 
+  .[c("metric","value")] %>% 
+  pivot_wider(names_from = metric, 
+              values_from = value) 
+
+# Mean patch size
+landcover_meanarea <- lsm_c_area_mn(cropped_landscape[["north_nlcd"]]) %>%
+  left_join(class_legend, by = "class") %>% 
+  .[c("landcover_type","value")] %>% 
+  left_join(class_legend,., by = "landcover_type") %>% 
+  .[c("landcover_type","value")] %>% 
+  pivot_wider(names_from = landcover_type, 
+              values_from = value) 
+
+colnames(landcover_meanarea) <- paste("meanarea",colnames(landcover_meanarea),sep="_")
+  
+# Total patch area
+
+landcover_totalarea <- lsm_c_ca(cropped_landscape[["north_nlcd"]]) %>%
+  left_join(class_legend, by = "class") %>% 
+  .[c("landcover_type","value")] %>% 
+  left_join(class_legend,., by = "landcover_type") %>% 
+  .[c("landcover_type","value")] %>% 
+  pivot_wider(names_from = landcover_type, 
+              values_from = value) 
+
+colnames(landcover_totalarea) <- paste("totalarea",colnames(landcover_totalarea),sep="_")
+
+# Percent landcover
+
+landcover_percent <- landcover_totalarea/as.numeric(hr_area)
+
+colnames(landcover_percent) <- colnames(landcover_totalarea) %>% 
+  str_replace(pattern = "meanarea", replacement = "percent")
+
+# Patch Density
+
+landcover_patchdensity <- lsm_c_pd(cropped_landscape[["north_nlcd"]]) %>%
+  left_join(class_legend, by = "class") %>% 
+  .[c("landcover_type","value")] %>% 
+  left_join(class_legend,., by = "landcover_type") %>% 
+  .[c("landcover_type","value")] %>% 
+  pivot_wider(names_from = landcover_type, 
+              values_from = value) 
+
+colnames(landcover_patchdensity) <- paste("patchdensity",colnames(landcover_patchdensity),sep="_")
+
+# Joining Everything
+
+covs <- bind_cols(hr_area,
+          landcover_contag,
+          landcover_lsi,
+          landcover_shdi,
+          landcover_meanarea,
+          landcover_totalarea,
+          landcover_patchdensity,
+          landcover_percent) %>% 
+  mutate(id = HR_estimate$id,
+         int_id = HR_estimate$int_id,
+         hr_type = HR_estimate$hr_type,.before = 1)
 
 
 ###############################################################################
