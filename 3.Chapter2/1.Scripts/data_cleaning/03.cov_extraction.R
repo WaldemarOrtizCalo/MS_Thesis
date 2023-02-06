@@ -129,7 +129,7 @@ hr_log <- foreach(i = 1:nrow(valid_homeranges),
           return(i)
         }
 
-#      Covariate Extraction [DEV]                                           ####
+#      Covariate Extraction                                                 ####
 #        Data                                                               ####
 
 polygon_filepaths <- list.files("1.DataManagement/ch2_data/clean/homerange_polygons/north",
@@ -289,6 +289,23 @@ log_north <- foreach(i = 1:length(polygon_filepaths),
           
           return(paste0(i," out of ", length(polygon_filepaths)," completed"))
         }
+
+#        Joining and Exporting all cov sheets                               ####
+
+# Getting Filepaths
+csv_filepaths <- list.files("1.DataManagement/ch2_data/clean/cov_extractions/north",
+                            full.names = T) 
+# Making filepaths csvs
+
+csvs <- lapply(csv_filepaths, read_csv, show_col_types = FALSE)
+
+# Joining data
+
+final <- bind_rows(csvs)
+
+# Export Data
+write_csv(final,
+          file = "1.DataManagement/ch2_data/clean/cov_extractions/north_final_covs.csv")
 
 ###############################################################################
 #   South                                                                   ####
