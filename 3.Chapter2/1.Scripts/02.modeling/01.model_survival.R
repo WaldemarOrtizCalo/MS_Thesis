@@ -11,7 +11,7 @@
 #      Library                                                              ####
 library(tidyverse)
 library(survival)
-
+library(ggsurvfit)
 #      Functions                                                            ####
 
 #      Data                                                                 ####
@@ -60,4 +60,44 @@ data_final <- covs %>%
   left_join(locs_metadata_clean)
 
 
+###############################################################################
+#   North                                                                   ####
+#      Kaplan-Meier Models                                                  ####
+#        All individuals                                                    ####
+
+# Creating Survival Object
+surv_object <- Surv(time = data_final$t_start,
+                 time2 = data_final$t_end,
+                 event = data_final$event,
+                 type = "counting")
+
+# Fitting Kaplan-Meier Model 
+model_kapmier_all <- survfit(surv_object ~ 1, data=data_final)
+
+# Plot
+model_kapmier_all %>% ggsurvfit() +
+  labs(
+    x = "Days",
+    y = "Overall survival probability"
+  ) + add_confidence_interval() +
+  add_risktable()
+
+#        Sex-Based                                                          ####
+
+# Creating Survival Object
+surv_object <- Surv(time = data_final$t_start,
+                    time2 = data_final$t_end,
+                    event = data_final$event,
+                    type = "counting")
+
+# Fitting Kaplan-Meier Model 
+model_kapmier_sex <- survfit(surv_object ~ sex, data=data_final)
+
+# Plot
+model_kapmier_sex %>% ggsurvfit() +
+  labs(
+    x = "Days",
+    y = "Overall survival probability"
+  ) + add_confidence_interval() +
+  add_risktable()
 ###############################################################################
