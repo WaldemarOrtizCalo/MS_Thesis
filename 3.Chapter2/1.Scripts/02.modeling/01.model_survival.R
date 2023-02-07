@@ -61,8 +61,8 @@ data_final <- covs %>%
 
 
 ###############################################################################
-#   North                                                                   ####
-#      Kaplan-Meier Models                                                  ####
+#   Kaplan-Meier Models                                                     ####
+#      North                                                                ####
 #        All individuals                                                    ####
 
 # Creating Survival Object
@@ -100,4 +100,5 @@ model_kapmier_sex %>% ggsurvfit() +
     y = "Overall survival probability"
   ) + add_confidence_interval() +
   add_risktable()
+
 ###############################################################################
