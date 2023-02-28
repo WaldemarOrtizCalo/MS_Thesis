@@ -24,7 +24,7 @@ locs_deer_raw <- "1.DataManagement\\loc_data\\deer_all_NS_clean.csv" %>%
   read_csv()
 
 ###############################################################################
-#   1.Renaming Columns                                                      ####
+#   1. Renaming Columns                                                     ####
 
 locs_deer_cleaning <- locs_deer_raw %>% 
   rename(individual.local.identifier = id,
@@ -50,5 +50,11 @@ locs_deer_cleaning <- locs_deer_cleaning %>%
   mutate(site= ifelse(str_sub(locs_deer_cleaning$individual.local.identifier,1,1) == "N",
                       "North","South"))
 
+
+###############################################################################
+#   Export                                                                  #### 
+
+write_csv(locs_deer_cleaning,
+          file = "1.DataManagement/loc_data/deer_NS_final_clean.csv")
 
 ###############################################################################
