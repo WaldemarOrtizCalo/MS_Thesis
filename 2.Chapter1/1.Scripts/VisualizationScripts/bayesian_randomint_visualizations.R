@@ -33,6 +33,8 @@ library(terra)
 library(ggcorrplot)
 library(foreach)
 library(tidyverse)
+library(tidyterra)
+library(viridis) 
 
 #      Functions                                                            ####
 
@@ -233,7 +235,7 @@ for (i in 1:length(north_models)) {
   }
 }
 
-#      Predictive Raster                                                    ####
+#      Predictive Raster Calculation                                        ####
 
 # Subsetting Model and Model Metadata
 model <- readRDS(north_models[[1]])
@@ -614,7 +616,7 @@ for (i in 1:length(south_models)) {
 }
 
 
-#      Predictive Raster                                                    ####
+#      Predictive Raster Calculation                                        ####
 
 # Subsetting Model and Model Metadata
 model <- readRDS(south_models[[1]])
@@ -980,7 +982,7 @@ for (i in 1:length(southeast_models)) {
   }
 }
 
-#      Predictive Raster                                                    ####
+#      Predictive Raster Calculation                                        ####
  
 # Subsetting Model and Model Metadata
 model <- readRDS(southeast_models[[1]])
@@ -1156,5 +1158,42 @@ ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/southea
        height = 12,
        units = "in")
 
+
+#      Predictive Raster Map                                                ####
+
+# Importing Raster
+rasters <- list.files("2.Chapter1/3.Output/visualizations_bayesian_randomint/southeast/predictive_maps",
+                      pattern = "tif",
+                      full.names = T) %>% 
+  rast() %>% 
+  project("EPSG:4326")
+
+# Extracting and Replacing Raster names
+raster_names <- list.files("2.Chapter1/3.Output/visualizations_bayesian_randomint/southeast/predictive_maps",
+                           pattern = "tif",
+                           full.names = F) %>% 
+  str_remove("southeastmodel_F_") %>% 
+  str_remove(".tif")
+
+names(rasters) <- raster_names
+
+# Making facetted plot
+maps <- ggplot() +
+  geom_spatraster(data = rasters) +
+  facet_wrap(~lyr, ncol = 2) +
+  scale_fill_viridis(option = "D",
+                     name = "Relative Pr(use)",
+                     na.value="transparent")+
+  theme(legend.position = "bottom")
+
+# Exporting
+ggsave(filename = "predictive_maps.png",
+       plot = maps,
+       device = "png",
+       path = "2.Chapter1/3.Output/visualizations_bayesian_randomint/southeast/predictive_maps",
+       width = 8,
+       height = 10,
+       units = "in",
+       dpi = 300)
 
 ###############################################################################
