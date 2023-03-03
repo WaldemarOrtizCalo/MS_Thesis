@@ -58,7 +58,7 @@ for(i in 1:length(algos)){
   output <- terrain(input,
                     v = algos[i],
                     neighbors = 8,
-                    filename = paste0("1.DataManagement/CovRasters/base_layers/south",algos[i],".tif"),
+                    filename = paste0("1.DataManagement/CovRasters/base_layers/south_",algos[i],".tif"),
                     overwrite = T)
   
   print(i/length(algos))
