@@ -44,8 +44,9 @@ table_mortality_original <- read_xlsx("1.DataManagement\\ch2_data\\dbo_tblMortal
   rename(individual.local.identifier = DeerID)
 
 # Deer Locations
-locs_deer <- read_csv("1.DataManagement\\CleanData\\deer_all_revised.csv") %>% 
+locs_deer <- read_csv("1.DataManagement/loc_data/deer_all_final_clean.csv") %>% 
   filter(site %in% c("North", "South")) %>% 
+  mutate(age = ifelse(age == "A1" | age == "A2" |age == "A3" |age == "A4", "A", age)) %>% 
   filter(age %in% c("F","Y","A")) %>% 
   mutate(site = factor(site, levels = c("North","South"))) %>%
   mutate(sex = factor(sex, levels = c("M","F"))) %>% 
@@ -215,14 +216,31 @@ locs_t_periods <- foreach(i = 1:length(list_deerIDs),
 ###############################################################################
 #   Data Cleaning: Mortality Table                                          ####
 
-# Mortality table
+# Cleaning Mortality Table
 mortality_table <- table_mortality_original %>% 
-  mutate(status = ifelse(!(is.na(MortDate)),1,0)) %>% 
-  select(individual.local.identifier,MortDate,Harvest,status) %>% 
+  mutate(status = ifelse(!(is.na(MortDate)) | !(is.na(HarvestDate)),1,0)) %>% 
+  select(individual.local.identifier,MortDate,HarvestDate,Harvest,status) %>% 
   mutate(Harvest = ifelse(Harvest == "Y",1,0)) %>% 
-  mutate(studyday = studyday_calc(MortDate,anchor_date = anchor_date)) %>% 
-  filter(status == 1)
-  
+  filter(status == 1) %>% 
+  mutate(MortDate = ymd(as.character(MortDate)),
+         HarvestDate =ymd(as.character(HarvestDate))) %>% 
+  mutate(event_date  = ifelse(!(is.na(MortDate)),as.character(MortDate),2))
+
+# Natural Mortalities
+natmort <- mortality_table %>% 
+  filter(!(is.na(MortDate))) %>% 
+  select(c(individual.local.identifier,Harvest,MortDate,status)) %>% 
+  rename(death_date = MortDate)
+
+# Harvest Mortalities
+harvmort <- mortality_table %>% 
+  filter(!(is.na(HarvestDate))) %>% 
+  select(c(individual.local.identifier,HarvestDate,Harvest,status)) %>% 
+  rename(death_date = HarvestDate)
+
+# Final Mort Table
+mortality_table <- full_join(harvmort,natmort)
+
 ###############################################################################
 #   Data Cleaning: Final Location Data                                      ####
 #      Adding Mortality information to relevant locs                        ####
@@ -233,6 +251,8 @@ list_deerIDs_mort <-  unique(mortality_table$individual.local.identifier)
 list_deerIDs_inclusion <- intersect(list_deerIDs,list_deerIDs_mort)
 
 # Adding information to mortalities
+options(dplyr.summarise.inform = FALSE)
+
 locs_mortalities <- foreach(i = 1:length(list_deerIDs_inclusion),
                             .combine = bind_rows) %do% {
                               
@@ -245,14 +265,18 @@ locs_mortalities <- foreach(i = 1:length(list_deerIDs_inclusion),
                                              individual.local.identifier == indiv)
                               
                               mort_t_periods <- locs %>% 
-                                mutate(event = ifelse(mort$studyday >= t_start &
-                                                        mort$studyday <= t_end,1,0))
+                                mutate(event = ifelse(mort$death_date >= date &
+                                                        mort$death_date <= date,1,0)) %>% 
+                                select(individual.local.identifier,ordered_int_id,t_start,t_end,event) %>% 
+                                group_by(individual.local.identifier,t_start,t_end) %>% 
+                                summarise(event = max(event))
+                              
                               # Iteration Tracker
                               print(i/length(list_deerIDs_inclusion))
                               
                               return(mort_t_periods)
-                            } %>% 
-  select(individual.local.identifier,ordered_int_id,t_start,t_end,event)
+                            } 
+options(dplyr.summarise.inform = T)
 
 #      Adding mortalities to loc df                                         ####
 
@@ -264,5 +288,28 @@ locs_final <- locs_t_periods %>%
 
 write_csv(locs_final,
           "1.DataManagement/ch2_data/clean/locs/deer_mortalitylocs.csv")
+
+###############################################################################
+#   [Inclusion Script]                                                      ####
+
+
+locs_clean <- locs_t_periods %>% 
+  group_by(individual.local.identifier) %>% 
+  summarise(nlocs = n(),
+            time_min_clean = min(timestamp),
+            time_max_clean = max(timestamp))
+
+locs_raw <- read_csv("1.DataManagement/loc_data/deer_spr_gps.csv") %>% 
+  rename(individual.local.identifier = DeerID) %>% 
+  group_by(individual.local.identifier) %>% 
+  summarise(nlocs = n(),
+            time_min_raw = min(GPS_DATE_LOCAL),
+            time_max_raw = max(GPS_DATE_LOCAL))
+
+summary_inclusion <- left_join(locs_raw,locs_clean)
+
+write_csv(summary_inclusion,
+          "1.DataManagement/jon_data/data_inclusion.csv")
+
 
 ###############################################################################
