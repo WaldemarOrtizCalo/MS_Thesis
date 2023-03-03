@@ -16,8 +16,37 @@ library(sf)
 library(terra)
 library(move)
 library(landscapemetrics)
+library(foreach)
 
 #      Functions                                                            ####
+reclass_matrixNorth<- matrix(data = c(1,"Water",
+                                      2,"Developed",
+                                      3,"Barren",
+                                      4,"Forest",
+                                      5,"Shrub",
+                                      6,"Grassland",
+                                      7,"Cropland",
+                                      8,"Wetland"
+),ncol = 2,byrow = TRUE) %>% 
+  as.data.frame() %>% 
+  rename("class" = V1,
+         "class_name" = V2)
+
+
+reclass_matrixSouth<- matrix(data = c(1, "Water",
+                                      2, "Developed",
+                                      3, "Barren",
+                                      4, "Deciduous",
+                                      5, "Evergreen",
+                                      6, "Mixed",
+                                      7, "Shrub",
+                                      8, "Grassland",
+                                      9, "Cropland",
+                                      10, "Wetland"),ncol = 2,byrow = TRUE) %>% 
+  as.data.frame() %>% 
+  rename("class" = V1,
+         "class_name" = V2)
+
 #      Data                                                                 ####
 
 # Deer Locations
@@ -52,8 +81,8 @@ valid_homeranges <- locs %>%
   filter(n_locs > 20)
 
 #        Home Range Polygon calculation and export                          ####
-
-hr_log <- foreach(i = 1:nrow(valid_homeranges),
+#nrow(valid_homeranges)
+hr_log <- foreach(i = 1:20,
         .combine = rbind) %do% {
           
           # HR metadata 
@@ -85,68 +114,121 @@ hr_log <- foreach(i = 1:nrow(valid_homeranges),
             mutate(hr_type = c("kde_95"),.after = int_id) %>% 
             slice(2)
           
-          KDE_50 <- akde(telemetry_object,M.IID) %>% 
-            as.sf(level.UD = 0.50) %>% 
-            mutate(id = indiv_id,.before = 1) %>% 
-            mutate(int_id = interval_id,.after = id) %>% 
-            mutate(hr_type = c("kde_50"),.after = int_id) %>% 
-            slice(2)
-          
           AKDE_95 <- akde(telemetry_object,M.OUF) %>% 
             as.sf(level.UD = 0.95) %>% 
             mutate(id = indiv_id,.before = 1) %>% 
             mutate(int_id = interval_id,.after = id) %>% 
             mutate(hr_type = c("akde_95"),.after = int_id) %>% 
             slice(2)
-          
-          AKDE_50 <- akde(telemetry_object,M.OUF) %>% 
-            as.sf(level.UD = 0.50) %>% 
-            mutate(id = indiv_id,.before = 1) %>% 
-            mutate(int_id = interval_id,.after = id) %>% 
-            mutate(hr_type = c("akde_50"),.after = int_id) %>% 
-            slice(2)
-          
+  
           # Export
-          sf_export <- bind_rows(KDE_95,KDE_50,AKDE_95,AKDE_50) %>% 
+          sf_export <- bind_rows(KDE_95,AKDE_95) %>% 
             st_write(paste0("1.DataManagement/ch2_data/clean/homerange_polygons/north/",
                             indiv_id,"_",interval_id,".shp"),
-                     append = F)
+                     append = F,
+                     quiet = T)
           
           return(i)
         }
 
-#      Covariate Extraction [DEV]                                           ####
-#        Polygon Import                                                     ####
+#      Covariate Extraction                                                 ####
 
+# List of Home Ranges
 polygon_filepaths <- list.files("1.DataManagement/ch2_data/clean/homerange_polygons/north",
                                 pattern = ".shp",
                                 full.names = T)
 
-# Start of the for loop 
-
-HR_estimates <- st_read(polygon_filepaths[[1]])
-
-# Start of second loop [ each HR estimate ]
-
-HR_estimate <- HR_estimates %>% slice(1)
-
-# Landscape Metrics  
-
-cropped_landscape <- crop(cov_layers,vect(HR_estimate)) %>% mask(vect(HR_estimate))
-
-# Start of next for loop
-
-mean_vals <- global(cropped_landscape[[c("north_dem",
-                                         "slope",
-                                         "aspect",
-                                         "TRI")]],"mean", na.rm = T) %>% 
-  rownames_to_column(var = "cov_name") %>% as_tibble %>% 
-  pivot_wider(names_from = cov_name, 
-              values_from = mean)
-
-
-lsm_c_area_mn(cropped_landscape[["north_nlcd"]])
-
+# Covariate Extraction
+HR_covs <- foreach(i = 1:length(polygon_filepaths),
+                   .combine = bind_rows) %do% {
+                     
+                     HR_estimates <- st_read(polygon_filepaths[[i]],
+                                             quiet = T)
+                     
+                     covs <- foreach(j = 1:nrow(HR_estimates),
+                                     .combine = bind_rows) %do% {
+                                       
+                                       HR_estimate <- HR_estimates %>% slice(j)
+                                       HR_estimate_vect <- vect(HR_estimate)
+                                       
+                                       # Landscape Metrics  
+                                       
+                                       cropped_landscape <- crop(cov_layers,HR_estimate_vect) %>% mask(vect(HR_estimate))
+                                       
+                                       hr_size <- tibble(hr_size_ha = expanse(HR_estimate_vect, unit="ha", transform=TRUE))
+                                       
+                                       # Landscape Metrics  
+                                       
+                                       cropped_landscape <- crop(cov_layers,HR_estimate_vect) %>% mask(vect(HR_estimate))
+                                       
+                                       hr_size <- tibble(hr_size_ha = expanse(HR_estimate_vect, unit="ha", transform=TRUE))
+                                       
+                                       mean_vals <- global(cropped_landscape[[c("north_dem",
+                                                                                "slope",
+                                                                                "aspect",
+                                                                                "TRI")]],"mean", na.rm = T) %>% 
+                                         rownames_to_column(var = "cov_name") %>% as_tibble %>% 
+                                         pivot_wider(names_from = cov_name, 
+                                                     values_from = mean) %>% 
+                                         rename(dem = north_dem)
+                                       
+                                       contag <- lsm_l_contag(cropped_landscape[["north_nlcd"]]) %>% 
+                                         dplyr::select(c(metric,value)) %>% 
+                                         pivot_wider(names_from = metric, 
+                                                     values_from = value)
+                                       
+                                       lsi <- lsm_l_lsi(cropped_landscape[["north_nlcd"]]) %>% 
+                                         dplyr::select(c(metric,value)) %>% 
+                                         pivot_wider(names_from = metric, 
+                                                     values_from = value)
+                                       
+                                       shdi <- lsm_l_shdi(cropped_landscape[["north_nlcd"]]) %>% 
+                                         dplyr::select(c(metric,value)) %>% 
+                                         pivot_wider(names_from = metric, 
+                                                     values_from = value)
+                                       
+                                       mean_patcharea <- lsm_c_area_mn(cropped_landscape[["north_nlcd"]]) %>% 
+                                         mutate(class = as.character(class)) %>% 
+                                         left_join(reclass_matrixNorth) %>% 
+                                         dplyr::select(c(class_name, value)) %>% 
+                                         pivot_wider(names_from = class_name,
+                                                     values_from = value,
+                                                     names_prefix = "meanpatcharea_")
+                                       
+                                       patch_density <- lsm_c_pd(cropped_landscape[["north_nlcd"]]) %>% 
+                                         mutate(class = as.character(class)) %>% 
+                                         left_join(reclass_matrixNorth) %>% 
+                                         dplyr::select(c(class_name, value)) %>% 
+                                         pivot_wider(names_from = class_name,
+                                                     values_from = value,
+                                                     names_prefix = "patchdensity_")
+                                       
+                                       landcover_proportions <- lsm_c_ca(cropped_landscape[["north_nlcd"]])%>% 
+                                         mutate(class = as.character(class)) %>% 
+                                         left_join(reclass_matrixNorth) %>% 
+                                         dplyr::select(c(class_name, value)) %>% 
+                                         mutate(value = value/hr_size$hr_size_ha) %>% 
+                                         pivot_wider(names_from = class_name,
+                                                     values_from = value,
+                                                     names_prefix = "proportion_")
+                                       
+                                       covs <- bind_cols(hr_size,
+                                                         mean_vals,
+                                                         contag,
+                                                         lsi,
+                                                         shdi,
+                                                         mean_patcharea,
+                                                         patch_density,
+                                                         landcover_proportions)
+                                       
+                                       return(covs)
+                                     }
+                     
+                     final <- bind_cols(HR_estimates,covs) %>% st_drop_geometry() %>% 
+                       dplyr::select(-c(name))
+                     
+                     return(final)
+                   }
 
 ###############################################################################
 #   South                                                                   ####
