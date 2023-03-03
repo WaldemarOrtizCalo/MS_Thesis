@@ -17,6 +17,7 @@ library(terra)
 library(move)
 library(landscapemetrics)
 library(foreach)
+library(doParallel)
 
 #      Functions                                                            ####
 reclass_matrixNorth<- matrix(data = c(1,"Water",
@@ -62,6 +63,23 @@ covlayers_south <- list.files("1.DataManagement/CovRasters/base_layers",
                               pattern = "south",
                               full.names = T) %>% str_subset(".xml", negate = T) %>% str_subset("southeast", negate = T)
 
+#      Cluster Setup                                                        ####
+
+# Cluster Number
+cl <- makeCluster(6)
+registerDoParallel(cl)
+
+# Exporting Packages
+clusterEvalQ(cl,
+             {
+               library(terra)
+               library(sf)
+               library(move)
+               library(ctmm)
+               library(tidyverse)
+               library(foreach)
+             })
+
 ###############################################################################
 #   North                                                                   ####
 #      Data Import                                                          ####
@@ -80,10 +98,16 @@ valid_homeranges <- locs %>%
   summarize(n_locs = n()) %>% 
   filter(n_locs > 20)
 
+#        Exporting to cluster                                               ####
+
+# Exporting data to clusters
+clusterExport(cl=cl, varlist=c("valid_homeranges"), envir=environment())
+
 #        Home Range Polygon calculation and export                          ####
-#nrow(valid_homeranges)
-hr_log <- foreach(i = 1:20,
-        .combine = rbind) %do% {
+
+hr_log <- foreach(i = 1:nrow(valid_homeranges),
+        .combine = rbind,
+        .errorhandling = "pass") %dopar% {
           
           # HR metadata 
           indiv_id <- valid_homeranges[[i,1]]
@@ -104,7 +128,7 @@ hr_log <- foreach(i = 1:20,
           # Creating CTMM fit objects for the smoothing
           M.IID <- ctmm.fit(telemetry_object) 
           GUESS <- ctmm.guess(telemetry_object,interactive=FALSE) 
-          M.OUF <- ctmm.fit(telemetry_object,GUESS) 
+          M.AUTOCOR <- ctmm.select(telemetry_object,GUESS) 
           
           # Home Range Polygons
           KDE_95 <- akde(telemetry_object,M.IID) %>% 
@@ -114,13 +138,13 @@ hr_log <- foreach(i = 1:20,
             mutate(hr_type = c("kde_95"),.after = int_id) %>% 
             slice(2)
           
-          AKDE_95 <- akde(telemetry_object,M.OUF) %>% 
+          AKDE_95 <- akde(telemetry_object,M.AUTOCOR) %>% 
             as.sf(level.UD = 0.95) %>% 
             mutate(id = indiv_id,.before = 1) %>% 
             mutate(int_id = interval_id,.after = id) %>% 
             mutate(hr_type = c("akde_95"),.after = int_id) %>% 
             slice(2)
-  
+          
           # Export
           sf_export <- bind_rows(KDE_95,AKDE_95) %>% 
             st_write(paste0("1.DataManagement/ch2_data/clean/homerange_polygons/north/",
@@ -140,24 +164,23 @@ polygon_filepaths <- list.files("1.DataManagement/ch2_data/clean/homerange_polyg
 
 # Covariate Extraction
 HR_covs <- foreach(i = 1:length(polygon_filepaths),
-                   .combine = bind_rows) %do% {
+                   .combine = bind_rows,
+                   .errorhandling = "pass") %do% {
                      
+                     # Importing sf object for HR 
                      HR_estimates <- st_read(polygon_filepaths[[i]],
                                              quiet = T)
-                     
+                    
+                     # Extracting Covariates 
                      covs <- foreach(j = 1:nrow(HR_estimates),
-                                     .combine = bind_rows) %do% {
+                                     .combine = bind_rows,
+                                     .errorhandling = "pass") %do% {
                                        
+                                       # Isolating home ranges 
                                        HR_estimate <- HR_estimates %>% slice(j)
                                        HR_estimate_vect <- vect(HR_estimate)
                                        
-                                       # Landscape Metrics  
-                                       
-                                       cropped_landscape <- crop(cov_layers,HR_estimate_vect) %>% mask(vect(HR_estimate))
-                                       
-                                       hr_size <- tibble(hr_size_ha = expanse(HR_estimate_vect, unit="ha", transform=TRUE))
-                                       
-                                       # Landscape Metrics  
+                                       # Cropping Landscape  
                                        
                                        cropped_landscape <- crop(cov_layers,HR_estimate_vect) %>% mask(vect(HR_estimate))
                                        
@@ -229,6 +252,10 @@ HR_covs <- foreach(i = 1:length(polygon_filepaths),
                      
                      return(final)
                    }
+
+# Export
+write_csv(HR_covs,
+          "1.DataManagement/ch2_data/clean/cov_extractions/north_HR_covs.csv")
 
 ###############################################################################
 #   South                                                                   ####
