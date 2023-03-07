@@ -2,87 +2,93 @@
 
 # Author: Waldemar Ortiz-Calo
 
-# Date:2023-02-06 
+# Date:2023-03-06 
 
 # Purpose: 
 
 ###############################################################################
 #   Library / Functions / Data                                              ####
+
 #      Library                                                              ####
 library(tidyverse)
 library(survival)
 library(ggsurvfit)
+library(MuMIn)
+library(lares)
+
 #      Functions                                                            ####
 
 #      Data                                                                 ####
-#        [Locs]                                                             ####
 
-# Deer Locs
-locs_deer <- read_csv("1.DataManagement/ch2_data/clean/locs/deer_mortalitylocs.csv") %>% 
-  mutate(age = factor(age,levels = c("A","Y","F")))
+covs_csvs <- list.files("1.DataManagement/ch2_data/clean/cov_extractions",
+                        full.names = T,
+                        pattern = ".csv") 
 
-# Deer metadata
-locs_metadata <- locs_deer %>% 
-  dplyr::select(c(individual.local.identifier,ordered_int_id,sex,site,age,t_start,t_end,event)) %>% 
-  unique()
-
-# Identifying problem cases
-problem_cases <- locs_metadata %>% 
-  group_by(individual.local.identifier,ordered_int_id) %>% 
-  summarize(count = n()) %>% 
-  filter(count > 1)
-
-# Cleaning
-for (i in 1:nrow(problem_cases)) {
-  
-  sub <- locs_metadata[locs_metadata$individual.local.identifier == problem_cases[[i,1]] & 
-                         locs_metadata$ordered_int_id == problem_cases[[i,2]],] 
-  
-  age_class <- sub$age %>% .[which.min(.)]
-  
-  locs_metadata[locs_metadata$individual.local.identifier == problem_cases[[i,1]] & 
-                  locs_metadata$ordered_int_id == problem_cases[[i,2]], "age"] <- age_class
-  
-  print(i)
-}
-
-# Identifying clean ones
-locs_metadata_clean <- locs_metadata %>% unique()
-
-#        [Covs]                                                             ####
-
-# This will be replaced with the join cov dataframe
-covs <- read_csv("1.DataManagement/ch2_data/clean/cov_extractions/north_final_covs.csv")
-
-#        [Joining Covs and Loc data]                                        ####
-
-data_final <- covs %>% 
-  left_join(locs_metadata_clean)
-
+mort_data <- read_csv("1.DataManagement/ch2_data/clean/locs/deer_mortalitylocs.csv")
 
 ###############################################################################
-#   Kaplan-Meier Models                                                     ####
-#      North                                                                ####
-#        All individuals                                                    ####
+#   Model North                                                             ####
+#      Setup                                                                ####
 
-# Creating Survival Object
-surv_object <- Surv(time = data_final$t_start,
-                 time2 = data_final$t_end,
-                 event = data_final$event,
-                 type = "counting")
+# Home Range Data
+hr_data <- read_csv(covs_csvs[[1]]) %>% 
+  rename(individual.local.identifier = id,
+         ordered_int_id = int_id)
 
-# Fitting Kaplan-Meier Model 
-model_kapmier_all <- survfit(surv_object ~ 1, data=data_final)
+# Mortality Data
+mort <- mort_data %>% 
+  distinct(individual.local.identifier,ordered_int_id,t_start,t_end, .keep_all = TRUE) %>% 
+  dplyr::select(-c(location.long,location.lat,timestamp,date))
 
-# Plot
-model_kapmier_all %>% ggsurvfit() +
-  labs(
-    x = "Days",
-    y = "Overall survival probability"
-  ) + add_confidence_interval() +
-  add_risktable()
+# Final Data
+data_final <- left_join(hr_data,mort) %>% 
+  relocate(names(mort),.after= ordered_int_id) %>% 
+  arrange(individual.local.identifier, ordered_int_id) %>% 
+  mutate_all(~replace_na(.,0)) %>% 
+  mutate(age = factor(age, levels = c("F","Y","A")),
+         year = as.character(year)) %>% 
+  filter(hr_type == "akde_95")
 
-#        Sex-Based                                                          ####
+# Scaling Data
+for (j in ((str_which(names(data_final),"hr_type")+1):ncol(data_final))) {
+  data_final[,j] <- scale(data_final[,j])
+  print(j)
+}
+
+#      Checking for Autocorrelation                                         ####
+
+# Initial list of covs
+cov_names_init <- names(data_final) %>% 
+  str_subset("individual.local.identifier",negate = T)  %>%
+  str_subset("month",negate = T)  %>%
+  str_subset("site",negate = T)  %>%
+  str_subset("ordered_int_id",negate = T)  %>%
+  str_subset("t_start",negate = T)  %>%
+  str_subset("t_end",negate = T)  %>%
+  str_subset("event",negate = T)  %>%
+  str_subset("hr_type",negate = T)  %>%
+  str_subset("Shrub",negate = T) %>% 
+  str_subset("Wetland",negate = T) %>% 
+  str_subset("Barren",negate = T) %>% 
+  str_subset("Water",negate = T)  %>%
+  c()
+
+# Making Correlation Plot
+cov_df <- data_final[cov_names_init]
+
+cor_bargraph <-corr_cross(cov_df, rm.na = T, max_pvalue = 0.07, 
+                          top = 40,
+                          plot = T)
+
+# Final list of covs
+cov_names_final <- cov_names_init %>% 
+  str_subset("slope",negate = T) %>% 
+  str_subset("lsi",negate = T) %>% 
+  str_subset("patchdensity_Grassland",negate = T)
+
+
+
+#      Survival Models                                                      ####
 
 # Creating Survival Object
 surv_object <- Surv(time = data_final$t_start,
@@ -90,15 +96,111 @@ surv_object <- Surv(time = data_final$t_start,
                     event = data_final$event,
                     type = "counting")
 
-# Fitting Kaplan-Meier Model 
-model_kapmier_sex <- survfit(surv_object ~ sex, data=data_final)
+#        Kaplan-Meier Model                                                 ####
 
-# Plot
-model_kapmier_sex %>% ggsurvfit() +
-  labs(
-    x = "Days",
-    y = "Overall survival probability"
-  ) + add_confidence_interval() +
-  add_risktable()
+model_kaplanmeier_north <- survfit(surv_object ~ 1, data=data_final)
+
+#        Cox Model                                                          ####
+
+# Building the formula
+formula <- as.formula(paste("surv_object ~ ", 
+                            paste(cov_names_final, collapse= "+")))
+
+# Building Global Model
+cox <- coxph(formula, 
+             data = data_final,
+             na.action = "na.fail")
+
+# Dredge
+dredge_north <- dredge(cox)
+
+###############################################################################
+#   Model South                                                             ####
+#      Setup                                                                ####
+
+# Home Range Data
+hr_data <- read_csv(covs_csvs[[2]]) %>% 
+  rename(individual.local.identifier = id,
+         ordered_int_id = int_id)
+
+# Mortality Data
+mort <- mort_data %>% 
+  distinct(individual.local.identifier,ordered_int_id,t_start,t_end, .keep_all = TRUE) %>% 
+  dplyr::select(-c(location.long,location.lat,timestamp,date))
+
+# Final Data
+data_final <- left_join(hr_data,mort) %>% 
+  relocate(names(mort),.after= ordered_int_id) %>% 
+  arrange(individual.local.identifier, ordered_int_id) %>% 
+  mutate_all(~replace_na(.,0)) %>% 
+  mutate(age = factor(age, levels = c("F","Y","A")),
+         year = as.character(year)) %>% 
+  filter(hr_type == "akde_95")
+
+# Scaling Data
+for (j in ((str_which(names(data_final),"hr_type")+1):ncol(data_final))) {
+  data_final[,j] <- scale(data_final[,j])
+  print(j)
+}
+
+#      Checking for Autocorrelation                                         ####
+
+# Initial list of covs
+cov_names_init <- names(data_final) %>% 
+  str_subset("individual.local.identifier",negate = T)  %>%
+  str_subset("month",negate = T)  %>%
+  str_subset("site",negate = T)  %>%
+  str_subset("ordered_int_id",negate = T)  %>%
+  str_subset("t_start",negate = T)  %>%
+  str_subset("t_end",negate = T)  %>%
+  str_subset("event",negate = T)  %>%
+  str_subset("hr_type",negate = T)  %>%
+  str_subset("Shrub",negate = T) %>% 
+  str_subset("Wetland",negate = T) %>% 
+  str_subset("Barren",negate = T) %>% 
+  str_subset("Water",negate = T)  %>%
+  c()
+
+# Making Correlation Plot
+cov_df <- data_final[cov_names_init]
+
+cor_bargraph <-corr_cross(cov_df, rm.na = T, max_pvalue = 0.07, 
+                          top = 40,
+                          plot = T)
+
+# Final list of covs
+cov_names_final <- cov_names_init %>% 
+  str_subset("slope",negate = T) %>% 
+  str_subset("proportion_Deciduous",negate = T) %>% 
+  str_subset("patchdensity_Evergreen",negate = T) %>% 
+  str_subset("patchdensity_Mixed",negate = T) %>% 
+  str_subset("lsi",negate = T) %>% 
+  str_subset("meanpatcharea_Grassland",negate = T) 
+
+#      Survival Models                                                      ####
+
+# Creating Survival Object
+surv_object <- Surv(time = data_final$t_start,
+                    time2 = data_final$t_end,
+                    event = data_final$event,
+                    type = "counting")
+
+#        Kaplan-Meier Model                                                 ####
+
+model_kaplanmeier_south <- survfit(surv_object ~ 1, data=data_final)
+
+#        Cox Model                                                          ####
+
+# Building the formula
+formula <- as.formula(paste("surv_object ~ ", 
+                            paste(cov_names_final, collapse= "+")))
+
+# Building Global Model
+cox <- coxph(formula, 
+             data = data_final,
+             na.action = "na.fail")
+
+# Dredge
+dredge_south <- dredge(cox)
 
 ###############################################################################
