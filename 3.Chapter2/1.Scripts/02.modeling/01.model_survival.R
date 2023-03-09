@@ -122,7 +122,7 @@ formula <- as.formula(paste("surv_object ~ ",
                             paste(cov_names_final, collapse= "+")))
 
 # Building Global Model
-cox <- coxph(formula, 
+cox_north <- coxph(formula, 
              data = data_final,
              na.action = "na.fail")
 
@@ -218,7 +218,7 @@ formula <- as.formula(paste("surv_object ~ ",
                             paste(cov_names_final, collapse= "+")))
 
 # Building Global Model
-cox <- coxph(formula, 
+cox_south <- coxph(formula, 
              data = data_final,
              na.action = "na.fail")
 
