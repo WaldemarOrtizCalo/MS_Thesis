@@ -15,6 +15,7 @@ library(survival)
 library(ggsurvfit)
 library(MuMIn)
 library(lares)
+library(doParallel)
 
 #      Functions                                                            ####
 
@@ -25,6 +26,20 @@ covs_csvs <- list.files("1.DataManagement/ch2_data/clean/cov_extractions",
                         pattern = ".csv") 
 
 mort_data <- read_csv("1.DataManagement/ch2_data/clean/locs/deer_mortalitylocs.csv")
+
+#      Cluster Setup                                                        ####
+
+# Cluster Number
+clust <- makeCluster(6)
+registerDoParallel(clust)
+
+# Exporting Packages
+clusterEvalQ(clust,
+             {
+               library(tidyverse)
+               library(MuMIn)
+               library(survival)
+             })
 
 ###############################################################################
 #   Model North                                                             ####
@@ -111,9 +126,16 @@ cox <- coxph(formula,
              data = data_final,
              na.action = "na.fail")
 
-# Dredge
-dredge_north <- dredge(cox)
+# Exporting data to clusters
+clusterExport(cl=clust, varlist=c("cox","data_final","surv_object"), envir=environment())
 
+# Dredge
+print(paste0("Start Time:",Sys.time()))
+
+dredge_north <- dredge(cox,
+                       cluster = clust)
+
+print(paste0("End Time:",Sys.time()))
 ###############################################################################
 #   Model South                                                             ####
 #      Setup                                                                ####
@@ -200,7 +222,16 @@ cox <- coxph(formula,
              data = data_final,
              na.action = "na.fail")
 
+# Exporting data to clusters
+clusterExport(cl=clust, varlist=c("cox","data_final","surv_object"), envir=environment())
+print(Sys.time())
+
 # Dredge
-dredge_south <- dredge(cox)
+print(paste0("Start Time:",Sys.time()))
+
+dredge_south <- dredge(cox,
+                       cluster = clust)
+
+print(paste0("End Time:",Sys.time()))
 
 ###############################################################################
