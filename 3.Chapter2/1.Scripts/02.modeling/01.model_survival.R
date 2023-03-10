@@ -136,6 +136,10 @@ dredge_north <- dredge(cox,
                        cluster = clust)
 
 print(paste0("End Time:",Sys.time()))
+
+write_csv(dredge_north,
+          "3.Chapter2/3.Output/dredge/dredge_north.csv")
+
 ###############################################################################
 #   Model South                                                             ####
 #      Setup                                                                ####
