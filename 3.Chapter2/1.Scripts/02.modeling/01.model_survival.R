@@ -137,8 +137,16 @@ dredge_north <- dredge(cox,
 
 print(paste0("End Time:",Sys.time()))
 
+# Dredge Export
 write_csv(dredge_north,
           "3.Chapter2/3.Output/dredge/dredge_north.csv")
+
+# Dredge Export Top Models 
+
+dredge_north_top <- read_csv("3.Chapter2/3.Output/dredge/dredge_north.csv") %>% 
+  slice_head(n = 200) %>% 
+  write_csv("3.Chapter2/3.Output/dredge/dredge_north_topmodels.csv",
+            append = F)
 
 ###############################################################################
 #   Model South                                                             ####
