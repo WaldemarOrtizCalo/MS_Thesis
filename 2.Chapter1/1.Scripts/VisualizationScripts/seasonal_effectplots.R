@@ -106,7 +106,6 @@ cov_list_plotting <- names(data)[-1] %>%
   str_remove("southeast_")
   
 # Start of the for loops
-i <- 1 
 
 for (i in 1:length(cov_list_plotting)) {
   
@@ -152,7 +151,6 @@ for (i in 1:length(cov_list_plotting)) {
     theme_nice()+
     ylab("Probability of Use")+
     ylim(0, 1)+
-    ggtitle(cov_list_plotting[[i]]) +
     labs(x = str_remove(cov_list_plotting[[i]],"southeast_")) +
     theme(plot.title = element_text(hjust = 0.5))
   
