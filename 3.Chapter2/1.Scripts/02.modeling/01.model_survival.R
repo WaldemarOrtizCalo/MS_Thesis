@@ -69,7 +69,9 @@ data_final <- left_join(hr_data,mort) %>%
   mutate(age = factor(age, levels = c("F","Y","A")),
          sex = factor(sex, levels = c("F","M")),
          year = as.character(year)) %>% 
-  filter(hr_type == "akde_95")
+  filter(hr_type == "akde_95")%>% 
+  mutate(t_start = t_start+28,
+         t_end = t_end+28,)
 
 # Scaling Data
 for (j in ((str_which(names(data_final),"hr_type")+1):ncol(data_final))) {
@@ -174,25 +176,6 @@ model_kaplanmeier_north_age %>%
     label_header = "**1-year survival (95% CI)**"
   )
 
-
-#           Sex + Age (Exploration)                                         ####
-
-model_kaplanmeier_north_sexage <- survfit(surv_object ~ age + sex, data=data_final)
-
-sexage_plot <- ggsurvfit(model_kaplanmeier_north_sexage) +
-  labs(
-    x = "Days",
-    y = "Overall survival probability"
-  ) +
-  add_confidence_interval()+
-  add_risktable()
-
-
-model_kaplanmeier_north_age %>% 
-  tbl_survfit(
-    times = 365.25,
-    label_header = "**1-year survival (95% CI)**"
-  )
 
 #        Cox Model                                                          ####
 
@@ -385,24 +368,6 @@ model_kaplanmeier_south_age %>%
   )
 
 
-#           Sex + Age (Exploration)                                         ####
-
-model_kaplanmeier_south_sexage <- survfit(surv_object ~ age + sex, data=data_final)
-
-sexage_plot <- ggsurvfit(model_kaplanmeier_south_sexage) +
-  labs(
-    x = "Days",
-    y = "Overall survival probability"
-  ) +
-  add_confidence_interval()+
-  add_risktable()
-
-
-model_kaplanmeier_south_age %>% 
-  tbl_survfit(
-    times = 365.25,
-    label_header = "**1-year survival (95% CI)**"
-  )
 #        Cox Model                                                          ####
 
 # Building the formula
