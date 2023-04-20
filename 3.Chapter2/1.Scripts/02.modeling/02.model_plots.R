@@ -21,6 +21,7 @@ library(lubridate)
 library(gtsummary)
 library(tidycmprsk)
 library(condSURV)
+library(survminer)
 
 #      Functions                                                            ####
 
@@ -53,7 +54,11 @@ data_final <- left_join(hr_data,mort) %>%
   mutate(age = factor(age, levels = c("F","Y","A")),
          sex = factor(sex, levels = c("F","M")),
          year = as.character(year)) %>% 
-  filter(hr_type == "akde_95")
+  filter(hr_type == "akde_95") %>% 
+  mutate(t_start = t_start+28,
+         t_end = t_end+28,)
+
+
 
 # Scaling Data
 for (j in ((str_which(names(data_final),"hr_type")+1):ncol(data_final))) {
@@ -104,10 +109,118 @@ surv_object <- Surv(time = data_final$t_start,
                     type = "counting")
 
 #        Kaplan-Meier Model                                                 ####
+#           Risk Tables                                                     ####
+
+# Setting up initial table
+
+# General
+risk_table_genpop <- data_final %>%
+  group_by(year,month) %>% 
+  summarise(n_deer = n_distinct(individual.local.identifier),
+            n_events = sum(event))
+
+# Male
+risk_table_males <-data_final %>%
+  filter(sex == "M") %>% 
+  group_by(year,month) %>% 
+  summarise(n_males = n_distinct(individual.local.identifier),
+            events_males = sum(event))
+
+# Female
+risk_table_females <-data_final %>%
+  filter(sex == "F") %>% 
+  group_by(year,month) %>% 
+  summarise(n_females = n_distinct(individual.local.identifier),
+            events_females = sum(event))
+
+# Final
+risk_table_final <- list(risk_table_genpop, 
+                         risk_table_males, 
+                         risk_table_females) %>% 
+  reduce(left_join, by = c("year","month")) %>% 
+  ungroup() %>% 
+  mutate(int_id = 1:nrow(.),.before = 1) %>% 
+  mutate_if(is.numeric, ~replace_na(., 0))
+
+# Cumulative sum of events
+
+for (i in 2:nrow(risk_table_final)) {
+  # Gen Pop
+  event_t1 <- risk_table_final[i,5] %>% as.numeric()
+  event_t2 <- risk_table_final[i-1,5] %>% as.numeric()
+  cum_sum <- event_t1+event_t2
+  
+  risk_table_final[i,5] <- cum_sum
+  
+  # Males
+  event_t1 <- risk_table_final[i,7] %>% as.numeric()
+  event_t2 <- risk_table_final[i-1,7] %>% as.numeric()
+  cum_sum <- event_t1+event_t2
+  
+  risk_table_final[i,7] <- cum_sum
+  
+  # Females
+  event_t1 <- risk_table_final[i,9] %>% as.numeric()
+  event_t2 <- risk_table_final[i-1,9] %>% as.numeric()
+  cum_sum <- event_t1+event_t2
+  
+  risk_table_final[i,9] <- cum_sum
+} 
+
+# Plotting
+ndeer_color <- "green4"
+nevent_color <- "red4"
+
+# General
+ggplot(risk_table_final,aes(x = int_id))+
+  geom_line(aes(y = n_deer),color = ndeer_color)+
+  geom_line(aes(y = n_events),color = nevent_color) +
+  scale_y_continuous(
+    # Features of the first axis
+    name = "Deer at Risk",
+    # Add a second axis and specify its features
+    sec.axis = sec_axis(~., name="Number of Events"))+
+  theme(axis.title.y = element_text(color = ndeer_color, size=13),
+        axis.title.y.right = element_text(color = nevent_color, size=13)) +
+  theme_bw()+
+  ggtitle("General Population")+
+  scale_x_continuous(name = "Months since study start",breaks = c(1,12,24,36,48,60,72))
+
+# Male
+ggplot(risk_table_final,aes(x = int_id))+
+  geom_line(aes(y = n_males),color = ndeer_color)+
+  geom_line(aes(y = events_males),color = nevent_color) +
+  scale_y_continuous(
+    # Features of the first axis
+    name = "Deer at Risk",
+    # Add a second axis and specify its features
+    sec.axis = sec_axis(~., name="Number of Events"))+
+  theme(axis.title.y = element_text(color = ndeer_color, size=13),
+        axis.title.y.right = element_text(color = nevent_color, size=13)) +
+  theme_bw()+
+  ggtitle("Males")+
+  scale_x_continuous(name = "Months since study start",breaks = c(1,12,24,36,48,60,72))
+
+# Female
+ggplot(risk_table_final,aes(x = int_id))+
+  geom_line(aes(y = n_females),color = ndeer_color)+
+  geom_line(aes(y = events_females),color = nevent_color) +
+  scale_y_continuous(
+    # Features of the first axis
+    name = "Deer at Risk",
+    # Add a second axis and specify its features
+    sec.axis = sec_axis(~., name="Number of Events"))+
+  theme(axis.title.y = element_text(color = ndeer_color, size=13),
+        axis.title.y.right = element_text(color = nevent_color, size=13)) +
+  theme_bw()+
+  ggtitle("Females")+
+  scale_x_continuous(name = "Months since study start",breaks = c(1,12,24,36,48,60,72))
+
 #           General                                                         ####
+
 model_kaplanmeier_north <- survfit(surv_object ~ 1, data=data_final)
 
-gen_plot <-   ggsurvfit(model_kaplanmeier_north) +
+gen_plot <- ggsurvfit(model_kaplanmeier_north) +
   labs(
     x = "Days",
     y = "Overall survival probability"
@@ -122,60 +235,34 @@ model_kaplanmeier_north %>%
   )
 
 #           Sex                                                             ####
-model_kaplanmeier_north_sex <- survfit(surv_object ~ sex, data=data_final)
 
-sex_plot <- ggsurvfit(model_kaplanmeier_north_sex) +
-  labs(
-    x = "Days",
-    y = "Overall survival probability"
-  ) +
-  add_confidence_interval()+
-  add_risktable()
+km_data_overall <- data_final 
+surv_object_overall <- Surv(time = km_data_overall$t_start,
+                            time2 = km_data_overall$t_end,
+                            event = km_data_overall$event,
+                            type = "counting")
+km_model_overall <- survfit(surv_object_overall ~ sex, data= km_data_overall)
 
-
-model_kaplanmeier_north_sex %>% 
-  tbl_survfit(
-    times = 365.25,
-    label_header = "**1-year survival (95% CI)**"
-  )
+km_plot_sex <- ggsurvplot(km_model_overall,
+                   conf.int = T,
+                   risk.table = T,
+                   break.x.by = 100,
+                   surv.median.line= "hv")
 
 #           Age                                                             ####
 
-model_kaplanmeier_north_age <- survfit(surv_object ~ age, data=data_final)
+km_data_overall <- data_final 
+surv_object_overall <- Surv(time = km_data_overall$t_start,
+                            time2 = km_data_overall$t_end,
+                            event = km_data_overall$event,
+                            type = "counting")
+km_model_overall <- survfit(surv_object_overall ~ age, data= km_data_overall)
 
-age_plot <- ggsurvfit(model_kaplanmeier_north_age) +
-  labs(
-    x = "Days",
-    y = "Overall survival probability"
-  ) +
-  add_confidence_interval()+
-  add_risktable()
-
-
-model_kaplanmeier_north_age %>% 
-  tbl_survfit(
-    times = 365.25,
-    label_header = "**1-year survival (95% CI)**"
-  )
-
-
-#           Sex + Age (Exploration)                                         ####
-
-model_kaplanmeier_north_sexage <- survfit(surv_object ~ age + sex, data=data_final)
-
-sexage_plot <- ggsurvfit(model_kaplanmeier_north_sexage) +
-  labs(
-    x = "Days",
-    y = "Overall survival probability"
-  ) +
-  add_confidence_interval()+
-  add_risktable()
-
-
-model_kaplanmeier_north_age %>% 
-  tbl_survfit(
-    times = 365.25,
-    label_header = "**1-year survival (95% CI)**"
-  )
+km_plot_age <- ggsurvplot(km_model_overall,
+                          conf.int = T,
+                          censor = F,
+                          risk.table = T,
+                          break.x.by = 100,
+                          surv.median.line= "hv")
 
 ###############################################################################
