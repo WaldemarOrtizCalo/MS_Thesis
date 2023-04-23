@@ -468,6 +468,87 @@ ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/north/h
        width = 10,
        height = 12,
        units = "in")
+#      Predictive Raster Map                                                ####
+#        [Male]                                                             ####
+
+# Importing Raster
+rasters <- list.files("2.Chapter1/3.Output/visualizations_bayesian_randomint/north/predictive_maps",
+                      pattern = "tif",
+                      full.names = T) %>% 
+  str_subset("_M_") %>% 
+  rast() %>% 
+  project("EPSG:4326")
+
+# Extracting and Replacing Raster names
+raster_names <- list.files("2.Chapter1/3.Output/visualizations_bayesian_randomint/north/predictive_maps",
+                           pattern = "tif",
+                           full.names = F) %>% 
+  str_subset("_M_") %>%
+  str_remove("northmodel_M_") %>% 
+  str_remove(".tif")
+
+names(rasters) <- raster_names
+
+# Making facetted plot
+maps <- ggplot() +
+  geom_spatraster(data = rasters) +
+  facet_wrap(~lyr, ncol = 2) +
+  scale_fill_viridis(option = "D",
+                     name = "Relative Pr(use)",
+                     na.value="transparent")+
+  theme(legend.position = "bottom")+
+  theme_bw()
+
+# Exporting
+ggsave(filename = "predictive_M_maps.png",
+       plot = maps,
+       device = "png",
+       path = "2.Chapter1/3.Output/visualizations_bayesian_randomint/north/predictive_maps",
+       width = 8,
+       height = 10,
+       units = "in",
+       dpi = 300)
+
+#        [Female]                                                           ####
+
+# Importing Raster
+rasters <- list.files("2.Chapter1/3.Output/visualizations_bayesian_randomint/north/predictive_maps",
+                      pattern = "tif",
+                      full.names = T) %>% 
+  str_subset("_F_") %>% 
+  rast() %>% 
+  project("EPSG:4326")
+
+# Extracting and Replacing Raster names
+raster_names <- list.files("2.Chapter1/3.Output/visualizations_bayesian_randomint/north/predictive_maps",
+                           pattern = "tif",
+                           full.names = F) %>% 
+  str_subset("_F_") %>%
+  str_remove("northmodel_F_") %>% 
+  str_remove(".tif")
+
+names(rasters) <- raster_names
+
+# Making facetted plot
+maps <- ggplot() +
+  geom_spatraster(data = rasters) +
+  facet_wrap(~lyr, ncol = 2) +
+  scale_fill_viridis(option = "D",
+                     name = "Relative Pr(use)",
+                     na.value="transparent")+
+  theme(legend.position = "bottom")+
+  theme_bw()
+
+# Exporting
+ggsave(filename = "predictive_F_maps.png",
+       plot = maps,
+       device = "png",
+       path = "2.Chapter1/3.Output/visualizations_bayesian_randomint/north/predictive_maps",
+       width = 8,
+       height = 10,
+       units = "in",
+       dpi = 300)
+
 ###############################################################################
 #   South                                                                   ####
 #      Beta Estimates                                                       ####
@@ -850,6 +931,87 @@ ggsave(filename = "2.Chapter1/3.Output/visualizations_bayesian_randomint/south/h
        width = 10,
        height = 12,
        units = "in")
+
+#      Predictive Raster Map                                                ####
+#        [Male]                                                             ####
+
+# Importing Raster
+rasters <- list.files("2.Chapter1/3.Output/visualizations_bayesian_randomint/south/predictive_maps",
+                      pattern = "tif",
+                      full.names = T) %>% 
+  str_subset("_M_") %>% 
+  rast() %>% 
+  project("EPSG:4326")
+
+# Extracting and Replacing Raster names
+raster_names <- list.files("2.Chapter1/3.Output/visualizations_bayesian_randomint/south/predictive_maps",
+                           pattern = "tif",
+                           full.names = F) %>% 
+  str_subset("_M_") %>%
+  str_remove("southmodel_M_") %>% 
+  str_remove(".tif")
+
+names(rasters) <- raster_names
+
+# Making facetted plot
+maps <- ggplot() +
+  geom_spatraster(data = rasters) +
+  facet_wrap(~lyr, ncol = 2) +
+  scale_fill_viridis(option = "D",
+                     name = "Relative Pr(use)",
+                     na.value="transparent")+
+  theme(legend.position = "bottom")+
+  theme_bw()
+
+# Exporting
+ggsave(filename = "predictive_M_maps.png",
+       plot = maps,
+       device = "png",
+       path = "2.Chapter1/3.Output/visualizations_bayesian_randomint/south/predictive_maps",
+       width = 8,
+       height = 10,
+       units = "in",
+       dpi = 300)
+
+#        [Female]                                                           ####
+
+# Importing Raster
+rasters <- list.files("2.Chapter1/3.Output/visualizations_bayesian_randomint/south/predictive_maps",
+                      pattern = "tif",
+                      full.names = T) %>% 
+  str_subset("_F_") %>% 
+  rast() %>% 
+  project("EPSG:4326")
+
+# Extracting and Replacing Raster names
+raster_names <- list.files("2.Chapter1/3.Output/visualizations_bayesian_randomint/south/predictive_maps",
+                           pattern = "tif",
+                           full.names = F) %>% 
+  str_subset("_F_") %>%
+  str_remove("southmodel_F_") %>% 
+  str_remove(".tif")
+
+names(rasters) <- raster_names
+
+# Making facetted plot
+maps <- ggplot() +
+  geom_spatraster(data = rasters) +
+  facet_wrap(~lyr, ncol = 2) +
+  scale_fill_viridis(option = "D",
+                     name = "Relative Pr(use)",
+                     na.value="transparent")+
+  theme(legend.position = "bottom")+
+  theme_bw()
+
+# Exporting
+ggsave(filename = "predictive_F_maps.png",
+       plot = maps,
+       device = "png",
+       path = "2.Chapter1/3.Output/visualizations_bayesian_randomint/south/predictive_maps",
+       width = 8,
+       height = 10,
+       units = "in",
+       dpi = 300)
 
 ###############################################################################
 #   Southeast                                                               ####

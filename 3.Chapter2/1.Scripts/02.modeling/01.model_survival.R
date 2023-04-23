@@ -21,6 +21,7 @@ library(lubridate)
 library(gtsummary)
 library(tidycmprsk)
 library(condSURV)
+library(AICcmodavg)
 
 #      Functions                                                            ####
 
@@ -240,6 +241,33 @@ print(paste0("End Time:",Sys.time()))
 write_csv(dredge_north_coxme,
           "3.Chapter2/3.Output/dredge/dredge_north_randint.csv")
 
+#        AICc Model Selection                                               ####
+
+dredge_df <- dredge(coxme_model,
+                    cluster = clust) %>% 
+  subset(delta < 2)
+
+mod_list <- get.models(dredge_df,
+                       subset = delta < 2)
+
+model_averages <- list()
+
+cov_list <- names(dredge_df)
+
+cutoff <- cov_list %>% str_which("df")-1
+
+cov_list_final <- names(dredge_df) %>% 
+  .[1:cutoff] %>% 
+  str_subset("age",negate = T) %>% 
+  str_subset("sex",negate = T)
+
+for (i in 1:length(cov_list_final)) {
+  
+  model_averages[[i]] <- modavg(mod_list,
+                                parm = cov_list_final[[i]])
+  
+  print(i)
+}
 ###############################################################################
 #   Model South                                                             ####
 #      Setup                                                                ####
