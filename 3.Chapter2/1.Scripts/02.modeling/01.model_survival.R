@@ -241,6 +241,9 @@ print(paste0("End Time:",Sys.time()))
 write_csv(dredge_north_coxme,
           "3.Chapter2/3.Output/dredge/dredge_north_randint.csv")
 
+#          Testing for PH                                                   ####
+resids <- cox.zph(coxme_model)
+
 #        AICc Model Selection                                               ####
 
 dredge_df <- dredge(coxme_model,
@@ -268,6 +271,7 @@ for (i in 1:length(cov_list_final)) {
   
   print(i)
 }
+
 ###############################################################################
 #   Model South                                                             ####
 #      Setup                                                                ####
