@@ -511,17 +511,10 @@ print(paste0("End Time:",Sys.time()))
 write_csv(dredge_south_coxme,
           "3.Chapter2/3.Output/dredge/dredge_south_randint.csv")
 
-# #          Testing for PH                                                 ####
+#      Testing for PH                                                       ####
 # resids <- cox.zph(coxme_model)
 # 
-# #        AICc Model Selection                                             ####
-=======
-# #          Testing for PH                                                   ####
-# resids <- cox.zph(coxme_model)
-# 
-# #        AICc Model Selection                                               ####
->>>>>>> 58913eb124282a19d50a972857de6aacc66cf7f3
-# 
+#      AICc Model Selection                                                 ####
 # dredge_df <- dredge(coxme_model,
 #                     cluster = clust) %>% 
 #   subset(delta < 2)
@@ -547,5 +540,4 @@ write_csv(dredge_south_coxme,
 #   
 #   print(i)
 # }
-
 ###############################################################################
