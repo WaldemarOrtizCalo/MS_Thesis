@@ -79,21 +79,6 @@ deer_age_sex <- read_csv("1.DataManagement/ch2_data/clean/locs/deer_mortalityloc
          "int_id"= "ordered_int_id")
 
 
-#      Cluster Setup                                                        ####
-
-# Cluster Number
-clust <- makeCluster(6)
-registerDoParallel(clust)
-
-# Exporting Packages
-clusterEvalQ(clust,
-             {
-               library(tidyverse)
-               library(MuMIn)
-               library(survival)
-               library(coxme)
-             })
-
 ###############################################################################
 #   Model North                                                             ####
 #      Setup                                                                ####
@@ -250,14 +235,10 @@ cox_north <- coxph(formula,
              data = loc_data_final,
              na.action = "na.fail")
 
-# Exporting data to clusters
-clusterExport(cl=clust, varlist=c("cox_north","loc_data_final","surv_object"), envir=environment())
-
 # Dredge
 print(paste0("Start Time:",Sys.time()))
 
-dredge_north <- dredge(cox,
-                       cluster = clust)
+dredge_north <- dredge(cox_north)
 
 print(paste0("End Time:",Sys.time()))
 
@@ -287,14 +268,10 @@ coxme_model <- coxme(formula,
                      data = loc_data_final,
                      na.action = "na.fail")
 
-# Exporting data to clusters
-clusterExport(cl=clust, varlist=c("coxme_model","loc_data_final","surv_object"), envir=environment())
-
 # Dredge
 print(paste0("Start Time:",Sys.time()))
 
-dredge_north_coxme <- dredge(coxme_model,
-                             cluster = clust)
+dredge_north_coxme <- dredge(coxme_model)
 
 print(paste0("End Time:",Sys.time()))
 
@@ -489,14 +466,10 @@ cox_south <- coxph(formula,
                    data = loc_data_final,
                    na.action = "na.fail")
 
-# Exporting data to clusters
-clusterExport(cl=clust, varlist=c("cox_south","loc_data_final","surv_object"), envir=environment())
-
 # Dredge
 print(paste0("Start Time:",Sys.time()))
 
-dredge_south <- dredge(cox,
-                       cluster = clust)
+dredge_south <- dredge(cox_south)
 
 print(paste0("End Time:",Sys.time()))
 
@@ -526,9 +499,6 @@ coxme_model <- coxme(formula,
                      data = loc_data_final,
                      na.action = "na.fail")
 
-# Exporting data to clusters
-clusterExport(cl=clust, varlist=c("coxme_model","loc_data_final","surv_object"), envir=environment())
-
 # Dredge
 print(paste0("Start Time:",Sys.time()))
 
@@ -541,7 +511,6 @@ print(paste0("End Time:",Sys.time()))
 write_csv(dredge_south_coxme,
           "3.Chapter2/3.Output/dredge/dredge_south_randint.csv")
 
-<<<<<<< HEAD
 # #          Testing for PH                                                 ####
 # resids <- cox.zph(coxme_model)
 # 
