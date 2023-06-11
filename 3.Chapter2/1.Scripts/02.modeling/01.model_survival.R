@@ -117,7 +117,11 @@ loc_data_final <- left_join(hr_cov_data,
              "age"),
            .after = int_id) %>% 
   replace(is.na(.), 0) %>% 
-  mutate(year = year(last_day),.after = last_day)
+  mutate(year = year(last_day),.after = last_day) %>% 
+  filter(hr_type == "akde_95") %>% 
+  mutate(year = as.factor(year),
+         age = factor(age,levels = c("F", "Y" , "A")),
+         sex = factor(sex,levels = c("F", "M" )))
 
 # Scaling Data
 for (j in ((str_which(names(loc_data_final),"event")+1):ncol(loc_data_final))) {
@@ -243,15 +247,8 @@ dredge_north <- dredge(cox_north)
 print(paste0("End Time:",Sys.time()))
 
 # Dredge Export
-write_csv(dredge_north,
+write_csv(as.data.frame(dredge_north),
           "3.Chapter2/3.Output/dredge/dredge_north.csv")
-
-# Dredge Export Top Models 
-
-dredge_north_top <- read_csv("3.Chapter2/3.Output/dredge/dredge_north.csv") %>% 
-  slice_head(n = 200) %>% 
-  write_csv("3.Chapter2/3.Output/dredge/dredge_north_topmodels.csv",
-            append = F)
 
 #        Cox-RandSlope Sub Model                                            ####
 
@@ -276,7 +273,7 @@ dredge_north_coxme <- dredge(coxme_model)
 print(paste0("End Time:",Sys.time()))
 
 # Dredge Export
-write_csv(dredge_north_coxme,
+write_csv(as.data.frame(dredge_north_coxme),
           "3.Chapter2/3.Output/dredge/dredge_north_randint.csv")
 
 #          Testing for PH                                                   ####
@@ -348,7 +345,11 @@ loc_data_final <- left_join(hr_cov_data,
              "age"),
            .after = int_id) %>% 
   replace(is.na(.), 0) %>% 
-  mutate(year = year(last_day),.after = last_day)
+  mutate(year = year(last_day),.after = last_day)%>% 
+  filter(hr_type == "akde_95") %>% 
+  mutate(year = as.factor(year),
+         age = factor(age,levels = c("F", "Y" , "A")),
+         sex = factor(sex,levels = c("F", "M" )))
 
 # Scaling Data
 for (j in ((str_which(names(loc_data_final),"event")+1):ncol(loc_data_final))) {
@@ -474,15 +475,8 @@ dredge_south <- dredge(cox_south)
 print(paste0("End Time:",Sys.time()))
 
 # Dredge Export
-write_csv(dredge_south,
+write_csv(as.data.frame(dredge_south),
           "3.Chapter2/3.Output/dredge/dredge_south.csv")
-
-# Dredge Export Top Models 
-
-dredge_south_top <- read_csv("3.Chapter2/3.Output/dredge/dredge_south.csv") %>% 
-  slice_head(n = 200) %>% 
-  write_csv("3.Chapter2/3.Output/dredge/dredge_south_topmodels.csv",
-            append = F)
 
 #        Cox-RandSlope Sub Model                                            ####
 
@@ -508,7 +502,7 @@ dredge_south_coxme <- dredge(coxme_model,
 print(paste0("End Time:",Sys.time()))
 
 # Dredge Export
-write_csv(dredge_south_coxme,
+write_csv(as.data.frame(dredge_south_coxme),
           "3.Chapter2/3.Output/dredge/dredge_south_randint.csv")
 
 #      Testing for PH                                                       ####
